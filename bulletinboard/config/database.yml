@@ -1,0 +1,8 @@
+development:
+  adapter: mysql2
+  encoding: utf8
+  database: bb_dev
+  pool: 5
+  username: bb
+  password:
+  timeout: 5000
