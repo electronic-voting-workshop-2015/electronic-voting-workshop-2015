@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://46.101.148.106/sendVoteResponse",
+  "type": "object",
+  "properties": {
+    "error_description": {
+      "id": "http://46.101.148.106/sendVoteResponse/error_description",
+      "type": "string"
+    }
+  }
+}

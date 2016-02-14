@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://46.101.148.106/getBBVotesResponse",
+  "type": "object",
+  "properties": {
+    "votes": {
+      "id": "http://46.101.148.106/getBBVotesResponse/votes",
+      "type": "array",
+      "items": {
+        "id": "http://46.101.148.106/getBBVotesResponse/votes/0",
+        "type": "object",
+        "properties": {
+          "vote_value": {
+            "id": "http://46.101.148.106/getBBVotesResponse/votes/0/vote_value",
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://46.101.148.106/getVotingPublicKey",
+  "type": "object",
+  "properties": {
+    "public_key": {
+      "id": "http://46.101.148.106/getVotingPublicKey/public_key",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "public_key"
+  ]
+}

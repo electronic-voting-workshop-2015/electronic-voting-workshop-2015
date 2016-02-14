@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://46.101.148.106/hash",
+  "type": "object",
+  "properties": {
+    "hash_function": {
+      "id": "http://46.101.148.106/hash/hash_function",
+      "type": "string"
+    }
+  },
+  "required": [
+    "hash_function"
+  ]
+}
