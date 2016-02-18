@@ -5,3 +5,8 @@ desc "allow mysql 'bb' user to administer the database"
 task :setup_mysql_first_time do
     sh "echo 'GRANT ALL ON bb_development.* TO bb@localhost' | mysql -u root"
 end
+
+desc "run the application"
+task :run do
+    sh "ruby -I. app/app.rb"
+end
