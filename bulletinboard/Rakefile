@@ -3,5 +3,5 @@ require "sinatra/activerecord/rake"
 
 desc "allow mysql 'bb' user to administer the database"
 task :setup_mysql_first_time do
-    sh "echo 'GRANT ALL ON bb_dev.* TO bb@localhost' | mysql -u root"
+    sh "echo 'GRANT ALL ON bb_development.* TO bb@localhost' | mysql -u root"
 end
