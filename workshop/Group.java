@@ -1,40 +1,34 @@
 package workshop;
+
 /*
  * We only use the group interface, the cryptographic infrastructure should recode it to their dedicated use
  */
 public abstract class Group{
-	/**
-	 * Returns the generator exponated by 'exponent'
-	 * @param exponent
-	 * @return
-	 */
-	public abstract byte[] getElement(byte[] exponent);	
-	/**
-	 * sets the group's order to 'order'
-	 * @param order
-	 */
-	public abstract void setOrder(byte[] order);
-	/**
-	 * returns the group's order
-	 * @return
-	 */	
-	public abstract byte[] getOrder();
-	/**
-	 * sets the group's generator to 'generator'
-	 * @param generator
-	 */
-	public abstract void setGenerator(byte[] generator);
-	/**
-	 * returns the group's generator
-	 * @return
-	 */
-	public abstract byte[] getGenerator();
-	/**
-	 * returns the group's element size in bytes
-	 */
-	public abstract int getElementSize();
-	/**
-	 * Sets the group's element size in bytes to 'size'
-	 */
-	public abstract void setElementSize(int size);
-}	
+
+    /**
+     * Returns the generator exponated by 'exponent'
+     */
+    public abstract byte[] getElement(byte[] exponent);
+
+    /**
+     * Returns the order of the group.
+     */
+    public abstract byte[] getOrder();
+    /**
+     * returns the group's generator
+     */
+    public abstract byte[] getGenerator();
+    /**
+     * returns the group's element size in bytes
+     */
+    public abstract int getElementSize();
+    /**
+     * Returns a byte[] representation of g^n under the group.g is a member of the group,
+     * n is the exponent.
+     */
+    public abstract byte[] groupPow(byte[] g, byte[] n);
+    /**
+     * Returns a byte[] representation of g*q under the group. g and q are both members of the group.
+     */
+    public abstract byte[] groupMult(byte[] g, byte[] q);
+}
