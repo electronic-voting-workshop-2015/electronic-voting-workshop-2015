@@ -1,6 +1,5 @@
-from Utils import bits, generateLargePrime, product
 from random import SystemRandom
-import json
+from Utils import bits, product, mod_inv
 
 
 class EllipticCurve:
@@ -68,10 +67,10 @@ class ECGroupMember:
         p = self.curve.p
 
         if self == g:
-            m = (3 * self.x ** 2 + a) * pow((2 * self.y), p - 2, p)  # mod inverse: http://stackoverflow.com/a/4798776
+            m = (3 * self.x ** 2 + a) * mod_inv((2 * self.y), p)
             m %= p
         else:
-            m = (self.y - g.y) * pow((self.x - g.x), p - 2, p)
+            m = (self.y - g.y) * mod_inv((self.x - g.x), p)
             m %= p
 
         xr = (pow(m, 2, p) - self.x - g.x) % p
@@ -81,6 +80,8 @@ class ECGroupMember:
 
     def __pow__(self, n, modulo=None):
         """returns multiplication scalar n"""
+        if n == -1:
+            return self.modinv()
         res = self.curve.getZeroMember()
         addend = self
 
@@ -91,17 +92,52 @@ class ECGroupMember:
 
         return res
 
+    def __bytes__(self):
+        """convert x any y values to a compact object for transferring to disk or network
+        object is a record with 2 field: (self.x, self.y). each field is a little endian integer the same size as p"""
+        length = self.curve.p.bit_length() // 8
+        xb = self.x.to_bytes(length, 'little')
+        yb = self.y.to_bytes(length, 'little')
+        return xb + yb
+
+    @staticmethod
+    def from_bytes(data, curve):
+        """converts a bytes object to a ECGroupMember object"""
+        length = curve.p.bit_length() // 8
+        if len(data) != 2 * length:
+            raise Exception('binary data does not match curve parameters')
+        xb = data[0:length]
+        yb = data[length:2 * length]
+        x = int.from_bytes(xb, 'little')
+        y = int.from_bytes(yb, 'little')
+        if not ECGroupMember.verify_point(x, y, curve):
+            raise Exception('binary data does not match curve parameters')
+        return ECGroupMember(curve, x, y)
+
+    @staticmethod
+    def verify_point(x, y, curve):
+        """returns True iff the point (x,y) is on the curve"""
+        p = curve.p
+        a = curve.a
+        b = curve.b
+        return y ** 2 % p == (x ** 3 + a * x + b) % p
+
     def __str__(self):
         return self.x.__str__() + ", " + self.y.__str__() + ", " + self.curve.__str__()
 
     def __eq__(self, other):
         return self.curve == other.curve and self.x == other.x and self.y == other.y
 
+    @classmethod
+    def to_group_member(cls, value):
+        """converts integer "value" to an ECCGroupMember object"""
+        pass
+
 
 class ThresholdParty:
     """represents a member participating in the decryption process
     n is the number of parties, t is the number of parties required to decrypt
-    algorithm from: http://moodle.tau.ac.il/pluginfile.php/217242/mod_resource/content/1/Tomer.pdf
+    algorithms from: http://moodle.tau.ac.il/pluginfile.php/217242/mod_resource/content/1/Tomer.pdf
     """
 
     def __init__(self, curve, t, n, party_id, hash_func):
@@ -126,10 +162,33 @@ class ThresholdParty:
         # TODO:get commitment from BB
         pass
 
+    def get_public_key(self, j):
+        """returns A_j's public key"""
+        # TODO:get public key from the BB
+        pass
+
+    def encrypt_message(self, public_key, value):
+        """returns encrypted value using public_key"""
+        g = self.curve.getGenerator()
+        r = self.curve.getRandomExponent()
+        m = ECGroupMember.to_group_member(value)  # TODO:convert integer "value" to an ECGroupMember
+        return g ** r, m * (public_key ** r)
+
+    def decrypt_message(self, private_key, cipher_text):
+        g = self.curve.getGenerator()
+        c = cipher_text[0]
+        d = cipher_text[1]
+        x = private_key
+        s = c**x
+        message = d * s**-1
+        return message
+
     def send_message(self, j):
         """send f_i(j) to party A_j"""
-        value = self.polynomial.value_at(j)
-        # TODO:encrypt using A_j's public key and publish to the BB
+        message = self.polynomial.value_at(j)
+        public_key = self.get_public_key(j)
+        cipher_text = self.encrypt_message(public_key, message)
+        # TODO:publish message to the BB
 
     def send_values(self):
         """send values f_i(j) to all parties A_j"""
@@ -140,13 +199,15 @@ class ThresholdParty:
 
     def get_message(self, j):
         """returns A_j's message: f_j(i)"""
-        # TODO:get message from BB
-        pass
+        cipher_text = None  # TODO:get cipher text from BB
+        private_key = self.polynomial.coefficients[0]
+        return self.decrypt_message(private_key, cipher_text)
 
     def validate_message(self, j, message, commitment):
         """returns True iff the message from A_j agrees with A_j's commitment"""
+        exponent = self.polynomial.value_at(j)
         g = self.curve.getGenerator()
-        return message == product([(g ** c[1]) ** (j ** c[0]) for c in commitment]) % self.curve.order
+        return message == g**exponent
 
     def validate_all_messages(self):  # TODO: better method name?
         messages = []
@@ -161,7 +222,7 @@ class ThresholdParty:
                 pass  # TODO: handle message not agreeing with commitment
 
         # compute s_i = f(i) and publish h_i = g^s_i
-        self.secret_value = sum([self.polynomial.value_at(x) for x in messages]) % self.curve.order
+        self.secret_value = sum(self.polynomial.value_at(x) for x in messages) % self.curve.order
         g = self.curve.getGenerator()
         self.publish_value(g ** self.secret_value)
 
@@ -183,10 +244,29 @@ class ThresholdParty:
     def publish_zkp(self, c, h, w, u, v, cc, z):
         pass  # TODO:publish zkp to the BB
 
-    def validate_zkp(self, G, g, c, h, w, u, v, cc, z):
+    @staticmethod
+    def validate_zkp(hash_func, G, g, c, h, w, u, v, cc, z):
         """returns True iff the zkp is valid"""
         # TODO:this function should be computed on the BB
-        return cc == self.hash_func(G, g, c, h, w, u, v) and u * h**cc == g**z and v * w**cc == h**z
+        return cc == hash_func(G, g, c, h, w, u, v) and u * h ** cc == g ** z and v * w ** cc == h ** z
+
+    @staticmethod
+    def decrypt_vote(curve, party_ids, commitments, d):
+        """decrypts a single vote using Lagrange interpolation on t point
+        party_ids is a list of t integers, commitments is a list of t commitments
+        d is part of the cipher text - (c,d)
+        performed after validating the ZKPs"""
+        # TODO:this function should be computed on the BB
+        q = curve.order
+        lambda_list = []
+        for j in party_ids:
+            l = ((i * mod_inv(i-j, q)) % q for i in party_ids if i != j)
+            lambda_list.append(product(l, q))
+        cs = product(commitments[j] ** lambda_list[j] for j in party_ids)
+        return d * cs**-1
+
+
+
 
 
 class Polynomial:
@@ -198,7 +278,7 @@ class Polynomial:
 
     def value_at(self, x):
         """returns the value of the polynomial at point x"""
-        return sum([c[1] * x ** c[0] for c in enumerate(self.coefficients)]) % self.order
+        return sum(c[1] * x ** c[0] for c in enumerate(self.coefficients)) % self.order
 
 
 # recommended NIST elliptic curves: http://csrc.nist.gov/groups/ST/toolkit/documents/dss/NISTReCur.pdf
@@ -234,7 +314,13 @@ def test():
     g1 = curve_256.getRandomMember()
     g2 = curve_256.getRandomMember()
     g3 = g1 * g2
-    g4 = g1 ** (2**200 + 3**100)
+    g4 = g1 ** (2)
+    print(ECGroupMember.verify_point(g1.x, g1.y, curve_256))
+    print(ECGroupMember.verify_point(g2.x, g2.y, curve_256))
+    print(ECGroupMember.verify_point(g3.x, g3.y, curve_256))
+    print(ECGroupMember.verify_point(g3.x, g3.y, curve_256))
+    print(g1)
+    print(g2)
     print(g3)
     print(g4)
 
