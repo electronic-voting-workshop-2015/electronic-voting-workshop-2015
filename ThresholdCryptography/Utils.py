@@ -2,8 +2,6 @@ import math
 import random
 
 
-
-
 def bits(n):
     """Generates binary digits of n, starting from least significant bit.
     from http://andrea.corbellini.name/2015/05/17/elliptic-curve-cryptography-a-gentle-introduction/
@@ -13,12 +11,21 @@ def bits(n):
         n >>= 1
 
 
-def product(l):
-    """computes product of list"""
+def product(l, p = 0):
+    """computes product of list, mod p if second passed second argument"""
     res = 1
-    for i in l:
-        res *= i
+    if p == 0:
+        for i in l:
+            res *= i
+    else:
+        for i in l:
+            res *= i % p
     return res
+
+
+def mod_inv(a, p):
+    """computes modular inverse of a in field F_p"""
+    return pow(a, p-2, p)  # mod inverse: http://stackoverflow.com/a/4798776
 
 def rabinMiller(n):
     """https://langui.sh/2009/03/07/generating-very-large-primes/#fn:1"""
