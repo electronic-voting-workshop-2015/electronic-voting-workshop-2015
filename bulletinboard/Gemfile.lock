@@ -55,8 +55,10 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  minitest
   mysql2
   rack-contrib
+  rack-test
   rake
   sinatra
   sinatra-activerecord

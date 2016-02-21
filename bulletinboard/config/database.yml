@@ -6,3 +6,12 @@ development:
   username: bb
   password:
   timeout: 5000
+
+test:
+  adapter: mysql2
+  encoding: utf8
+  database: bb_test
+  pool: 5
+  username: bb
+  password:
+  timeout: 5000

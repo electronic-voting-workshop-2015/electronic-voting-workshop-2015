@@ -1,12 +1,19 @@
 require 'sinatra/activerecord'
 require "sinatra/activerecord/rake"
+require 'rake/testtask'
+
+Rake::TestTask.new do |t|
+  t.pattern = "test/*test*.rb"
+end
 
 desc "allow mysql 'bb' user to administer the database"
 task :setup_mysql_first_time do
-    sh "echo 'GRANT ALL ON bb_development.* TO bb@localhost' | mysql -u root"
+    [ "development", "test" ].each do |database|
+        sh "echo 'GRANT ALL ON bb_#{database}.* TO bb@localhost' | mysql -u root"
+    end
 end
 
 desc "run the application"
 task :run do
-    sh "ruby -I. app/app.rb"
+    sh "ruby app/app.rb"
 end
