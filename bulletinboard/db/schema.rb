@@ -11,9 +11,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160218131718) do
+ActiveRecord::Schema.define(version: 20160221214313) do
 
-  create_table "proofs", force: :cascade do |t|
+  create_table "publications", force: :cascade do |t|
     t.binary "content", limit: 65535
   end
 

@@ -4,7 +4,7 @@ require 'sinatra/activerecord'
 require 'rack'
 require 'rack/contrib'
 require 'pp'
-require 'models/proof'
+require 'models/publication'
 
 use Rack::PostBodyContentTypeParser
 
@@ -12,15 +12,17 @@ post '/sendVote' do
     json :parameters_were => params
 end
 
-post '/updateProofsFile' do
-    if Proof.count == 0
-        Proof.create!( content: params[ "content" ] )
-    else
-        proof = Proof.first
-        proof.update!( content: params[ "content" ] )
-    end
+post '/publish' do
+    publication = Publication.create!( content: params[ "content" ] )
+    json id: publication.id
 end
 
-get '/proofsFile' do
-    json :content => Proof.first.content
+get '/retrieve' do
+    begin
+        id = params[ "id" ].to_i
+        publication = Publication.find id
+        json :content => publication.content
+    rescue ActiveRecord::RecordNotFound => e
+        raise Exception.new( "could not find id=#{id}" )
+    end
 end
