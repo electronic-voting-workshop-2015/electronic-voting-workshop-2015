@@ -141,7 +141,6 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         byte[] result = new byte[c1.length + c2.length];
         System.arraycopy(c1, 0, result, 0, c1.length);
         System.arraycopy(c2, 0, result, c1.length, c2.length);
-        printArray(result);
         return result;
     }
 
