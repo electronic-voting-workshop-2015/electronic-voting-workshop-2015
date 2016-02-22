@@ -19,10 +19,10 @@ class CreateTables < ActiveRecord::Migration
       t.integer   :race_id, null: false
       
       execute "CREATE TRIGGER `votes_PREVENT_DEL` BEFORE DELETE ON `votes` FOR EACH ROW
-                begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';"
+                begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed'; end"
       
       execute "CREATE TRIGGER `votes_UPDATE_TIME` AFTER INSERT ON `votes` FOR EACH ROW
-                            begin SET NEW.time = SYSDATE();"   
+                            begin SET NEW.time = SYSDATE(); end"   
 
     end #votes
     
@@ -56,10 +56,10 @@ class CreateTables < ActiveRecord::Migration
       t.string    :source, null: false
       
       execute "CREATE TRIGGER `logs_PREVENT_DEL` BEFORE DELETE ON `logs` FOR EACH ROW
-                      begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';"
+                      begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed'; end"
       
       execute "CREATE TRIGGER `logs_UPDATE_TIME` AFTER INSERT ON `logs` FOR EACH ROW
-                            begin SET NEW.time = SYSDATE();"  
+                            begin SET NEW.time = SYSDATE(); end"  
     end #logs
     
   end #up
