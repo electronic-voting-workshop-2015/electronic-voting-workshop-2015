@@ -60,7 +60,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * 
 	 * @return a string which is a concatenation of the signature and timestamp.
 	 */
-	private String addSignatureAndTimeStamp() {
+	private String addSignatureAndTimeStamp(String str) {
 		return null;
 		// TODO Auto-generated method stub
 	}
