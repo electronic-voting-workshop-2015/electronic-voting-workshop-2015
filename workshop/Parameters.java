@@ -13,6 +13,8 @@ public class Parameters {
 	public static Group ourGroup;
 	// The cryptography module we use
 	public static ECClientCryptographyModule cryptoClient;
+	// The public key for the encryption
+	public static byte[] publicKey;
 	// The cipher-text QR version
 	public static int topQRLevel;
 	// The audit QR version
@@ -50,11 +52,12 @@ public class Parameters {
 		return result;
 	}
 
-	public static void setParameters(Group ourGroup1, ECClientCryptographyModule cryptoClient1, int topQRLevel1,
+	public static void setParameters(Group ourGroup1, ECClientCryptographyModule cryptoClient1, byte[] publicKey1, int topQRLevel1,
 			int bottomQRLevel1, HashSet<String> candidatesNames1,
 			ArrayList<RaceProperties> racesProperties1, int timeStampLevel1) {
 		ourGroup = ourGroup1;
 		cryptoClient = cryptoClient1;
+		publicKey = publicKey1;
 		topQRLevel = topQRLevel1;
 		bottomQRLevel = bottomQRLevel1;
 		candidatesNames = candidatesNames1;
