@@ -92,29 +92,27 @@ public class VotingBoothImp implements VotingBooth {
 	}
 
 	/**
-	 * sets the desired Top QR parameters, Version , ECC level, number of bits
-	 * to be decoded
+	 * Creates the top QR
 	 * 
 	 * @param ciphertext
 	 *            . a string represents the ciphertext to be encoded as a QR.
 	 * @return QR png file
 	 */
-	private File calcTopQRParameters(String ciphertext) {
+	private File topQRCreator(String ciphertext) {
 		return null;
 		// TODO Auto-generated method stub
 
 	}
 
 	/**
-	 * sets the desired Bottom QR parameters, Version , ECC level, number of
-	 * bits to be decoded
+	 * Creates the bottom QR
 	 * 
 	 * @param randomness
 	 *            . a string represents the concatenated randomnesses to be
 	 *            encoded as a Small QR.
 	 * @return QR png file
 	 */
-	private File calcBottomQRParameters(String randomness) {
+	private File bottomQRCreator(String randomness) {
 		return null;
 		// TODO Auto-generated method stub
 
