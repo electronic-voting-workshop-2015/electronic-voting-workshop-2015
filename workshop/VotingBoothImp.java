@@ -39,7 +39,6 @@ public class VotingBoothImp implements VotingBooth {
 	 */
 	public void audit(boolean isAudit) {
 		// TODO Auto-generated method stub
-
 	}
 
 	/**
@@ -51,6 +50,7 @@ public class VotingBoothImp implements VotingBooth {
 	 *         race, parsed from the input JSON.
 	 */
 	private ArrayList<Race> parseJSON(JSONObject jsonRepr) {
+		return null;
 		// TODO Auto-generated method stub
 	}
 
@@ -61,7 +61,8 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return a string which is a concatenation of the signature and timestamp.
 	 */
 	private String addSignatureAndTimeStamp() {
-
+		return null;
+		// TODO Auto-generated method stub
 	}
 
 	/**
@@ -73,6 +74,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return QR png file
 	 */
 	private File calcTopQRParameters(String ciphertext) {
+		return null;
 		// TODO Auto-generated method stub
 
 	}
@@ -87,6 +89,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return QR png file
 	 */
 	private File calcBottomQRParameters(String randomness) {
+		return null;
 		// TODO Auto-generated method stub
 
 	}
