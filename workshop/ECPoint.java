@@ -13,7 +13,7 @@ public class ECPoint {
     private final BigInteger y;
 
     ECPoint(EllipticCurve curve, BigInteger x, BigInteger y) {
-        // TODO verify that the curve is satisfied by the point.
+        // TODO check that the curve is satisfied by the point.
         this.curve = curve;
         this.x = x;
         this.y = y;
@@ -24,6 +24,7 @@ public class ECPoint {
      * The representation of x and y in the array should match the BigInteger.toByteArray() method.
      */
     public static ECPoint fromByteArray(EllipticCurve curve, byte[] array) {
+        // TODO verify if point lies on curve.
         int size = array.length / 2;
         BigInteger x = new BigInteger(Arrays.copyOfRange(array, 0, size));
         byte[] a = {1};
@@ -38,7 +39,6 @@ public class ECPoint {
      * maxSize represents the maximum number of bytes to represent x or y
      */
     public byte[] toByteArray(int maxSize) {
-        // TODO change to cohesive length.
         byte[] xBytes = x.toByteArray();
         byte[] yBytes = y.toByteArray();
         byte[] result = new byte[maxSize * 2];
@@ -62,7 +62,7 @@ public class ECPoint {
     /**
      * Returns the completing elemnt of this point in the group (-this).
      */
-    public ECPoint completeing() {
+    public ECPoint completing() {
         return new ECPoint(curve, x, y.negate().mod(curve.getP()));
     }
 
