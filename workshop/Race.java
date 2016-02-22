@@ -11,7 +11,7 @@ public class Race {
 	
 	public Race(RaceProperties curRaceProp){
 		this.curRaceProp = curRaceProp;
-		this.setVotesArray(new String[this.curRaceProp.getNumOfPossibleCan()]);
+		this.setVotesArray(new String[this.curRaceProp.getNumOfSlots()]);
 	}
 
 	public String[] getVotesArray() {
