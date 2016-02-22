@@ -4,6 +4,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Set;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 
 import org.json.*;
 
@@ -150,8 +156,89 @@ public class VotingBoothImp implements VotingBooth {
 	 *            be chosen in each race.
 	 */
 
+ 	/**
+ 	* prints the ballot.
+ 	* 
+ 	* @param votesInAllRaces
+ 	*            . a list of Race objects contains the names of candidates to
+ 	*            be chosen in each race.
+ 	* @param qrPng QR png file.
+ 	*/
 	private void printPage(File qrPng, ArrayList<Race> votesInAllRaces) {
-		// TODO Auto-generated method stub
+		class Ballot extends JPanel implements printable{
+		
+			public Ballot(){
+				GridLayout mainLayout = new GridLAyout(4,1);
+				JPanel emptyPanel, tapePanel, votePanel, qrPanel;
+			
+				int votePanelH = 54, width = 242, rows = 0;
+			
+				emptyPanel = new JPanel(); votePanel = new JPanel();
+				tapePanel = new JPanel(); qrPanel = new JPanel();
+			  	this.setSize(new Dimension(312,242));
+				emptyPanel.setSize(new Dimension(54,242));
+				votePanel.setSize(new Dimension(54,242));
+				tapePanel.setSize(new Dimension(13,242));
+				qrPanel.setSize(new Dimension(191,242));
+				
+				for(Race r : votesInAllRaces){
+					if(r.curRaceProp.numOfPossibleCan >= lines)
+						rows = r.curRaceProp.numOfPossibleCan;
+				}
+			
+			
+				GridLayout votePanelLayout = new GridLayout(1,votesInAllRaces.size());
+				for(Race r : votesInAllRaces){
+					JPanel p = new JPanel();
+					p.setSize(new Dimension(votePanelH,width/votesInAllRaces.size());
+				
+					GridLayout l = new GridLayout(rows+1,1);
+					JTextField raceName = new JTextfield(r.curRacePror.nameOfRace);
+					l.add(raceName);
+					for(String s:r.votesArray){
+						JTextField jtf = new JTextfield(s);
+						l.add(jtf);								
+					}
+					p.setLayout(l);
+				
+					votePanelLayout.add(p);
+				}
+				votePanel.setLayout(votePanelLayout);
+			
+				ImageIcon qrIcon = new ImageIcon(qrPng.getAbsolutePath());
+				JLabel imagelabel = new JLabel(qrIcon, JLabel.CENTER);
+				qrPanel.add(JLabel,JPanel.CENTER);
+			
+				mainLayout.add(emptyPanel); mainLayout.add(votePanel);
+				mainLayout.add(tapePanel); mainLayout.add(qrPanel);
+			
+				this.setLayout(mainLayou);	
+				this.setVisible(false);
+			}
+		
+		
+		@Override
+	    	public int print(Graphics g, PageFormat pf, int i) throws PrinterException {
+	        	if (i > 0) {
+	            	return NO_SUCH_PAGE;
+	        	}
+	        	Graphics2D g2d = (Graphics2D) g;
+	        	g2d.translate(pf.getImageableX(), pf.getImageableY());
+	        	Ballot.this.printAll(g);
+	        	return Printable.PAGE_EXISTS;
+	    	}
+		}
+		//end of class
+	
+		Ballot b = new Ballot();		
+		PrinterJob pj = PrinterJob.getPrinterJob();
+    		PageFormat pf = pj.pageDialog(pj.defaultPage());
+    		pj.setPrintable(b,pf);
+   		try {
+        	pj.print();
+    		} catch (PrinterException pe) {
+        	pe.printStackTrace(System.err);
+    		} 
 	}
 
 }
