@@ -1,5 +1,5 @@
-$N = 7
-$T = 5
+$N = 7 #number of parties
+$T = 5 #threshold
 
 class CreateTables < ActiveRecord::Migration
   def up
@@ -11,12 +11,16 @@ class CreateTables < ActiveRecord::Migration
     end #ZKP
     
     create_table :votes do |t|
-      t.integer   :vote_id
-      t.string    :vote_value
-      t.integer   :ballot_box
-      t.datetime  :date
-      t.integer   :serial_number
-      t.integer   :race_id
+      #t.integer   :vote_id       ID column generated automatically
+      t.string    :vote_value, null: false
+      t.integer   :ballot_box, null: false
+      t.datetime  :date, null: false
+      t.integer   :serial_number, null: false
+      t.integer   :race_id, null: false
+      
+      execute "CREATE TRIGGER `votes_PREVENT_DEL` BEFORE DELETE ON `votes` FOR EACH ROW
+                begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';" 
+
     end #votes
     
     create_table :commitments do |t|
@@ -43,10 +47,13 @@ class CreateTables < ActiveRecord::Migration
     end #SendCommitments
     
     create_table :logs do |t|
-      t.integer   :log_id
+     # t.integer   :log_id            ID column generated automatically
       t.string    :log_value
       t.datetime  :time
       t.string    :source
+      
+      execute "CREATE TRIGGER `logss_PREVENT_DEL` BEFORE DELETE ON `logs` FOR EACH ROW
+                      begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';" 
     end #logs
     
   end #up
