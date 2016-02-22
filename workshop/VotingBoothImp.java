@@ -49,9 +49,35 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return list of Race objects, representing the votes of the voter in each
 	 *         race, parsed from the input JSON.
 	 */
-	private ArrayList<Race> parseJSON(JSONObject jsonRepr) {
-		return null;
-		// TODO Auto-generated method stub
+	private ArrayList<Race> parseJSON(JSONArray jsonRepr) throws JSONException {
+		ArrayList<Race> curVote= new ArrayList<Race>();
+		int raceNum=0;
+		JSONObject curRace;	
+		String curCand;
+		for(RaceProperties rp : Parameters.racesProperties){
+			try{
+				curRace=jsonRepr.getJSONObject(raceNum);
+			}
+			catch(Exception ClassCastException){
+				throw(new ClassCastException());
+			}								
+			curVote.add(raceNum, new Race(rp));
+			Set<String> validNames=rp.getPossibleCandidates();
+			String[] curRaceArrayOfNames= new String[rp.getNumOfSlots()];
+			for(int i=0;i<rp.getNumOfSlots();i++){
+				try{
+					curCand=curRace.getJSONArray("chosenCandidates").get(i).toString();
+				}
+				catch(Exception ClassCastException){
+					throw(new ClassCastException());
+				}
+				if(validNames.contains(curCand)){
+					curRaceArrayOfNames[i]=curCand;
+				}				
+			}
+			curVote.get(raceNum).setVotesArray(curRaceArrayOfNames);
+		}
+		return curVote;		
 	}
 
 	/**
