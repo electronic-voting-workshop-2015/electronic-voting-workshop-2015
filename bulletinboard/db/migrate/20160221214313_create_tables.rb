@@ -6,13 +6,13 @@ class CreateTables < ActiveRecord::Migration
     create_table :ZKP do |t|
       t.integer  :vote_id
       N.times do |i| # N = number of parties
-        t.string  :"party_#{i+1}"
+        t.text  :"party_#{i+1}"
       end
     end #ZKP
     
     create_table :votes do |t|
       #t.integer   :vote_id                         ID column generated automatically
-      t.string    :vote_value, null: false
+      t.text    :vote_value, null: false
       t.integer   :ballot_box, null: false
       t.integer   :serial_number, null: false
       t.integer   :race_id, null: false
@@ -25,7 +25,7 @@ class CreateTables < ActiveRecord::Migration
     create_table :commitments do |t|
       t.integer   :party_id
       T.times do |i|                                      # T = threshold
-        t.string  :"threshold_#{i+1}"
+        t.text  :"threshold_#{i+1}"
       end
       
       N.times do |i|
@@ -37,7 +37,7 @@ class CreateTables < ActiveRecord::Migration
       t.integer   :party_id
       
       N.times do |i|
-        t.string  :"party_#{i+1}"
+        t.text  :"party_#{i+1}"
       end
       
       N.times do |i|
@@ -47,7 +47,7 @@ class CreateTables < ActiveRecord::Migration
     
     create_table :logs do |t|
      # t.integer   :log_id                          ID column generated automatically
-      t.string    :log_value, null: false
+      t.text    :log_value, null: false
       t.string    :source, null: false
       
       execute "CREATE TRIGGER `logs_PREVENT_DEL` BEFORE DELETE ON `logs` FOR EACH ROW
