@@ -26,8 +26,8 @@ public class VotingBoothImp implements VotingBooth {
 	private ArrayList<Race> curVote; // the list of Race objects, representing
 										// the votes of the voter in each race.
 
-	private int topECCLevel; // top QR error correction level
-	private int bottomECCLevel; // bottom QR error correction level
+	private static QRProperties topQR; //Valid vote QR properties
+	private static QRProperties bottomQR;// Audit QR properties
 
 	/**
 	 * processes the choice of the voter, encrypt it and prints the ballot.
@@ -239,6 +239,122 @@ public class VotingBoothImp implements VotingBooth {
     		} catch (PrinterException pe) {
         	pe.printStackTrace(System.err);
     		} 
+	}
+	/**
+	 * set the required QR Properties to the given data QR Properties
+	 * @param qr
+	 * @param data
+	 */
+	public static void setQR(QRProperties qr, QRProperties data){
+		qr.setLevel(data.getLevel());
+		qr.setEcc(data.getEcc());
+		qr.setMaxNumOfBits(data.getMaxNumOfBits());
+	}
+	/**
+	 * Our specific QR map, can be further expanded
+	 * @return
+	 */
+	public static HashMap<Integer,Integer[]> ourQRMap(){
+		HashMap<Integer,Integer[]> qrMap = new HashMap<Integer,Integer[]>();		
+		Integer[] curSizes=new Integer[4];
+		curSizes[0]=1091;curSizes[1]=857;curSizes[2]=611;curSizes[3]=461;
+		qrMap.put(23, curSizes.clone());
+		curSizes[0]=1171;curSizes[1]=911;curSizes[2]=661;curSizes[3]=511;
+		qrMap.put(24, curSizes.clone());
+		curSizes[0]=1273;curSizes[1]=997;curSizes[2]=715;curSizes[3]=535;
+		qrMap.put(25, curSizes.clone());
+		curSizes[0]=1367;curSizes[1]=1059;curSizes[2]=751;curSizes[3]=593;
+		qrMap.put(26, curSizes.clone());
+		curSizes[0]=1465;curSizes[1]=1125;curSizes[2]=805;curSizes[3]=625;
+		qrMap.put(27, curSizes.clone());
+		curSizes[0]=1528;curSizes[1]=1190;curSizes[2]=868;curSizes[3]=658;
+		qrMap.put(28, curSizes.clone());
+		curSizes[0]=1628;curSizes[1]=1264;curSizes[2]=908;curSizes[3]=698;
+		qrMap.put(29, curSizes.clone());
+		curSizes[0]=1732;curSizes[1]=1370;curSizes[2]=982;curSizes[3]=742;
+		qrMap.put(30, curSizes.clone());
+		curSizes[0]=1840;curSizes[1]=1452;curSizes[2]=1030;curSizes[3]=790;
+		qrMap.put(31, curSizes.clone());
+		curSizes[0]=1952;curSizes[1]=1538;curSizes[2]=1112;curSizes[3]=842;
+		qrMap.put(32, curSizes.clone());
+		curSizes[0]=2068;curSizes[1]=1628;curSizes[2]=1168;curSizes[3]=898;
+		qrMap.put(33, curSizes.clone());	
+		return qrMap;
+	}
+	
+	/**
+	 * Given size of group element in bytes, the max QR version allowed, required QR (Audit or Valid vote), the QR map (versions to DATA+ECC bytes allowance)
+	 * Calculate the wanted QR parameters, which are error correction level, version, and maximal capacity in bits
+	 * Maximizes and minimizes the ECC and QR version respectively 
+	 * In our scheme, maximal version for top QR is 33, for bottom QR is 27
+	 * @param sizeOfElemInBytes
+	 * @param maxVersion
+	 * @param isTop
+	 * @param qrSpecs
+	 * @return
+	 */
+	public static QRProperties calcQRsettings(int sizeOfElemInBytes, int maxVersion, boolean isTop, HashMap<Integer,Integer[]> qrSpecs){
+		int totalNumOfElements=0;
+		int totalLengthInBytes=0;
+		ECCLevel ecc;
+		int curQRLevel;					
+		curQRLevel=maxVersion;
+		ecc=ECCLevel.LOW;
+		for(RaceProperties rc : Parameters.racesProperties){
+			totalNumOfElements+=rc.getNumOfSlots();
+		}
+		//ElGamal outputs 2 elements for each element given in top QR, and randomness+message in bottom QR
+		totalNumOfElements*=2;
+		if(isTop){
+			totalNumOfElements++;//One more element for the signature
+			switch(Parameters.timeStampLevel){
+			case(1)://HH:MM format, byte for each unit
+				totalLengthInBytes+=2;
+				break;		
+			case(2)://HH:MM:SS format
+				totalLengthInBytes+=3;
+				break;
+			default:
+				break;
+			}
+		}							
+		totalLengthInBytes+=totalNumOfElements*sizeOfElemInBytes;
+		boolean canImprove=true;
+		while(canImprove){
+			canImprove=false;
+			while(totalLengthInBytes<qrSpecs.get(curQRLevel)[ecc.ordinal()]){//can increase ECC level
+				canImprove=true;//we manage to improve the ecc at least once
+				if(!(ecc.equals(ECCLevel.HIGH))&&(totalLengthInBytes<=qrSpecs.get(curQRLevel)[ecc.ordinal()+1])){
+					switch(ecc){
+						case LOW:
+							ecc=ECCLevel.MEDIUM;
+							break;
+						case MEDIUM:
+							ecc=ECCLevel.HIGH;
+							break;
+						case QUALITY:
+							ecc=ECCLevel.HIGH;
+							break;
+						default:
+							break;	
+					}
+				}
+			}
+			if(canImprove && ecc.equals(ECCLevel.HIGH)){//if we didnt manage to improve ecc at all, or got stuck in some mid-level, we wont lower the QRlevel
+				if(curQRLevel==23){
+					break;
+				}
+				if(totalLengthInBytes<=qrSpecs.get(curQRLevel-1)[ECCLevel.LOW.ordinal()]){
+					curQRLevel++;
+					ecc=ECCLevel.LOW;
+				}
+				else{
+					canImprove=false;
+				}
+			}		
+		}
+		QRProperties result = new QRProperties(curQRLevel,ecc,(qrSpecs.get(curQRLevel)[ecc.ordinal()])*8);
+		return result;		
 	}
 
 }
