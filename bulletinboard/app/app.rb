@@ -18,15 +18,14 @@ post '/publish' do
 end
 
 post '/publishZKP' do
-  data = JSON.parse request.body.read
   
   #todo: verify signature
   
-  voteZkp = ZKP.find_by(vote_id: data[:vote_id])
-    voteZkp.update("party_#{data[:party_id]}": data[:zkp])
+  voteZkp = ZKP.find_by(vote_id: params['vote_id'])
+  voteZkp.update("party_#{data[:party_id]}": params['zkp'])
   
-rescue ActiveRecord::RecordNotFound
-  create = ZKP.create(vote_id: data[:vote_id], "party_#{data[:party_id]}": data[:zkp])
+  rescue ActiveRecord::RecordNotFound
+    create = ZKP.create(vote_id: params['vote_id'], "party_#{params['party_id']}": params['zkp'])
 end
 
 get '/retrieve' do

@@ -14,15 +14,11 @@ class CreateTables < ActiveRecord::Migration
       #t.integer   :vote_id                         ID column generated automatically
       t.string    :vote_value, null: false
       t.integer   :ballot_box, null: false
-      t.datetime  :time                             #trigger will populate this field
       t.integer   :serial_number, null: false
       t.integer   :race_id, null: false
       
       execute "CREATE TRIGGER `votes_PREVENT_DEL` BEFORE DELETE ON `votes` FOR EACH ROW
                 begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed'; end"
-      
-      execute "CREATE TRIGGER `votes_UPDATE_TIME` AFTER INSERT ON `votes` FOR EACH ROW
-                            begin SET NEW.time = SYSDATE(); end"   
 
     end #votes
     
@@ -52,17 +48,22 @@ class CreateTables < ActiveRecord::Migration
     create_table :logs do |t|
      # t.integer   :log_id                          ID column generated automatically
       t.string    :log_value, null: false
-      t.datetime  :time                             #trigger will populate this field
       t.string    :source, null: false
       
       execute "CREATE TRIGGER `logs_PREVENT_DEL` BEFORE DELETE ON `logs` FOR EACH ROW
                       begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed'; end"
-      
-      execute "CREATE TRIGGER `logs_UPDATE_TIME` AFTER INSERT ON `logs` FOR EACH ROW
-                            begin SET NEW.time = SYSDATE(); end"  
+
     end #logs
     
   end #up
+  
+  def down
+    drop_table  :ZKP
+    drop_table  :votes
+    drop_table  :commitments
+    drop_table  :SendCommitments
+    drop_table  :logs
+  end #down
 
 end #CreateTables
 
