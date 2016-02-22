@@ -25,7 +25,7 @@ public class VotingBoothImp implements VotingBooth {
 	 *            represents the current choice of the voter in all the races in
 	 *            the elections. it is a JSON string format.
 	 */
-	public void vote(JSONObject jsonRepr) {
+	public void vote(JSONArray jsonRepr) {
 		// TODO Auto-generated method stub
 
 	}
