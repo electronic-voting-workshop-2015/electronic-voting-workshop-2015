@@ -13,12 +13,12 @@ public class RaceProperties {
 	private Set<String> possibleCandidates; // set of all the candidates names running in this race
 	private String nameOfRace; // name of this race ("prime minister", "minister" etc.)
 	private boolean isOrdered; // is the order of the chosen candidates relevant
-	private int numOfPossibleCan; // how much candidates are supposed to be chosen in this race
+	private int numOfSlots; // how much candidates are supposed to be chosen in this race
 	
 	public RaceProperties(Set<String> possibleCandidates, String nameOfRace, int numOfPossibleCan, boolean isOrdered){
 		this.possibleCandidates = possibleCandidates;
 		this.nameOfRace = nameOfRace;
-		this.numOfPossibleCan = numOfPossibleCan;
+		this.numOfSlots = numOfPossibleCan;
 		this.isOrdered = isOrdered;
 	}
 	
@@ -31,8 +31,8 @@ public class RaceProperties {
 		return nameOfRace;
 	}
 	
-	public int getNumOfPossibleCan() {
-		return numOfPossibleCan;
+	public int getNumOfSlots() {
+		return numOfSlots;
 	}
 
 	public boolean isOrdered() {
