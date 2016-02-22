@@ -2,6 +2,7 @@ package workshop;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Set;
 
 import org.json.*;
@@ -18,6 +19,9 @@ public class VotingBoothImp implements VotingBooth {
 									// encryptions.
 	private ArrayList<Race> curVote; // the list of Race objects, representing
 										// the votes of the voter in each race.
+	
+	private int topECCLevel; // top QR error correction level
+	private int bottomECCLevel; // bottom QR error correction level
 
 	/**
 	 * processes the choice of the voter, encrypt it and prints the ballot.
@@ -27,8 +31,28 @@ public class VotingBoothImp implements VotingBooth {
 	 *            the elections. it is a JSON string format.
 	 */
 	public void vote(JSONArray jsonRepr) {
-		// TODO Auto-generated method stub
-
+		StringBuilder sbCiphertext = new StringBuilder();
+		StringBuilder sbRandomness = new StringBuilder();
+		byte[][] encryptResult;
+		try{
+			curVote = parseJSON(jsonRepr); // parse the JSONArray to get info about the vote
+		} catch (JSONException e){
+			System.err.println("An error occured during the parse of JSONArray.");
+		}
+		
+		// encrypt the vote
+		for (Race race : curVote){
+			for (String name : race.getVotesArray()){
+				encryptResult = Parameters.cryptoClient.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
+				sbCiphertext.append(Arrays.toString(encryptResult[0]));
+				sbRandomness.append(Arrays.toString(encryptResult[1]));
+			}
+		}
+		sbCiphertext.append(addSignatureAndTimeStamp());
+		ciphertext = sbCiphertext.toString();
+		auditRandomness = sbRandomness.toString();
+		File topQr = topQRCreator(ciphertext);
+		printPage(topQr, curVote);
 	}
 
 	/**
@@ -51,34 +75,29 @@ public class VotingBoothImp implements VotingBooth {
 	 *         race, parsed from the input JSON.
 	 */
 	private ArrayList<Race> parseJSON(JSONArray jsonRepr) throws JSONException {
-		ArrayList<Race> curVote= new ArrayList<Race>();
-		int raceNum=0;
-		JSONObject curRace;	
+		ArrayList<Race> result = new ArrayList<Race>();
+		int raceNum = 0;
+		JSONObject curRace;
 		String curCand;
-		for(RaceProperties rp : Parameters.racesProperties){
-			try{
-				curRace=jsonRepr.getJSONObject(raceNum);
-			}
-			catch(Exception ClassCastException){
-				throw(new ClassCastException());
-			}								
-			curVote.add(raceNum, new Race(rp));
-			Set<String> validNames=rp.getPossibleCandidates();
-			String[] curRaceArrayOfNames= new String[rp.getNumOfSlots()];
-			for(int i=0;i<rp.getNumOfSlots();i++){
-				try{
-					curCand=curRace.getJSONArray("chosenCandidates").get(i).toString();
+		for (RaceProperties rp : Parameters.racesProperties) {
+			curRace = jsonRepr.getJSONObject(raceNum);
+			result.add(raceNum, new Race(rp));
+			Set<String> validNames = rp.getPossibleCandidates();
+			String[] curRaceArrayOfNames = new String[rp.getNumOfSlots()];
+			for (int i = 0; i < rp.getNumOfSlots(); i++) {
+				try {
+					curCand = curRace.getJSONArray("chosenCandidates").get(i)
+							.toString();
+				} catch (Exception ClassCastException) {
+					throw (new ClassCastException());
 				}
-				catch(Exception ClassCastException){
-					throw(new ClassCastException());
+				if (validNames.contains(curCand)) {
+					curRaceArrayOfNames[i] = curCand;
 				}
-				if(validNames.contains(curCand)){
-					curRaceArrayOfNames[i]=curCand;
-				}				
 			}
-			curVote.get(raceNum).setVotesArray(curRaceArrayOfNames);
+			result.get(raceNum).setVotesArray(curRaceArrayOfNames);
 		}
-		return curVote;		
+		return result;
 	}
 
 	/**
@@ -104,6 +123,7 @@ public class VotingBoothImp implements VotingBooth {
 		// TODO Auto-generated method stub
 
 	}
+	
 
 	/**
 	 * Creates the bottom QR
@@ -127,7 +147,7 @@ public class VotingBoothImp implements VotingBooth {
 	 *            be chosen in each race.
 	 */
 
-	private void print(ArrayList<Race> votesInAllRaces) {
+	private void printPage(File qrPng, ArrayList<Race> votesInAllRaces) {
 		// TODO Auto-generated method stub
 	}
 
