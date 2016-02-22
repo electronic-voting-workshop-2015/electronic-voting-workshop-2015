@@ -1,32 +1,28 @@
 from random import SystemRandom
-from Utils import bits, product, mod_inv
+from Utils import bits, product, mod_inv, list_to_bytes, publish_list
+from base64 import standard_b64decode, standard_b64encode
+
+BB_URL = "http://46.101.148.106"  # the address of the Bulletin Board
 
 
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
     self.order is the order of the generator g
     """
-
     def __init__(self, a, b, p, order):
         self.a = a
         self.b = b
         self.p = p
         self.order = order
-        self.generator = None  # assigned when calling setGenerator
+        self.generator = None  # assigned after initializing
 
-    def setGenerator(self, generator):
-        self.generator = generator
-
-    def getGenerator(self):
-        return self.generator
-
-    def getZeroMember(self):
+    def get_zero_member(self):
         return ECGroupMember(self, 0, 0)
 
-    def getRandomMember(self):
-        return self.generator ** self.getRandomExponent()
+    def get_random_member(self):
+        return self.generator ** self.get_random_exponent()
 
-    def getRandomExponent(self):
+    def get_random_exponent(self):
         rng = SystemRandom()
         return rng.randint(1, self.order)
 
@@ -56,12 +52,12 @@ class ECGroupMember:
             raise Exception('The objects are not ECGroupMember')
         if not self.curve == g.curve:
             raise Exception('The group members are not from the same curve')
-        if self == self.curve.getZeroMember():
+        if self == self.curve.get_zero_member():
             return g
-        if g == self.curve.getZeroMember():
+        if g == self.curve.get_zero_member():
             return self
         if self.x == g.x and self.y == -g.y:
-            return self.curve.getZeroMember()
+            return self.curve.get_zero_member()
 
         a = self.curve.a
         p = self.curve.p
@@ -82,7 +78,7 @@ class ECGroupMember:
         """returns multiplication scalar n"""
         if n == -1:
             return self.modinv()
-        res = self.curve.getZeroMember()
+        res = self.curve.get_zero_member()
         addend = self
 
         for bit in bits(n):
@@ -100,6 +96,10 @@ class ECGroupMember:
         yb = self.y.to_bytes(length, 'little')
         return xb + yb
 
+    def to_base64(self):
+        """encodes object as base64 string"""
+        return standard_b64encode(bytes(self)).decode('utf-8')
+
     @staticmethod
     def from_bytes(data, curve):
         """converts a bytes object to a ECGroupMember object"""
@@ -113,6 +113,12 @@ class ECGroupMember:
         if not ECGroupMember.verify_point(x, y, curve):
             raise Exception('binary data does not match curve parameters')
         return ECGroupMember(curve, x, y)
+
+    @staticmethod
+    def from_base64(data, curve):
+        """converts base64 string to a ECGroupMember object"""
+        data_bytes = standard_b64decode(data.encode('utf-8'))
+        return ECGroupMember.from_bytes(data_bytes, curve)
 
     @staticmethod
     def verify_point(x, y, curve):
@@ -137,17 +143,21 @@ class ECGroupMember:
 class ThresholdParty:
     """represents a member participating in the decryption process
     n is the number of parties, t is the number of parties required to decrypt
+    sign_key is the private key unique to the party, used for creating certificates
+    sign_curve is the curve used for signing
     algorithms from: http://moodle.tau.ac.il/pluginfile.php/217242/mod_resource/content/1/Tomer.pdf
     """
 
-    def __init__(self, curve, t, n, party_id, hash_func):
-        self.curve = curve
+    def __init__(self, voting_curve, t, n, party_id, hash_func, sign_key, sign_curve):
+        self.voting_curve = voting_curve
         self.t = t
         self.n = n
         self.party_id = party_id  # a number between 0 and n-1
-        self.polynomial = Polynomial([curve.getRandomExponent() for _ in range(t)], curve.order)
+        self.polynomial = Polynomial([voting_curve.get_random_exponent() for _ in range(t)], voting_curve.order)
         self.secret_value = None  # the value f(j), assigned after calling validate_all_messages
         self.hash_func = hash_func  # the cryptographic hash function used for ZKP
+        self.sign_key = sign_key
+        self.sign_curve = sign_curve
 
     def publish_commitment(self):
         """publish the values g^v_i,g^a_i1...,g^a_it to the BB"""
@@ -169,13 +179,13 @@ class ThresholdParty:
 
     def encrypt_message(self, public_key, value):
         """returns encrypted value using public_key"""
-        g = self.curve.getGenerator()
-        r = self.curve.getRandomExponent()
+        g = self.voting_curve.generator
+        r = self.voting_curve.get_random_exponent()
         m = ECGroupMember.to_group_member(value)  # TODO:convert integer "value" to an ECGroupMember
         return g ** r, m * (public_key ** r)
 
     def decrypt_message(self, private_key, cipher_text):
-        g = self.curve.getGenerator()
+        g = self.voting_curve.generator
         c = cipher_text[0]
         d = cipher_text[1]
         x = private_key
@@ -206,7 +216,7 @@ class ThresholdParty:
     def validate_message(self, j, message, commitment):
         """returns True iff the message from A_j agrees with A_j's commitment"""
         exponent = self.polynomial.value_at(j)
-        g = self.curve.getGenerator()
+        g = self.voting_curve.generator
         return message == g**exponent
 
     def validate_all_messages(self):  # TODO: better method name?
@@ -222,8 +232,8 @@ class ThresholdParty:
                 pass  # TODO: handle message not agreeing with commitment
 
         # compute s_i = f(i) and publish h_i = g^s_i
-        self.secret_value = sum(self.polynomial.value_at(x) for x in messages) % self.curve.order
-        g = self.curve.getGenerator()
+        self.secret_value = sum(self.polynomial.value_at(x) for x in messages) % self.voting_curve.order
+        g = self.voting_curve.generator
         self.publish_value(g ** self.secret_value)
 
     def generate_zkp(self, c):
@@ -231,10 +241,10 @@ class ThresholdParty:
         c is part of the message: m=(c,d). cc is the 'random' challenge"""
         x = self.secret_value
         w = c ** x
-        g = self.curve.getGenerator()
+        g = self.voting_curve.generator
         h = g ** x
-        G = self.curve
-        r = G.getRandomExponent()
+        G = self.voting_curve
+        r = G.get_random_exponent()
         u = g ** r
         v = h ** r
         cc = self.hash_func(G, g, c, h, w, u, v)
@@ -271,7 +281,6 @@ class ThresholdParty:
 
 class Polynomial:
     """represents a degree t polynomial in the group F_order as a list of t+1 coefficients"""
-
     def __init__(self, coefficients, order):
         self.coefficients = coefficients
         self.order = order
@@ -289,7 +298,7 @@ _Gx = 0x188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012
 _Gy = 0x07192b95ffc8da78631011ed6b24cdd573f977a11e794811
 curve_192 = EllipticCurve(-3, _b, _p, _r)
 g_192 = ECGroupMember(curve_192, _Gx, _Gy)
-curve_192.setGenerator(g_192)
+curve_192.generator = g_192
 
 _p = 26959946667150639794667015087019630673557916260026308143510066298881
 _r = 26959946667150639794667015087019625940457807714424391721682722368061
@@ -298,7 +307,7 @@ _Gx = 0xb70e0cbd6bb4bf7f321390b94a03c1d356c21122343280d6115c1d21
 _Gy = 0xbd376388b5f723fb4c22dfe6cd4375a05a07476444d5819985007e34
 curve_224 = EllipticCurve(-3, _b, _p, _r)
 g_224 = ECGroupMember(curve_224, _Gx, _Gy)
-curve_224.setGenerator(g_224)
+curve_224.generator = g_224
 
 _p = 115792089210356248762697446949407573530086143415290314195533631308867097853951
 _r = 115792089210356248762697446949407573529996955224135760342422259061068512044369
@@ -307,14 +316,14 @@ _Gx = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296
 _Gy = 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5
 curve_256 = EllipticCurve(-3, _b, _p, _r)
 g_256 = ECGroupMember(curve_256, _Gx, _Gy)
-curve_256.setGenerator(g_256)
+curve_256.generator = g_256
 
 
-def test():
-    g1 = curve_256.getRandomMember()
-    g2 = curve_256.getRandomMember()
+def main():
+    g1 = curve_256.get_random_member()
+    g2 = curve_256.get_random_member()
     g3 = g1 * g2
-    g4 = g1 ** (2)
+    g4 = g1 ** 2
     print(ECGroupMember.verify_point(g1.x, g1.y, curve_256))
     print(ECGroupMember.verify_point(g2.x, g2.y, curve_256))
     print(ECGroupMember.verify_point(g3.x, g3.y, curve_256))
@@ -325,4 +334,6 @@ def test():
     print(g4)
 
 
-test()
+if __name__ == "__main__":
+    # execute only if run as a script
+    main()
