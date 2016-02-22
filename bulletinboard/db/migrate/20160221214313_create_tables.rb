@@ -11,21 +11,24 @@ class CreateTables < ActiveRecord::Migration
     end #ZKP
     
     create_table :votes do |t|
-      #t.integer   :vote_id       ID column generated automatically
+      #t.integer   :vote_id                         ID column generated automatically
       t.string    :vote_value, null: false
       t.integer   :ballot_box, null: false
-      t.datetime  :date, null: false
+      t.datetime  :time                             #trigger will populate this field
       t.integer   :serial_number, null: false
       t.integer   :race_id, null: false
       
       execute "CREATE TRIGGER `votes_PREVENT_DEL` BEFORE DELETE ON `votes` FOR EACH ROW
-                begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';" 
+                begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';"
+      
+      execute "CREATE TRIGGER `votes_UPDATE_TIME` AFTER INSERT ON `votes` FOR EACH ROW
+                            begin SET NEW.time = SYSDATE();"   
 
     end #votes
     
     create_table :commitments do |t|
       t.integer   :party_id
-      T.times do |i| # T = threshold
+      T.times do |i|                                      # T = threshold
         t.string  :"threshold_#{i+1}"
       end
       
@@ -47,13 +50,16 @@ class CreateTables < ActiveRecord::Migration
     end #SendCommitments
     
     create_table :logs do |t|
-     # t.integer   :log_id            ID column generated automatically
-      t.string    :log_value
-      t.datetime  :time
-      t.string    :source
+     # t.integer   :log_id                          ID column generated automatically
+      t.string    :log_value, null: false
+      t.datetime  :time                             #trigger will populate this field
+      t.string    :source, null: false
       
-      execute "CREATE TRIGGER `logss_PREVENT_DEL` BEFORE DELETE ON `logs` FOR EACH ROW
-                      begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';" 
+      execute "CREATE TRIGGER `logs_PREVENT_DEL` BEFORE DELETE ON `logs` FOR EACH ROW
+                      begin signal sqlstate '45000' set message_text = 'Deleting values from this table is not allowed';"
+      
+      execute "CREATE TRIGGER `logs_UPDATE_TIME` AFTER INSERT ON `logs` FOR EACH ROW
+                            begin SET NEW.time = SYSDATE();"  
     end #logs
     
   end #up
