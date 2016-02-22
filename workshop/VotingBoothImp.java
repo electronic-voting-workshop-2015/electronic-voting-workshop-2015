@@ -1,5 +1,6 @@
 package workshop;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.json.*;
@@ -69,9 +70,9 @@ public class VotingBoothImp implements VotingBooth {
 	 * 
 	 * @param ciphertext
 	 *            . a string represents the ciphertext to be encoded as a QR.
-	 * @return QR
+	 * @return QR png file
 	 */
-	private Object calcTopQRParameters(String ciphertext) {
+	private File calcTopQRParameters(String ciphertext) {
 		// TODO Auto-generated method stub
 
 	}
@@ -83,9 +84,9 @@ public class VotingBoothImp implements VotingBooth {
 	 * @param randomness
 	 *            . a string represents the concatenated randomnesses to be
 	 *            encoded as a Small QR.
-	 * @return QR
+	 * @return QR png file
 	 */
-	private Object calcBottomQRParameters(String randomness) {
+	private File calcBottomQRParameters(String randomness) {
 		// TODO Auto-generated method stub
 
 	}
