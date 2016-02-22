@@ -1,28 +1,21 @@
 package workshop;
-import java.awt.image.BufferedImage;
+import org.json.*;
+
 
 public interface VotingBooth {
+	
 	/**
-	 * sets the desired Top QR parameters, Version , ECC level, number of bits to be decoded, relevant only to the VB team
-	 * @param numberOfCandidates
-	 * @param timeStampLevel
-	 * @param signSize
-	 * @return
+	 * processes the choice of the voter, encrypt it and prints the ballot.
+	 * @param jsonRepr represents the choice of the voter in all the races in the elections. it is a JSON string format.
 	 */
-	public void calcTopQRParameters(int numberOfCandidates, int timeStampLevel, int signSize);
+	public void vote(JSONObject jsonRepr);
+	
 	/**
-	 * sets the desired Bottom QR parameters, Version , ECC level, number of bits to be decoded, relevant only to the VB team
-	 * @param numberOfCandidates
-	 * @param timeStampLevel
-	 * @param signSize
-	 * @return
+	 * 
+	 * @param isAudit represents whether the voter wanted to audit.
+	 * 		if true, prints the rest of the voting paper and terminates the voting booth state.
+	 * 		otherwise, terminates the voting booth state.
 	 */
-	public void calcBottomQRParameters(int numberOfCandidates, int timeStampLevel, int signSize);
-	/**
-	 * Receiving the original vote from the GUI team, encrypting it and encoding to QR
-	 * return type is still unknown, for now we use BufferedImage, we wait for the GUI team to publish their Interface
-	 * @param curVote
-	 * @return
-	 */
-	public BufferedImage currentVoteQR(String[] curVote);	
+	public void audit(boolean isAudit);
+		
 }
