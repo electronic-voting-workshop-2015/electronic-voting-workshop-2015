@@ -3,9 +3,12 @@ package ECCryptography;
 import workshop.ClientCryptographyModule;
 
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ECClientCryptographyModule implements ClientCryptographyModule {
 
@@ -18,13 +21,15 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
     // printouts to feld.noa@gmail.com.
     private static boolean logEncryptionMethods = false;
 
+    // TODO generateMapping
+
     public ECClientCryptographyModule(ECGroup encryptGroup, ECGroup signGroup) {
         this.encryptGroup = encryptGroup;
         this.signGroup = signGroup;
         this.random = new SecureRandom();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchAlgorithmException {
         BigInteger a = new BigInteger("-3");
         BigInteger b = new BigInteger("5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b", 16);
         BigInteger p = new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853951");
@@ -39,7 +44,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         byte[] publicKey = group.getElement(new BigInteger("5").toByteArray()); // Just some example public key. Notice you will not know the
             // exponent of the real publicKey.
         if (logEncryptionMethods) System.out.println("Set group, x = 5, h = " + ECPoint.fromByteArray(curve, publicKey).toString());
-        ECClientCryptographyModule module = new ECClientCryptographyModule(group, null);
+        ECClientCryptographyModule module = new ECClientCryptographyModule(group, group); // TODO change signGroup!!!!!!!
     }
 
     // TODO used for debugging, remove when done.
@@ -88,9 +93,12 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         int encryptedChunksNum = 0;
 
         while(encryptedChunksNum < extendedMessageSize / chunkByteSize) {
-            byte[] encryptedChunk = ElgamalEncrypt(group, publicKey,
-                    Arrays.copyOfRange(extendedMessage, encryptedChunksNum * chunkByteSize,
-                            encryptedChunksNum * chunkByteSize + chunkByteSize));
+            byte[] chunk = Arrays.copyOfRange(extendedMessage, encryptedChunksNum * chunkByteSize,
+                    encryptedChunksNum * chunkByteSize + chunkByteSize);
+            // Turn message into a encryptGroup member.
+            if (logEncryptionMethods)System.out.print("m = ");
+            byte[] m = group.getElement(chunk);
+            byte[] encryptedChunk = elgamalEncrypt(group, publicKey, m)[0];
             if (logEncryptionMethods) {
                 System.out.println("Encrypting sub-message: ");
                 System.out.println("-----------------------------------------------------------------------------------");
@@ -117,10 +125,20 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
     }
 
     /**
+     * Encrypts the message asusuming that m is a valid group member of signGroup.
+     * @param publicKey
+     * @param m - a valid group member of signGroup. will be assigned with the new encrypted message.
+     * @return The randomness r.
+     */
+    public byte[][] encryptGroupMember(byte[] publicKey, byte[] m) {
+        return elgamalEncrypt(encryptGroup, publicKey, m);
+    }
+
+    /**
      * Encrypts a part of a message in the size of one element in encryptGroup.
      * PublicKey
      */
-    private byte[] ElgamalEncrypt(ECGroup group, byte[] publicKey, byte[] message) {
+    private byte[][] elgamalEncrypt(ECGroup group, byte[] publicKey, byte[] m) {
         // Generate the private key r.
         byte[] r = new byte[group.getElementSize()];
         random.nextBytes(r);
@@ -131,9 +149,6 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         r = temp.toByteArray();
         System.out.println("Infrastructure - ElGamal encryption: r = " + temp);
 
-        // Turn message into a encryptGroup member.
-        if (logEncryptionMethods)System.out.print("m = ");
-        byte[] m = group.getElement(message);
         if (logEncryptionMethods) System.out.print("c1 = ");
         byte[] c1 = group.getElement(r);
         if (logEncryptionMethods) System.out.print("c2 = ");
@@ -141,36 +156,156 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         byte[] result = new byte[c1.length + c2.length];
         System.arraycopy(c1, 0, result, 0, c1.length);
         System.arraycopy(c2, 0, result, c1.length, c2.length);
-        return result;
+        byte[][] resultAndR = new byte[2][];
+        resultAndR[0] = result;
+        resultAndR[1] = r;
+        return resultAndR;
     }
 
+    /**
+     * Signs the message, converts the result numbers to an unsigned, little endian form and returns an array of the
+     * formatted result.
+     * @param privateKey The party's key, given physically by the infrastructure team.
+     * @param encryptedMessage
+     * @return
+     */
     @Override
-    public byte[] sign(byte[] privateKey, byte[] message) {
-        // TODO
-        return new byte[0];
+    public byte[] sign(byte[] privateKey, byte[] encryptedMessage) {
+        try {
+            byte[] e = sha256(encryptedMessage);
+            int lN = (int) Math.log(new BigInteger(signGroup.getOrder()).doubleValue());
+            byte[] certificate = new byte[0];
+            BigInteger n = new BigInteger(signGroup.getOrder());
+            BigInteger z = new BigInteger(Arrays.copyOfRange(e, 0, lN));
+            if (logEncryptionMethods) {
+                System.out.println("Sign: lN = " + lN + ", z = " + z);
+            }
+            while (certificate.length == 0) {
+                byte[] kBytes = new byte[0];
+                BigInteger k = BigInteger.ZERO;
+                // If something fails, replace the next loop with:
+                // k = new BigInteger(<String of the k printed out before failing.>);
+                while (k.equals(BigInteger.ZERO)) {
+                    kBytes = new byte[lN];
+                    random.nextBytes(kBytes);
+                    k = new BigInteger(kBytes).mod(n);
+                }
+                System.out.println("Infrastructure - Sign: k = " + k);
+                byte[] kG = signGroup.getElement(kBytes);
+                BigInteger r = signGroup.getX(kG);
+                if (r.equals(BigInteger.ZERO)) {
+                    continue;
+                }
+                BigInteger s = k.modInverse(n).multiply(
+                        z.add(r.multiply(new BigInteger(privateKey)).mod(n)).mod(n)).mod(n);
+                if (s.equals(BigInteger.ZERO)) {
+                    continue;
+                }
+                if (logEncryptionMethods) {
+                    System.out.println("Sign: r = " + r + "\ns = " + s);
+                }
+                byte[] rBytes = toUnsignedLittleEndian(r, signGroup.getElementSize() / 2);
+                byte[] sBytes = toUnsignedLittleEndian(s, signGroup.getElementSize() / 2);
+                certificate = new byte[rBytes.length + sBytes.length];
+                System.arraycopy(rBytes, 0, certificate, 0, rBytes.length);
+                System.arraycopy(sBytes, 0, certificate, rBytes.length, sBytes.length);
+            }
+            if (logEncryptionMethods) {
+                System.out.println("Sign: certificate: ");
+                System.out.println("---------------------------------------------------------------------------------");
+                printArray(certificate);
+                System.out.println("---------------------------------------------------------------------------------");
+            }
+            return certificate;
+        } catch (NoSuchAlgorithmException exception) {
+            System.out.println(exception.getMessage());
+            System.out.println("Sign failed.");
+            return new byte[0];
+        }
     }
 
     @Override
     public boolean verifyCertificate(byte[] publicKey, byte[] encryptedMessage, byte[] certificate) {
-        // TODO
-        return false;
+        byte[] rBytes = Arrays.copyOfRange(certificate, 0, certificate.length / 2);
+        byte[] sBytes = Arrays.copyOfRange(certificate, certificate.length / 2, certificate.length);
+        BigInteger r = fromUnsignedLittleEndian(rBytes);
+        BigInteger s = fromUnsignedLittleEndian(sBytes);
+        if (logEncryptionMethods) {
+            System.out.println("Verify certificate: r = " + r + "\ns = " + s);
+        }
+        if (r.compareTo(BigInteger.ONE) == -1
+                || r.compareTo(new BigInteger(signGroup.getOrder()).subtract(BigInteger.ONE)) == 1) {
+            if (logEncryptionMethods) System.out.println("False over r < 1 or r > n-1");
+            return false;
+        }
+        if (s.compareTo(BigInteger.ONE) == -1
+                || s.compareTo(new BigInteger(signGroup.getOrder()).subtract(BigInteger.ONE)) == 1) {
+            if (logEncryptionMethods) System.out.println("False over s < 1 or s > n-1");
+            return false;
+        }
+        try {
+            byte[] e = sha256(encryptedMessage);
+            BigInteger n = new BigInteger(signGroup.getOrder());
+            int lN = (int) Math.log(n.doubleValue());
+            byte[] zBytes = Arrays.copyOfRange(e, 0, lN);
+            BigInteger z = new BigInteger(zBytes);
+            BigInteger w = s.modInverse(n);
+            BigInteger u1 = z.multiply(w).mod(n);
+            BigInteger u2 = r.multiply(w).mod(n);
+            byte[] x1y1 = signGroup.groupMult(signGroup.getElement(u1.toByteArray()), signGroup.groupPow(publicKey, u2.toByteArray()));
+            BigInteger x1 = signGroup.getX(x1y1);
+
+            if (logEncryptionMethods) {
+                System.out.println("Verify certificate: ");
+                System.out.println("n = " + n);
+                System.out.println("lN = " + lN);
+                System.out.println("z = " + z);
+                System.out.println("w = " + w);
+                System.out.println("u1 = " + u1);
+                System.out.println("u2 = " + u2);
+                System.out.println("x1 = " + x1);
+                System.out.println("y1 = " + signGroup.getY(x1y1));
+            }
+
+            return r.equals(x1);
+
+        } catch (NoSuchAlgorithmException exception) {
+            System.out.println(exception.getMessage());
+            System.out.println("Verify certificate failed.");
+            return false;
+        }
     }
 
-    // Uses Euclid's method to find the GCD of k and l. returns true if it is 1.
-    private boolean gcdEqualsOne(BigInteger k, BigInteger l) {
-        return gcd(k, l).equals(BigInteger.ONE);
+    @Override
+    public Map<Integer, byte[]> getCandidateToMemebrMapping(int candidateNum) {
+        Map<Integer, byte[]> result = new HashMap<>();
+        for (int i = 0; i < candidateNum; i++) {
+            result.put(i, encryptGroup.getElement(BigInteger.valueOf(i).toByteArray()));
+        }
+        return result;
     }
 
-    private BigInteger gcd(BigInteger k, BigInteger l) {
-        if (k.equals(BigInteger.ZERO)) {
-            return l;
+    // Turns a bigInteger to a little endian bytes array of fixed size. Not verified for negative BigIntegers.
+    private static byte[] toUnsignedLittleEndian(BigInteger n, int arrlength) {
+        byte[] result = new byte[arrlength];
+        byte[] nBytes = n.toByteArray();
+        for (int i = 0; i < nBytes.length; i++) {
+            result[i] = nBytes[nBytes.length - i - 1];
         }
-        if (l.equals(BigInteger.ZERO)) {
-            return k;
+        return result;
+    }
+
+    // Turns a little endian bytes array to a BigInteger. Not verified for negative BigIntegers.
+    private static BigInteger fromUnsignedLittleEndian(byte[] arr) {
+        byte[] resBytes = new byte[arr.length + 1];
+        for (int i = 0; i < arr.length; i++) {
+            resBytes[resBytes.length - i - 1] = arr[i];
         }
-        if (k.compareTo(l) == 1) {
-            return gcd(l, k.mod(l));
-        }
-        return gcd(k, l.mod(k));
+        return new BigInteger(resBytes);
+    }
+
+    private static byte[] sha256(byte[] input) throws NoSuchAlgorithmException {
+        MessageDigest mDigest = MessageDigest.getInstance("SHA-256");
+        return mDigest.digest(input);
     }
 }
