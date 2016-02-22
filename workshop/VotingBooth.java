@@ -8,7 +8,7 @@ public interface VotingBooth {
 	 * processes the choice of the voter, encrypt it and prints the ballot.
 	 * @param jsonRepr represents the choice of the voter in all the races in the elections. it is a JSON string format.
 	 */
-	public void vote(JSONObject jsonRepr);
+	public void vote(JSONArray jsonRepr);
 	
 	/**
 	 * 
