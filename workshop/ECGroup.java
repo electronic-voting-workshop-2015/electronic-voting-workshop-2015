@@ -68,4 +68,22 @@ public class ECGroup extends Group {
         }
         return curve.add(g1, q1).toByteArray(elementByteSize / 2);
     }
+
+    @Override
+    public byte[] completing(byte[] member) {
+        ECPoint point = ECPoint.fromByteArray(curve, member);
+        return point.completing().toByteArray(elementByteSize / 2);
+    }
+
+    // Returns the x value of a point which is a group member.
+    public BigInteger getX(byte[] ecpoint) {
+        ECPoint point = ECPoint.fromByteArray(curve, ecpoint);
+        return point.getX();
+    }
+
+    // Returns the y value of a point which is a group member.
+    public BigInteger getY(byte[] ecpoint) {
+        ECPoint point = ECPoint.fromByteArray(curve, ecpoint);
+        return point.getY();
+    }
 }
