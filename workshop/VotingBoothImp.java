@@ -19,7 +19,7 @@ public class VotingBoothImp implements VotingBooth {
 									// encryptions.
 	private ArrayList<Race> curVote; // the list of Race objects, representing
 										// the votes of the voter in each race.
-	
+
 	private int topECCLevel; // top QR error correction level
 	private int bottomECCLevel; // bottom QR error correction level
 
@@ -34,16 +34,20 @@ public class VotingBoothImp implements VotingBooth {
 		StringBuilder sbCiphertext = new StringBuilder();
 		StringBuilder sbRandomness = new StringBuilder();
 		byte[][] encryptResult;
-		try{
-			curVote = parseJSON(jsonRepr); // parse the JSONArray to get info about the vote
-		} catch (JSONException e){
-			System.err.println("An error occured during the parse of JSONArray.");
+		try {
+			curVote = parseJSON(jsonRepr); // parse the JSONArray to get info
+											// about the vote
+		} catch (JSONException e) {
+			System.err
+					.println("An error occured during the parse of JSONArray.");
 		}
-		
+
 		// encrypt the vote
-		for (Race race : curVote){
-			for (String name : race.getVotesArray()){
-				encryptResult = Parameters.cryptoClient.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
+		for (Race race : curVote) {
+			for (String name : race.getVotesArray()) {
+				encryptResult = Parameters.cryptoClient.encryptGroupMember(
+						Parameters.publicKey,
+						Parameters.candidatesMap.get(name));
 				sbCiphertext.append(Arrays.toString(encryptResult[0]));
 				sbRandomness.append(Arrays.toString(encryptResult[1]));
 			}
@@ -123,7 +127,6 @@ public class VotingBoothImp implements VotingBooth {
 		// TODO Auto-generated method stub
 
 	}
-	
 
 	/**
 	 * Creates the bottom QR
