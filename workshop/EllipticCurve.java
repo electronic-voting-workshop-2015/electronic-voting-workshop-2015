@@ -87,7 +87,7 @@ public class EllipticCurve {
           throw new IllegalArgumentException("Points added are not on the curve.");
         }
         // Edge cases
-        if (g.equals(q.completeing())) {
+        if (g.equals(q.completing())) {
             return zeroMember;
         }
         if (g.equals(zeroMember)) {
@@ -118,7 +118,7 @@ public class EllipticCurve {
         BigInteger Xr = m.modPow(TWO, p).subtract(Xg).subtract(Xq).mod(p);
         // Yr = -Yresult = Yg + m(Xr - Xg)
         BigInteger Yr = m.multiply(Xr.subtract(Xg)).add(Yg).mod(p);
-        return (new ECPoint(this, Xr, Yr)).completeing();
+        return (new ECPoint(this, Xr, Yr)).completing();
     }
 
     /**
