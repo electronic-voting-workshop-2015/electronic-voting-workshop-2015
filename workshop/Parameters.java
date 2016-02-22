@@ -6,6 +6,7 @@ import java.util.*;
  * The fixed parameters file, to be edited by all teams
  * The initial system parameters, which are chosen by the initializer before the process starts
  * Needs to be initialized once(!) before the actual elections.
+ * Access to parameters are static: Parameters.field 
  */
 public class Parameters {
 	//The group we use for encrypting the votes
@@ -28,7 +29,7 @@ public class Parameters {
 	 * Maps the candidates to group elements, and update the corresponding field
 	 * @param candidates
 	 */
-	public static HashMap<String, byte[]> mapCandidates(HashSet<String> candidates) {
+	private static HashMap<String, byte[]> mapCandidates(HashSet<String> candidates) {
 		HashMap<String, byte[]> result = new HashMap<String, byte[]>();
 		HashMap<String, Integer> tempMap = new HashMap<String, Integer>();
 		int n = 0;
@@ -42,6 +43,11 @@ public class Parameters {
 		return result;
 	}	
 	
+	/**
+	 * Sets the parametes. Needs to be called once in the initialization part.
+	 * After they are set, the parameters are constant and global for all teams to use.
+	 * 
+	 */
 	public static void setParameters(Group ourGroup1, int topQRLevel1, int bottomQRLevel1, HashSet<String> candidatesNames1, ArrayList<RaceProperties> racesProperties1, int timeStampLevel1){
 		ourGroup = ourGroup1;
 		topQRLevel = topQRLevel1;
