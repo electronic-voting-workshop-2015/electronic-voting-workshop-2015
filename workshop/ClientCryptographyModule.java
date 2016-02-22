@@ -1,5 +1,7 @@
 package workshop;
 
+import java.util.Map;
+
 public interface ClientCryptographyModule {
 
     /**
@@ -13,10 +15,10 @@ public interface ClientCryptographyModule {
     /**
      * Create the signatue passed to the BB using Diffie-Helman.
      * @param privateKey The party's key, given physically by the infrastructure team.
-     * @param message The message to encrypt.
+     * @param encryptedMessage
      * @return The signature's ciphertext.
      */
-    byte[] sign(byte[] privateKey, byte[] message);
+    byte[] sign(byte[] privateKey, byte[] encryptedMessage);
 
     /**
      * Verify a certificate of an encrypted message.
@@ -26,4 +28,10 @@ public interface ClientCryptographyModule {
      */
     boolean verifyCertificate(
             byte[] publicKey, byte[] encryptedMessage, byte[] certificate);
+
+    /**
+     * Returns a mapping of integers (candidate numbers) to group members in byte[] format.
+     * @return
+     */
+    Map<Integer, byte[]> getCandidateToMemebrMapping(int candidateNum);
 }
