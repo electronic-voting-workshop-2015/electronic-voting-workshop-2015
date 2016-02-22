@@ -22,7 +22,7 @@ post '/publishZKP' do
   #todo: verify signature
   
   voteZkp = ZKP.find_by(vote_id: params['vote_id'])
-  voteZkp.update("party_#{data[:party_id]}": params['zkp'])
+  voteZkp.update("party_#{params[:party_id]}": params['zkp'])
   
   rescue ActiveRecord::RecordNotFound
     create = ZKP.create(vote_id: params['vote_id'], "party_#{params['party_id']}": params['zkp'])
