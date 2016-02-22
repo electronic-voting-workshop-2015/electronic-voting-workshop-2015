@@ -31,4 +31,6 @@ public abstract class Group{
      * Returns a byte[] representation of g*q under the group. g and q are both members of the group.
      */
     public abstract byte[] groupMult(byte[] g, byte[] q);
+
+    public abstract byte[] completing(byte[] member);
 }
