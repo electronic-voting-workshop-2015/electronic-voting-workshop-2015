@@ -44,8 +44,7 @@ public class VotingBoothImp implements VotingBooth {
 			curVote = parseJSON(jsonRepr); // parse the JSONArray to get info
 											// about the vote
 		} catch (JSONException e) {
-			System.err
-					.println("An error occured during the parse of JSONArray.");
+			System.err.println("An error occured during the parse of JSONArray.");
 		}
 
 		// encrypt the vote
@@ -54,15 +53,20 @@ public class VotingBoothImp implements VotingBooth {
 				encryptResult = Parameters.cryptoClient.encryptGroupMember(
 						Parameters.publicKey,
 						Parameters.candidatesMap.get(name));
-				sbCiphertext.append(Arrays.toString(encryptResult[0]));
-				sbRandomness.append(Arrays.toString(encryptResult[1]));
+				try {
+					sbCiphertext.append(new String(encryptResult[0], "UTF-8"));
+					sbRandomness.append(new String(encryptResult[1], "UTF-8"));
+				} catch (UnsupportedEncodingException e) {
+					System.err.println("An error occured during byte-to-char conversion.");
+				}
+
 			}
 		}
-		sbCiphertext.append(addSignatureAndTimeStamp());
+		sbCiphertext.append(addSignatureAndTimeStamp()); // add machine signature and timestamp to ciphertext
 		ciphertext = sbCiphertext.toString();
 		auditRandomness = sbRandomness.toString();
-		File topQr = topQRCreator(ciphertext);
-		printPage(topQr, curVote);
+		File topQr = topQRCreator(ciphertext); // create the top QR containing the ciphertext
+		printPage(topQr, curVote); // print the ballot
 	}
 
 	/**
