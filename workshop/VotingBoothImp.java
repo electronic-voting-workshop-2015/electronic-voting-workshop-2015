@@ -80,15 +80,16 @@ public class VotingBoothImp implements VotingBooth {
 		// TODO Auto-generated method stub
 	}
 
-	/**
+/**
 	 * 
 	 * @param jsonRepr
 	 *            represents the current choice of the voter in all the races in
 	 *            the elections. it is a JSON string format.
+	 *            must preserve soundness, meaning invalid vote format must be rejected
 	 * @return list of Race objects, representing the votes of the voter in each
 	 *         race, parsed from the input JSON.
 	 */
-	private ArrayList<Race> parseJSON(JSONArray jsonRepr) throws JSONException {
+	public static ArrayList<Race> parseJSON(JSONArray jsonRepr) throws JSONException {
 		ArrayList<Race> result = new ArrayList<Race>();
 		int raceNum = 0;
 		JSONObject curRace;
@@ -98,18 +99,27 @@ public class VotingBoothImp implements VotingBooth {
 			result.add(raceNum, new Race(rp));
 			Set<String> validNames = rp.getPossibleCandidates();
 			String[] curRaceArrayOfNames = new String[rp.getNumOfSlots()];
+			
+			if(!(rp.getNameOfRace().equals(curRace.get("position")))){//race name match check
+				JSONException exp=new org.json.JSONException("Invalid vote format, mismatching positions");
+				throw(exp);
+			}
+			if(rp.getNumOfSlots()!=curRace.getJSONArray("chosenCandidates").length()){//candidates length check
+				JSONException exp=new org.json.JSONException("Invalid vote format, mismatch in number of candidates chosen for : "+rp.getNameOfRace());
+				throw(exp);
+			}
 			for (int i = 0; i < rp.getNumOfSlots(); i++) {
-				try {
-					curCand = curRace.getJSONArray("chosenCandidates").get(i)
-							.toString();
-				} catch (Exception ClassCastException) {
-					throw (new ClassCastException());
-				}
-				if (validNames.contains(curCand)) {
+				curCand = curRace.getJSONArray("chosenCandidates").get(i).toString();											
+				if (validNames.contains(curCand)) {//candidate name exists in the name pool check
 					curRaceArrayOfNames[i] = curCand;
+				}
+				else{
+					JSONException exp=new org.json.JSONException("Invalid name used");
+					throw(exp);
 				}
 			}
 			result.get(raceNum).setVotesArray(curRaceArrayOfNames);
+			raceNum++;
 		}
 		return result;
 	}
