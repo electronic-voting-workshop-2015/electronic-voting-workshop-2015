@@ -315,6 +315,7 @@ public class VotingBoothImp implements VotingBooth {
 				totalLengthInBytes+=3;
 				break;
 			default:
+				System.out.println("TimeStamp is not initialized");
 				break;
 			}
 		}							
@@ -330,7 +331,7 @@ public class VotingBoothImp implements VotingBooth {
 							ecc=ECCLevel.MEDIUM;
 							break;
 						case MEDIUM:
-							ecc=ECCLevel.HIGH;
+							ecc=ECCLevel.QUALITY;
 							break;
 						case QUALITY:
 							ecc=ECCLevel.HIGH;
@@ -339,14 +340,16 @@ public class VotingBoothImp implements VotingBooth {
 							break;	
 					}
 				}
-			}
-			if(canImprove && ecc.equals(ECCLevel.HIGH)){//if we didnt manage to improve ecc at all, or got stuck in some mid-level, we wont lower the QRlevel
-				if(curQRLevel==23){
+				else{
 					break;
 				}
-				if(totalLengthInBytes<=qrSpecs.get(curQRLevel-1)[ECCLevel.LOW.ordinal()]){
-					curQRLevel++;
-					ecc=ECCLevel.LOW;
+			}
+			if(canImprove){//if we didnt manage to improve ecc at all, we wont lower the QRlevel
+				if(curQRLevel==minOfSet(qrSpecs.keySet())){
+					break;
+				}
+				if(totalLengthInBytes<=qrSpecs.get(curQRLevel-1)[ecc.ordinal()]){
+					curQRLevel--;					
 				}
 				else{
 					canImprove=false;
@@ -355,6 +358,22 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		QRProperties result = new QRProperties(curQRLevel,ecc,(qrSpecs.get(curQRLevel)[ecc.ordinal()])*8);
 		return result;		
+	}
+	
+	private static int minOfSet(Set<Integer> set){
+		int[] res= new int[set.size()];
+		int i=0;
+		for(int k: set){
+			res[i]=k;
+			i++;
+		}
+		int min=res[0];
+		for(i=1;i<res.length;i++){
+			if(res[i]<min){
+				min=res[i];
+			}
+		}
+		return min;		
 	}
 
 }
