@@ -56,7 +56,8 @@ public class VotingBoothImp implements VotingBooth {
 				try {
 					sbCiphertext.append(new String(encryptResult[0], "UTF-8")); 
 					sbRandomness.append(new String(encryptResult[1], "UTF-8"));
-					// the opposite operation (for those who read the QR) should be: byte[] bytesArr = strOfQR.getBytes("UTF-8");
+					// the opposite operation (for those who read the QR) should be: 
+						// byte[] bytesArr = strOfQR.getBytes("UTF-8");
 				} catch (UnsupportedEncodingException e) {
 					System.err.println("An error occured during byte-to-char conversion.");
 				}
