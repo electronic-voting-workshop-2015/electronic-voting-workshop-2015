@@ -15,10 +15,10 @@ public class RaceProperties {
 	private boolean isOrdered; // is the order of the chosen candidates relevant
 	private int numOfSlots; // how much candidates are supposed to be chosen in this race
 	
-	public RaceProperties(Set<String> possibleCandidates, String nameOfRace, int numOfPossibleCan, boolean isOrdered){
+	public RaceProperties(Set<String> possibleCandidates, String nameOfRace, int numOfSlots, boolean isOrdered){
 		this.possibleCandidates = possibleCandidates;
 		this.nameOfRace = nameOfRace;
-		this.numOfSlots = numOfPossibleCan;
+		this.numOfSlots = numOfSlots;
 		this.isOrdered = isOrdered;
 	}
 	
