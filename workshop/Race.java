@@ -18,6 +18,10 @@ public class Race {
 		return votesArray;
 	}
 
+	public RaceProperties getCurRaceProp() {
+		return curRaceProp;
+	}
+
 	public void setVotesArray(String[] votesArray) {
 		this.votesArray = votesArray;
 	}
