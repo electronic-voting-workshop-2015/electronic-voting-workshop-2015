@@ -53,15 +53,19 @@ public class VotingBoothImp implements VotingBooth {
 				encryptResult = Parameters.cryptoClient.encryptGroupMember(
 						Parameters.publicKey,
 						Parameters.candidatesMap.get(name));
-				try {
-					sbCiphertext.append(new String(encryptResult[0], "UTF-8")); 
-					sbRandomness.append(new String(encryptResult[1], "UTF-8"));
-					// the opposite operation (for those who read the QR) should be: 
-						// byte[] bytesArr = strOfQR.getBytes("UTF-8");
-				} catch (UnsupportedEncodingException e) {
-					System.err.println("An error occured during byte-to-char conversion.");
+				char[] cipherChars = new char[encryptResult[0]];
+				char[] randomnessChars = new char[encryptResult[1]];
+				for (int i = 0; i < cipherChars.length; i++) {
+					cipherChars[i] = (char)encryptResult[0][i];
 				}
-
+				for (int i = 0; i < randomnessChars.length; i++) {
+					randomnessChars[i] = (char)encryptResult[1][i];
+				}
+				sbCiphertext.append(cipherChars);
+				sbRandomness.append(randomnessChars); 
+				// the opposite operation (for those who read the QR) is:
+				// char[] ch = strFromQR.toCharArray();
+				// and then cast it element by element to byte
 			}
 		}
 		sbCiphertext.append(addSignatureAndTimeStamp()); // add machine signature and timestamp to ciphertext
