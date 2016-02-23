@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://46.101.148.106/sendVote",
+  "type": "object",
+  "properties": {
+    "ballot_box": {
+      "id": "http://46.101.148.106/sendVote/ballot_box",
+      "type": "integer"
+    },
+    "SerialNumber": {
+      "id": "http://46.101.148.106/sendVote/SerialNumber",
+      "type": "integer"
+    },
+    "votes": {
+      "id": "http://46.101.148.106/sendVote/votes",
+      "type": "array",
+      "items": {
+        "id": "http://46.101.148.106/sendVote/votes/0",
+        "type": "object",
+        "properties": {
+          "vote_value": {
+            "id": "http://46.101.148.106/sendVote/votes/0/vote_value",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "signature": {
+      "id": "http://46.101.148.106/sendVote/signature",
+      "type": "string"
+    }
+  },
+  "required": [
+    "ballot_box",
+    "SerialNumber",
+    "votes",
+    "signature"
+  ]
+}
+
+
+example:
+
+{
+  "ballot_box": 10,
+  "SerialNumber": 23456,
+  "votes": [
+    {
+      "vote_value": "123456"
+    }
+  ],
+  "signature": "ekjfkjansfads"
+}
