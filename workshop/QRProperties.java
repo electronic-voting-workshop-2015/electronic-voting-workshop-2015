@@ -27,4 +27,9 @@ public class QRProperties {
 			this.ecc=ecc;
 			this.maxNumOfBits=maxNumOfBits;
 		}
+		public QRProperties(){
+			this.level=0;
+			this.ecc=null;
+			this.maxNumOfBits=0;
+		}
 }
