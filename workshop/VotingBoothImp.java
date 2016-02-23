@@ -89,7 +89,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return list of Race objects, representing the votes of the voter in each
 	 *         race, parsed from the input JSON.
 	 */
-	public static ArrayList<Race> parseJSON(JSONArray jsonRepr) throws JSONException {
+	private static ArrayList<Race> parseJSON(JSONArray jsonRepr) throws JSONException {
 		ArrayList<Race> result = new ArrayList<Race>();
 		int raceNum = 0;
 		JSONObject curRace;
