@@ -13,7 +13,7 @@ post '/sendVote' do
   #todo: verify signature
   
   for index in 0 ... params['votes'].size-1
-    create = votes.create(vote_value: params['votes'].fetch(index),
+    create = votes.create(vote_value: params['votes'].fetch(index)[vote_value],
                           ballot_box: params['ballot_box'].to_i,
                           serial_number: params['serial_number'].to_i,
                           race_id: index+1)
