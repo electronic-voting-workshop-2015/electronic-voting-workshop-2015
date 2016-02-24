@@ -171,7 +171,7 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		// == 2
 		else {
-			timeArray = new byte[2];
+			timeArray = new byte[3];
 			timeArray[0] = (byte) cal.get(Calendar.HOUR_OF_DAY);
 			timeArray[1] = (byte) cal.get(Calendar.MINUTE);
 			timeArray[2] = (byte) cal.get(Calendar.SECOND);
