@@ -118,7 +118,10 @@ public class VotingBoothImp implements VotingBooth {
 			result.add(raceNum, new Race(rp));
 			Set<String> validNames = rp.getPossibleCandidates();
 			String[] curRaceArrayOfNames = new String[rp.getNumOfSlots()];
-			
+			if((rp.isOrdered() && curRace.get("type")!=2) || (rp.getNumOfSlots()>1 && curRace.get("type")>0)){//type check
+				JSONException exp=new org.json.JSONException("Invalid vote format, mismatching types");
+				throw(exp);
+			}
 			if(!(rp.getNameOfRace().equals(curRace.get("position")))){//race name match check
 				JSONException exp=new org.json.JSONException("Invalid vote format, mismatching positions");
 				throw(exp);
