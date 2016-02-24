@@ -323,9 +323,9 @@ public class VotingBoothImp implements VotingBooth {
 			totalNumOfElements+=rc.getNumOfSlots();
 		}
 		//ElGamal outputs 2 elements for each element given in top QR, and randomness+message in bottom QR
-		
+		totalNumOfElements*=2;
 		if(isTop){
-			totalNumOfElements*=2;
+			
 			totalNumOfElements++;//One more element for the signature
 			switch(Parameters.timeStampLevel){
 			case(1)://HH:MM format, byte for each unit
