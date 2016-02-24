@@ -78,9 +78,7 @@ public class Parameters {
 		boolean validSignature = true; // valid that each machine's signature is different from the previous ones
 		for (int i = 1; i <= numOfMachines; i++) {
 			byte[] signature = new byte[ourGroup.getElementSize()];
-			// fill signatures of machines with random numbers in the range [0,127]
-			for (int k = 0; k < ourGroup.getElementSize(); k++)
-				signature[k] = (byte) rn.nextInt(128);
+			new Random().nextBytes(signature);
 			// loop to check that the signature of machine #i is different from all the previous machines' signatures
 			for (int j = 1; j < i; j++) {
 				if (isSameArray(signature, map.get(j))) {
@@ -90,7 +88,7 @@ public class Parameters {
 				}
 			}
 			if (validSignature)
-				map.put(i, signature);
+				map.put(i, ourGroup.getElement(signature));
 			validSignature = true;
 		}
 		return map;
