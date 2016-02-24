@@ -1,8 +1,10 @@
 package workshop;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -34,7 +36,7 @@ public class VotingBoothImp implements VotingBooth {
 	private ArrayList<Race> curVote; // the list of Race objects, representing
 										// the votes of the voter in each race.
 
-	private static QRProperties topQR; //Valid vote QR properties
+	private static QRProperties topQR; // Valid vote QR properties
 	private static QRProperties bottomQR;// Audit QR properties
 
 	/**
@@ -48,9 +50,12 @@ public class VotingBoothImp implements VotingBooth {
 		StringBuilder sbCiphertext = new StringBuilder();
 		StringBuilder sbRandomness = new StringBuilder();
 		byte[][] encryptResult;
+		int machineNum;
 		try {
 			curVote = parseJSON(jsonRepr); // parse the JSONArray to get info
 											// about the vote
+			// machineNum = 
+			// TODO: get the machine number from the JSON !!
 		} catch (JSONException e) {
 			System.err.println("An error occured during the parse of JSONArray.");
 		}
@@ -76,7 +81,7 @@ public class VotingBoothImp implements VotingBooth {
 				// and then cast it element by element to byte
 			}
 		}
-		sbCiphertext.append(addSignatureAndTimeStamp()); // add machine signature and timestamp to ciphertext
+		sbCiphertext.append(addSignatureAndTimeStamp(machineNum)); // add machine signature and timestamp to ciphertext
 		ciphertext = sbCiphertext.toString();
 		auditRandomness = sbRandomness.toString();
 		File topQr = topQRCreator(ciphertext); // create the top QR containing the ciphertext
@@ -144,9 +149,40 @@ public class VotingBoothImp implements VotingBooth {
 	 * 
 	 * @return a string which is a concatenation of the signature and timestamp.
 	 */
-	private String addSignatureAndTimeStamp() {
-		return null;
-		// TODO Auto-generated method stub
+	private String addSignatureAndTimeStamp(int machineNum) {
+		String signAndTimeStamp = "";
+		// the machine's signature
+		byte[] signatureByteArray = Parameters.mapMachineToSignature.get(machineNum);
+		try {
+			signAndTimeStamp += new String(signatureByteArray, "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			// TODO Auto-generated catch block
+			System.err.println("An error occured during byte-to-char conversion.");
+		}
+		// the timestamp according to the required precision (chosen in the parameters file)
+		// precision level 1: only hour and minute (2 bytes total)
+		// precision level 2: hour+minute+second (3 bytes total)
+		Calendar cal = Calendar.getInstance();
+		byte[] timeArray;
+		if (Parameters.timeStampLevel == 1) {
+			timeArray = new byte[2];
+			timeArray[0] = (byte) cal.get(Calendar.HOUR_OF_DAY);
+			timeArray[1] = (byte) cal.get(Calendar.MINUTE);
+		}
+		// == 2
+		else {
+			timeArray = new byte[2];
+			timeArray[0] = (byte) cal.get(Calendar.HOUR_OF_DAY);
+			timeArray[1] = (byte) cal.get(Calendar.MINUTE);
+			timeArray[2] = (byte) cal.get(Calendar.SECOND);
+		}
+	    try {
+			signAndTimeStamp += new String(timeArray, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			System.err.println("An error occured during byte-to-char conversion.");
+		}
+	    return signAndTimeStamp; // return the signature of the machine and the time stamp concatenated together.
 	}
 
 	/**
