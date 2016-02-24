@@ -230,7 +230,7 @@ public class VotingBoothImp implements VotingBooth {
  	*            be chosen in each race.
  	* @param qrPng QR png file.
  	*/
-	private void printPage(File qrPng, ArrayList<Race> votesInAllRaces) {
+	public void printPage(final File qrPng,final ArrayList<Race> votesInAllRaces) {
 		class Ballot extends JPanel implements Printable{
 		
 			public Ballot(){
@@ -240,13 +240,17 @@ public class VotingBoothImp implements VotingBooth {
 			
 				int votePanelH = 54, width = 242, rows = 0;
 			
-				emptyPanel = new JPanel(); votePanel = new JPanel();
-				tapePanel = new JPanel(); qrPanel = new JPanel();
-			  	this.setSize(new Dimension(312,242));
-				emptyPanel.setSize(new Dimension(54,242));
-				votePanel.setSize(new Dimension(54,242));
-				tapePanel.setSize(new Dimension(13,242));
-				qrPanel.setSize(new Dimension(191,242));
+				emptyPanel = new JPanel();
+				emptyPanel.add(new JTextField("fuck"));
+				votePanel = new JPanel();
+				tapePanel = new JPanel();
+				tapePanel.add(new JTextField("You"));
+				qrPanel = new JPanel();
+			  	this.setSize(new Dimension(242,312));
+				emptyPanel.setSize(new Dimension(242,54));
+				votePanel.setSize(new Dimension(242,54));
+				tapePanel.setSize(new Dimension(242,13));
+				qrPanel.setSize(new Dimension(242,191));
 				
 				for(Race r : votesInAllRaces){
 					if(r.getCurRaceProp().getNumOfSlots() >= rows)
@@ -258,7 +262,7 @@ public class VotingBoothImp implements VotingBooth {
 				votePanel.setLayout(votePanelLayout);
 				for(Race r : votesInAllRaces){
 					JPanel p = new JPanel();
-					p.setSize(new Dimension(votePanelH,width/votesInAllRaces.size()));
+					p.setSize(new Dimension(width/votesInAllRaces.size(),votePanelH));
 				
 					GridLayout l = new GridLayout(rows+1,1);
 					p.setLayout(l);
@@ -271,9 +275,9 @@ public class VotingBoothImp implements VotingBooth {
 					votePanel.add(p);
 				}
 			
-				ImageIcon qrIcon = new ImageIcon(qrPng.getAbsolutePath());
+				ImageIcon qrIcon = new ImageIcon(qrPng.getPath());
 				JLabel imagelabel = new JLabel(qrIcon, JLabel.CENTER);
-				qrPanel.add(imagelabel ,JPanel.CENTER_ALIGNMENT);
+				qrPanel.add(imagelabel);
 			
 				this.add(emptyPanel);
 				this.add(votePanel);
@@ -281,7 +285,7 @@ public class VotingBoothImp implements VotingBooth {
 				this.add(qrPanel);
 
 			
-				this.setVisible(false);
+				this.setVisible(true);
 			}
 		
 		
@@ -297,8 +301,11 @@ public class VotingBoothImp implements VotingBooth {
 	    	}
 		}
 		//end of class
-	
-		Ballot b = new Ballot();		
+		JFrame f = new JFrame();
+		f.setSize(new Dimension(242,312));
+		Ballot b = new Ballot();	
+		f.add(b);
+		f.setVisible(true);
 		PrinterJob pj = PrinterJob.getPrinterJob();
     		PageFormat pf = pj.pageDialog(pj.defaultPage());
     		pj.setPrintable(b,pf);
