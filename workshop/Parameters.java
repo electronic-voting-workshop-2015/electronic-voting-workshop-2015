@@ -31,7 +31,7 @@ public class Parameters {
 	// (important mainly for those who read the QR)
 	public static ArrayList<RaceProperties> racesProperties;
 	// The mapping between candidates and group elements
-	public static HashMap<String, byte[]> candidatesMap = mapCandidates(candidatesNames);
+	public static HashMap<String, byte[]> candidatesMap;
 	// The time-stamp accuracy level, either 1 or 2, 1 for HH:MM format, 2 for
 	// HH:MM:SS format
 	public static int timeStampLevel;
@@ -65,6 +65,7 @@ public class Parameters {
 		topQRLevel = topQRLevel1;
 		bottomQRLevel = bottomQRLevel1;
 		candidatesNames = candidatesNames1;
+		candidatesMap = mapCandidates(candidatesNames);
 		racesProperties = racesProperties1;
 		timeStampLevel = timeStampLevel1;
 		numOfMachines = numOfMachines1;
