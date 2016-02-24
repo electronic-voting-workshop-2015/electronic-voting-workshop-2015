@@ -222,11 +222,20 @@ public class VotingBoothImp implements VotingBooth {
  	*            be chosen in each race.
  	* @param qrPng QR png file.
  	*/
+/**
+ 	* prints the ballot.
+ 	* 
+ 	* @param votesInAllRaces
+ 	*            . a list of Race objects contains the names of candidates to
+ 	*            be chosen in each race.
+ 	* @param qrPng QR png file.
+ 	*/
 	private void printPage(File qrPng, ArrayList<Race> votesInAllRaces) {
 		class Ballot extends JPanel implements Printable{
 		
 			public Ballot(){
 				GridLayout mainLayout = new GridLayout(4,1);
+				this.setLayout(mainLayout);	
 				JPanel emptyPanel, tapePanel, votePanel, qrPanel;
 			
 				int votePanelH = 54, width = 242, rows = 0;
@@ -246,31 +255,32 @@ public class VotingBoothImp implements VotingBooth {
 			
 			
 				GridLayout votePanelLayout = new GridLayout(1,votesInAllRaces.size());
+				votePanel.setLayout(votePanelLayout);
 				for(Race r : votesInAllRaces){
 					JPanel p = new JPanel();
 					p.setSize(new Dimension(votePanelH,width/votesInAllRaces.size()));
 				
 					GridLayout l = new GridLayout(rows+1,1);
+					p.setLayout(l);
 					JTextField raceName = new JTextField(r.getCurRaceProp().getNameOfRace());
-					l.add(raceName);
+					p.add(raceName);
 					for(String s:r.getVotesArray()){
 						JTextField jtf = new JTextField(s);
-						l.add(jtf);								
-					}
-					p.setLayout(l);
-				
-					votePanelLayout.add(p);
+						p.add(jtf);								
+					}				
+					votePanel.add(p);
 				}
-				votePanel.setLayout(votePanelLayout);
 			
 				ImageIcon qrIcon = new ImageIcon(qrPng.getAbsolutePath());
 				JLabel imagelabel = new JLabel(qrIcon, JLabel.CENTER);
 				qrPanel.add(imagelabel ,JPanel.CENTER_ALIGNMENT);
 			
-				mainLayout.add(emptyPanel); mainLayout.add(votePanel);
-				mainLayout.add(tapePanel); mainLayout.add(qrPanel);
+				this.add(emptyPanel);
+				this.add(votePanel);
+				this.add(tapePanel);
+				this.add(qrPanel);
+
 			
-				this.setLayout(mainLayout);	
 				this.setVisible(false);
 			}
 		
@@ -293,9 +303,9 @@ public class VotingBoothImp implements VotingBooth {
     		PageFormat pf = pj.pageDialog(pj.defaultPage());
     		pj.setPrintable(b,pf);
    		try {
-        	pj.print();
+        		pj.print();
     		} catch (PrinterException pe) {
-        	pe.printStackTrace(System.err);
+        		pe.printStackTrace(System.err);
     		} 
 	}
 	/**
