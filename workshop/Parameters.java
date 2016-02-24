@@ -74,13 +74,16 @@ public class Parameters {
 	
 	public static HashMap<Integer,byte[]> setMachinesSignatures() {
 		HashMap<Integer,byte[]> map = new HashMap<>();
+		Random rn = new Random();
 		boolean validSignature = true; // valid that each machine's signature is different from the previous ones
 		for (int i = 1; i <= numOfMachines; i++) {
 			byte[] signature = new byte[ourGroup.getElementSize()];
-			new Random().nextBytes(signature);
+			// fill signatures of machines with random numbers in the range [0,127]
+			for (int k = 0; k < ourGroup.getElementSize(); k++)
+				signature[k] = (byte) rn.nextInt(128);
 			// loop to check that the signature of machine #i is different from all the previous machines' signatures
 			for (int j = 1; j < i; j++) {
-				if (sameArray(signature, map.get(j))) {
+				if (isSameArray(signature, map.get(j))) {
 					validSignature = false;
 					i--;
 					break;
