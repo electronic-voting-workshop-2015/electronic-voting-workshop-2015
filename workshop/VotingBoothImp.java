@@ -179,8 +179,8 @@ public class VotingBoothImp implements VotingBooth {
 			timeArray[1] = (char) cal.get(Calendar.MINUTE);
 			timeArray[2] = (char) cal.get(Calendar.SECOND);
 		}
-	    signAndTimeStamp.append(timeArray);
-	    return signAndTimeStamp.toString(); // return the signature of the machine and the time stamp concatenated together.
+	    	signAndTimeStamp.append(timeArray);
+	    	return signAndTimeStamp.toString(); // return the signature of the machine and the time stamp concatenated together.
 	}
 
 	/**
