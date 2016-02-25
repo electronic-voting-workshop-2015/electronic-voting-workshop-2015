@@ -94,7 +94,7 @@ public class Parameters {
 		return map;
 	}
 	
-	public static boolean sameArray(byte[] arr1, byte[] arr2) {
+	public static boolean isSameArray(byte[] arr1, byte[] arr2) {
 		for (int i = 0; i < arr1.length; i++) {
 			if (arr1[i] != arr2[i])
 				return false;
