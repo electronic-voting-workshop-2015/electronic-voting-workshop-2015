@@ -203,26 +203,29 @@ class ThresholdParty:
         converts the value to 2 group members, the first is
         an encoding of the first half of value (most significant bits),
         the second encoded from the second half
-        the returned cipher text is a triplet of group members"""
+        the returned cipher text is a quartet of group members"""
         g = self.voting_curve.generator
-        r = self.voting_curve.get_random_exponent()
+        r1 = self.voting_curve.get_random_exponent()
+        r2 = self.voting_curve.get_random_exponent()
         int_length = self.voting_curve.order.bit_length() // 2
         first_half = most_significant(value, int_length)
         second_half = least_significant(value, int_length)
         m1 = ECGroupMember.from_int(first_half, int_length, self.voting_curve)
         m2 = ECGroupMember.from_int(second_half, int_length, self.voting_curve)
-        return g ** r, m1 * (public_key ** r), m2 * (public_key ** r)
+        return g**r1, m1 * (public_key**r1), g**r2,  m2 * (public_key**r2)
 
     def decrypt_message(self, private_key, cipher_text):
         """returns an int that was encrypted using the encrypt_message"""
         g = self.voting_curve.generator
-        c = cipher_text[0]
+        c1 = cipher_text[0]
+        c2 = cipher_text[2]
         d1 = cipher_text[1]
-        d2 = cipher_text[2]
+        d2 = cipher_text[3]
         x = private_key
-        s = c ** x
-        message1 = d1 * s ** -1
-        message2 = d2 * s ** -1
+        s1 = c1 ** x
+        s2 = c2 ** x
+        message1 = d1 * s1 ** -1
+        message2 = d2 * s2 ** -1
         int_length = self.voting_curve.order.bit_length() // 2
         return concat_bits(message1, message2, int_length)
 
