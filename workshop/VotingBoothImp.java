@@ -145,6 +145,33 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		return result;
 	}
+	
+	/**
+	 * Parsing the initialization JSON into the main array which defines the election system
+	 * @param jsonRepr
+	 * @return
+	 * @throws JSONException
+	 */
+	public static ArrayList<RaceProperties> parseInitJSON(JSONArray jsonRepr) throws JSONException{
+		ArrayList<RaceProperties> res = new ArrayList<RaceProperties>();
+		for(int i=0; i<jsonRepr.length();i++){
+			JSONObject curElement=jsonRepr.getJSONObject(i);
+			String name= curElement.getString("position");
+			int slotsNum=curElement.getInt("slots");
+			boolean order=false;
+			if(curElement.getInt("type")==3){
+				order=true;
+			}
+			JSONArray names=curElement.getJSONArray("candidatesPool");
+			Set<String> namesPool=new HashSet<String>();
+			for(int j=0;j<names.length();j++){
+				namesPool.add(names.getString(j));
+			}					
+			RaceProperties cur=new RaceProperties(namesPool, name, slotsNum, order);
+			res.add(cur);			
+		}
+		return res;
+	}
 
 	/**
 	 * prepares the machine signature of the current vote, by calling the Sign
