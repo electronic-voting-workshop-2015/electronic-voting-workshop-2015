@@ -153,39 +153,34 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return a string which is a concatenation of the signature and timestamp.
 	 */
 	private String addSignatureAndTimeStamp(int machineNum) {
-		String signAndTimeStamp = "";
+		StringBuilder signAndTimeStamp = new StringBuilder();
 		// the machine's signature
 		byte[] signatureByteArray = Parameters.mapMachineToSignature.get(machineNum);
-		try {
-			signAndTimeStamp += new String(signatureByteArray, "UTF-8");
-		} catch (UnsupportedEncodingException e1) {
-			// TODO Auto-generated catch block
-			System.err.println("An error occured during byte-to-char conversion.");
-		}
+		char[] signatureCharArray = new char[signatureByteArray.length];
+		// remember: the mapping from machines serial numbers to their signature is int->byte[]
+		// so we have to cast to char array
+		for (int i = 0; i < signatureCharArray.length; i++)
+			signatureCharArray[i] = (char)signatureByteArray[i];
+		signAndTimeStamp.append(signatureCharArray);
 		// the timestamp according to the required precision (chosen in the parameters file)
 		// precision level 1: only hour and minute (2 bytes total)
 		// precision level 2: hour+minute+second (3 bytes total)
 		Calendar cal = Calendar.getInstance();
-		byte[] timeArray;
+		char[] timeArray;
 		if (Parameters.timeStampLevel == 1) {
-			timeArray = new byte[2];
-			timeArray[0] = (byte) cal.get(Calendar.HOUR_OF_DAY);
-			timeArray[1] = (byte) cal.get(Calendar.MINUTE);
+			timeArray = new char[2];
+			timeArray[0] = (char) cal.get(Calendar.HOUR_OF_DAY);
+			timeArray[1] = (char) cal.get(Calendar.MINUTE);
 		}
 		// == 2
 		else {
-			timeArray = new byte[3];
-			timeArray[0] = (byte) cal.get(Calendar.HOUR_OF_DAY);
-			timeArray[1] = (byte) cal.get(Calendar.MINUTE);
-			timeArray[2] = (byte) cal.get(Calendar.SECOND);
+			timeArray = new char[3];
+			timeArray[0] = (char) cal.get(Calendar.HOUR_OF_DAY);
+			timeArray[1] = (char) cal.get(Calendar.MINUTE);
+			timeArray[2] = (char) cal.get(Calendar.SECOND);
 		}
-	    try {
-			signAndTimeStamp += new String(timeArray, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			System.err.println("An error occured during byte-to-char conversion.");
-		}
-	    return signAndTimeStamp; // return the signature of the machine and the time stamp concatenated together.
+	    signAndTimeStamp.append(timeArray);
+	    return signAndTimeStamp.toString(); // return the signature of the machine and the time stamp concatenated together.
 	}
 
 	/**
