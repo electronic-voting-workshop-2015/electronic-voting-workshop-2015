@@ -1,6 +1,8 @@
-from random import SystemRandom
-from Utils import bits, product, mod_inv, list_to_bytes, publish_list
 from base64 import standard_b64decode, standard_b64encode
+from random import SystemRandom
+
+from Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
+    most_significant
 
 BB_URL = "http://46.101.148.106"  # the address of the Bulletin Board
 
@@ -9,6 +11,7 @@ class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
     self.order is the order of the generator g
     """
+
     def __init__(self, a, b, p, order):
         self.a = a
         self.b = b
@@ -134,10 +137,28 @@ class ECGroupMember:
     def __eq__(self, other):
         return self.curve == other.curve and self.x == other.x and self.y == other.y
 
-    @classmethod
-    def to_group_member(cls, value):
-        """converts integer "value" to an ECCGroupMember object"""
-        pass
+    @staticmethod
+    def from_int(num, num_len, curve):
+        """encodes integer num to an ECCGroupMember object
+        algorithm from https://eprint.iacr.org/2013/373.pdf part 2.4
+        num must be of bit size at most half of the bit size of curve.order"""
+        rng = SystemRandom()
+        prefix_length = curve.order.bit_length() - num_len
+        a = curve.a
+        b = curve.b
+        p = curve.p
+        while True:
+            prefix = rng.randint(1, 2 ** prefix_length - 1)
+            candidate_x = concat_bits(prefix, num, num_len)
+            candidate_y2 = (candidate_x ** 3 + a * candidate_x + b) % p
+            candidate_y = mod_sqrt(candidate_y2, p)
+            if ECGroupMember.verify_point(candidate_x, candidate_y, curve):
+                return ECGroupMember(curve, candidate_x, candidate_y)
+
+    @staticmethod
+    def to_int(group_member, curve, bit_length):
+        """complementary method to from_int - decodes int from group_member"""
+        return least_significant(group_member.x, bit_length)
 
 
 class ThresholdParty:
@@ -178,27 +199,40 @@ class ThresholdParty:
         pass
 
     def encrypt_message(self, public_key, value):
-        """returns encrypted value using public_key"""
+        """returns encrypted value using public_key
+        converts the value to 2 group members, the first is
+        an encoding of the first half of value (most significant bits),
+        the second encoded from the second half
+        the returned cipher text is a triplet of group members"""
         g = self.voting_curve.generator
         r = self.voting_curve.get_random_exponent()
-        m = ECGroupMember.to_group_member(value)  # TODO:convert integer "value" to an ECGroupMember
-        return g ** r, m * (public_key ** r)
+        int_length = self.voting_curve.order.bit_length() // 2
+        first_half = most_significant(value, int_length)
+        second_half = least_significant(value, int_length)
+        m1 = ECGroupMember.from_int(first_half, int_length, self.voting_curve)
+        m2 = ECGroupMember.from_int(second_half, int_length, self.voting_curve)
+        return g ** r, m1 * (public_key ** r), m2 * (public_key ** r)
 
     def decrypt_message(self, private_key, cipher_text):
+        """returns an int that was encrypted using the encrypt_message"""
         g = self.voting_curve.generator
         c = cipher_text[0]
-        d = cipher_text[1]
+        d1 = cipher_text[1]
+        d2 = cipher_text[2]
         x = private_key
-        s = c**x
-        message = d * s**-1
-        return message
+        s = c ** x
+        message1 = d1 * s ** -1
+        message2 = d2 * s ** -1
+        int_length = self.voting_curve.order.bit_length() // 2
+        return concat_bits(message1, message2, int_length)
 
     def send_message(self, j):
         """send f_i(j) to party A_j"""
         message = self.polynomial.value_at(j)
         public_key = self.get_public_key(j)
         cipher_text = self.encrypt_message(public_key, message)
-        # TODO:publish message to the BB
+        publish_list(cipher_text, 0, self.party_id, signature=None, table_id=None, recipient_id=j,
+                     url=BB_URL)  # TODO: supply proper arguments
 
     def send_values(self):
         """send values f_i(j) to all parties A_j"""
@@ -217,7 +251,7 @@ class ThresholdParty:
         """returns True iff the message from A_j agrees with A_j's commitment"""
         exponent = self.polynomial.value_at(j)
         g = self.voting_curve.generator
-        return message == g**exponent
+        return message == g ** exponent
 
     def validate_all_messages(self):  # TODO: better method name?
         messages = []
@@ -270,17 +304,15 @@ class ThresholdParty:
         q = curve.order
         lambda_list = []
         for j in party_ids:
-            l = ((i * mod_inv(i-j, q)) % q for i in party_ids if i != j)
+            l = ((i * mod_inv(i - j, q)) % q for i in party_ids if i != j)
             lambda_list.append(product(l, q))
         cs = product(commitments[j] ** lambda_list[j] for j in party_ids)
-        return d * cs**-1
-
-
-
+        return d * cs ** -1
 
 
 class Polynomial:
     """represents a degree t polynomial in the group F_order as a list of t+1 coefficients"""
+
     def __init__(self, coefficients, order):
         self.coefficients = coefficients
         self.order = order
