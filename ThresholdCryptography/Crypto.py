@@ -182,8 +182,9 @@ class ThresholdParty:
 
     def publish_commitment(self):
         """publish the values g^v_i,g^a_i1...,g^a_it to the BB"""
+        g = self.voting_curve.generator
         for coefficient in self.polynomial.coefficients:
-            self.publish_value(coefficient)
+            self.publish_value(g ** coefficient)
 
     def publish_value(self, value):
         pass  # TODO:publish the value to the BB
