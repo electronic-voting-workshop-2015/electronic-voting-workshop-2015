@@ -24,12 +24,15 @@ get '/getBBVotes' do
 end
 
 post '/publishZKP' do
+	begin
   
-  #todo: verify signature
+		#todo: verify signature
   
-  voteZkp = ZKP.find_by(vote_id: params['vote_id'])
-  voteZkp.update("party_#{params[:party_id]}": params['zkp'])
+		voteZkp = ZKP.find_by(vote_id: params['vote_id'])
+		voteZkp.update("party_#{params[:party_id]}": params['zkp'])
   
-  rescue ActiveRecord::RecordNotFound => e
-    create = ZKP.create(vote_id: params['vote_id'].to_i, "party_#{params['party_id']}": params['zkp'])
+		rescue ActiveRecord::RecordNotFound
+			create = ZKP.create(vote_id: params['vote_id'].to_i, "party_#{params['party_id']}": params['zkp'])
+		end
+	end
 end
