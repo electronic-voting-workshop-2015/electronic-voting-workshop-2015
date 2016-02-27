@@ -1,6 +1,6 @@
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
-
+from time import sleep
 import sys
 
 from Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
@@ -384,11 +384,33 @@ VOTING_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
 T = 5  # number of parties needed for decryption
 N = 7  # total number of parties
+SLEEP_TIME = 1
 
+def get_sign_key():
+    pass
+
+def get_sign_curve():
+    pass
+
+def get_public_key_confirmation():
+    """returns True iff the BB finished computing the public key"""
+    pass
 
 def run():
     """run as a party for the first time"""
-    pass
+    party_id = int(sys.argv[2])
+    sign_key = get_sign_key()  # TODO: write functions that read from public configuration files
+    sign_curve = get_sign_curve()
+    party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve)
+    party.publish_commitment()
+
+    while True:
+        if get_public_key_confirmation():
+            break
+        sleep(SLEEP_TIME)
+
+    party.send_values()
+
 
 
 def rerun():
