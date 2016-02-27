@@ -11,7 +11,7 @@ module TestHelper
     end
 
     def setup
-        Publication.delete_all
+         ActiveRecord::Base.subclasses.each(&:delete_all)
     end
 
     def randomInteger

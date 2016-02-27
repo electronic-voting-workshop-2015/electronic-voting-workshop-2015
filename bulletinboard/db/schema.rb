@@ -11,9 +11,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160221214313) do
+ActiveRecord::Schema.define(version: 20160227133846) do
 
-  create_table "publications", id: false, force: :cascade do |t|
+  create_table "commitments", id: false, force: :cascade do |t|
+    t.binary "content", limit: 65535
+  end
+
+  create_table "messages", id: false, force: :cascade do |t|
     t.binary "content", limit: 65535
   end
 
