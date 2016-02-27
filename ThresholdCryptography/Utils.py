@@ -76,8 +76,8 @@ def bytes_to_list(b, member_length=0, curve=None):
     if member_length == 0:  #
         member_length = 2 * curve.p.bit_length() // 8
     for i in split_every(member_length, b):
-        if isinstance(i, int):
-            res += int.from_bytes(i, 'little')
+        if curve != None:
+            res.append(int.from_bytes(i, 'little'))
         else:  # object is ECGroupMember
             res.append(ECGroupMember.from_bytes(i, curve))
     return res
