@@ -94,6 +94,7 @@ def base64_to_bytes(b64):
 
 
 def list_to_base64(l, int_length):
+    """converts list of objects (or single object) to base64 string"""
     return bytes_to_base64(list_to_bytes(l, int_length))
 
 
