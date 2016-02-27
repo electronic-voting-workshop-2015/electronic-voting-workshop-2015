@@ -169,16 +169,22 @@ class ThresholdParty:
     n is the number of parties, t is the number of parties required to decrypt
     sign_key is the private key unique to the party, used for creating certificates
     sign_curve is the curve used for signing
+    is_phase1 is a boolean value, signifying that the party is in phase1 of the threshold process
     algorithms from: http://moodle.tau.ac.il/pluginfile.php/217242/mod_resource/content/1/Tomer.pdf
     """
 
-    def __init__(self, voting_curve, t, n, party_id, hash_func, sign_key, sign_curve):
+    def __init__(self, voting_curve, t, n, party_id, hash_func, sign_key, sign_curve, is_phase1):
         self.voting_curve = voting_curve
         self.t = t
         self.n = n
         self.party_id = party_id  # a number between 0 and n-1
-        self.polynomial = Polynomial([voting_curve.get_random_exponent() for _ in range(t)], voting_curve.order)
-        self.secret_value = None  # the value f(j), assigned after calling validate_all_messages
+
+        if is_phase1:
+            self.polynomial = Polynomial([voting_curve.get_random_exponent() for _ in range(t)], voting_curve.order)
+            self.secret_value = None  # the value f(j), assigned after calling validate_all_messages
+        else:
+            self.load_secret()  # load secret value from file if in phase2
+
         self.hash_func = hash_func  # the cryptographic hash function used for ZKP
         self.sign_key = sign_key
         self.sign_curve = sign_curve
@@ -260,8 +266,12 @@ class ThresholdParty:
         g = self.voting_curve.generator
         return message == g ** exponent
 
-    def validate_all_messages(self):  # TODO: better method name?
+    def validate_all_messages(self):
+        """returns True iff all the messages from the other parties
+        agree with their commitments. Also computes and stores the secret value,
+        and publishes commitment to secret value"""
         messages = []
+        all_valid = True  # flag signifies all messages agree with commitments
         for j in range(self.n):
             if j == self.party_id:
                 continue
@@ -270,13 +280,19 @@ class ThresholdParty:
             if self.validate_message(j, message, commitment):
                 messages.append(message)
             else:
-                pass  # TODO: handle message not agreeing with commitment
+                print(
+                    "message from party %d does not agree with it's commitment!" % j)  # TODO: handle message not agreeing with commitment
+                all_valid = False
+
+        if not all_valid:
+            return False
 
         # compute s_i = f(i) and publish h_i = g^s_i
         self.secret_value = sum(self.polynomial.value_at(x) for x in messages) % self.voting_curve.order
         self.save_secret()
         g = self.voting_curve.generator
         self.publish_value(g ** self.secret_value)
+        return True
 
     def save_secret(self):
         """save secret value to file"""
@@ -311,6 +327,12 @@ class ThresholdParty:
     def publish_zkp(self, c, h, w, u, v, cc, z):
         pass  # TODO:publish zkp to the BB
 
+    def generate_all_zkps(self, votes):
+        """generate a zkp for every vote.
+        votes is a list of tuples m=(c,d)"""
+        for m in votes:
+            self.generate_zkp(m[0])
+
     @staticmethod
     def validate_zkp(hash_func, G, g, c, h, w, u, v, cc, z):
         """returns True iff the zkp is valid"""
@@ -335,7 +357,6 @@ class ThresholdParty:
 
 class Polynomial:
     """represents a degree t polynomial in the group F_order as a list of t+1 coefficients"""
-
     def __init__(self, coefficients, order):
         self.coefficients = coefficients
         self.order = order
@@ -379,44 +400,87 @@ curve_256 = EllipticCurve(-3, _b, _p, _r)
 g_256 = ECGroupMember(curve_256, _Gx, _Gy)
 curve_256.generator = g_256
 
-
 VOTING_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
 T = 5  # number of parties needed for decryption
 N = 7  # total number of parties
 SLEEP_TIME = 1
 
+
 def get_sign_key():
     pass
 
+
 def get_sign_curve():
     pass
+
 
 def get_public_key_confirmation():
     """returns True iff the BB finished computing the public key"""
     pass
 
-def run():
-    """run as a party for the first time"""
+
+def get_sent_messages_confirmation():
+    """returns True iff the BB contains secret messages from every party"""
+    pass
+
+
+def get_votes():
+    """returns all the votes from the BB.
+    Each vote is a tuple (c,d) of group members"""
+    pass
+
+
+def phase1():
+    """steps 1-8 in threshold workflow - voting can only begin after this phase ends successfully
+    https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
+    print("initializing values of party")
     party_id = int(sys.argv[2])
     sign_key = get_sign_key()  # TODO: write functions that read from public configuration files
     sign_curve = get_sign_curve()
-    party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve)
-    party.publish_commitment()
+    party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=True)
 
+    print("publishing commitment")
+    party.publish_commitment()
     while True:
         if get_public_key_confirmation():
             break
         sleep(SLEEP_TIME)
 
+    print("sending secret values to other parties")
     party.send_values()
+    while True:
+        if get_sent_messages_confirmation():
+            break
+        sleep(SLEEP_TIME)
+
+    print("validating messages from other parties")
+    if not party.validate_all_messages():
+        print("Fatal Error: one or more parties message's does not agree with commitment!!!")
+        print("Aborting")
+        sys.exit()
+
+    print("phase 1 completed successfully - voting can now start!")
+    sys.exit()
 
 
+def phase2():
+    """steps 10-11 in threshold workflow - run only after voting stopped
+    https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
+    print("initializing values of party")
+    party_id = int(sys.argv[2])
+    sign_key = get_sign_key()  # TODO: write functions that read from public configuration files
+    sign_curve = get_sign_curve()
+    party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=False)
 
-def rerun():
-    """if the party closed the Python process during the voting phase,
-    rerun to g"""
-    pass
+    print("retrieving voting data from the Bulletin Board")
+    votes = get_votes()
+
+    print("generating and publishing zero knowledge proofs")
+    party.generate_all_zkps(votes)
+
+    print("phase 2 completed successfully - decryption can now start on the Bulletin Board!")
+    sys.exit()
 
 
 def test():
@@ -435,14 +499,16 @@ def test():
 
 
 def main():
-    if sys.argv[1] == "test":
+    if len(sys.argv) != 2:
+        print("Error: exactly one argument expected")
+    elif sys.argv[1] == "test":
         test()
-    elif sys.argv[1] == "run":
-        run()
-    elif sys.argv[1] == "rerun":
-        rerun()
+    elif sys.argv[1] == "phase1":
+        phase1()
+    elif sys.argv[1] == "phase2":
+        phase2()
     else:
-        print("Error: argument should be one of: run, rerun, test")
+        print("Error: argument should be one of: phase1, phase2, test")
 
 
 if __name__ == "__main__":
