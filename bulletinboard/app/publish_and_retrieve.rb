@@ -1,16 +1,14 @@
 require 'models/publication'
+require 'pry'
 
 post '/publish' do
-    publication = Publication.create!( content: params[ "content" ] )
-    json id: publication.id
+    publication = Publication.create!( content: params[ "content" ].to_json )
 end
 
 get '/retrieve' do
-    begin
-        id = params[ "id" ].to_i
-        publication = Publication.find id
-        json :content => publication.content
-    rescue ActiveRecord::RecordNotFound => e
-        raise Exception.new( "could not find id=#{id}" )
+    all = Publication.all.to_a.map do |publication| 
+        hash = JSON.parse publication.content
+        hash
     end
+    all.to_json
 end

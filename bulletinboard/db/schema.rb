@@ -13,7 +13,7 @@
 
 ActiveRecord::Schema.define(version: 20160221214313) do
 
-  create_table "publications", force: :cascade do |t|
+  create_table "publications", id: false, force: :cascade do |t|
     t.binary "content", limit: 65535
   end
 

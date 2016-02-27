@@ -10,6 +10,10 @@ module TestHelper
         array.join( '' )
     end
 
+    def setup
+        Publication.delete_all
+    end
+
     def randomInteger
         (Random.rand * 10000000).to_i
     end
