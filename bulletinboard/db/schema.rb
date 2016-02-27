@@ -11,7 +11,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160227133846) do
+ActiveRecord::Schema.define(version: 20160227154629) do
+
+  create_table "ZKP", force: :cascade do |t|
+    t.integer "vote_id", limit: 4
+    t.text    "party_1", limit: 65535
+    t.text    "party_2", limit: 65535
+    t.text    "party_3", limit: 65535
+    t.text    "party_4", limit: 65535
+    t.text    "party_5", limit: 65535
+    t.text    "party_6", limit: 65535
+    t.text    "party_7", limit: 65535
+  end
 
   create_table "commitments", id: false, force: :cascade do |t|
     t.binary "content", limit: 65535
@@ -19,6 +30,13 @@ ActiveRecord::Schema.define(version: 20160227133846) do
 
   create_table "messages", id: false, force: :cascade do |t|
     t.binary "content", limit: 65535
+  end
+
+  create_table "votes", force: :cascade do |t|
+    t.text    "vote_value",    limit: 65535, null: false
+    t.integer "ballot_box",    limit: 4,     null: false
+    t.integer "serial_number", limit: 4,     null: false
+    t.integer "race_id",       limit: 4,     null: false
   end
 
 end
