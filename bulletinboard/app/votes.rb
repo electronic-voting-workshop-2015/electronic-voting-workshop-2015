@@ -8,6 +8,11 @@ post '/sendVote' do
                           serial_number: params['serial_number'].to_i,
                           race_id: index+1)
   end
+	rescue
+		json result: -1
+	end
+	
+	json result: index+1
   
 end
 
