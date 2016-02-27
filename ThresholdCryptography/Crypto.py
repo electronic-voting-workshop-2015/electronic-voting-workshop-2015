@@ -2,10 +2,10 @@ from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 
 from Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
-    most_significant
+    most_significant, list_to_base64, list_to_bytes, bytes_to_list
 
 BB_URL = "http://46.101.148.106"  # the address of the Bulletin Board
-
+SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
@@ -224,8 +224,8 @@ class ThresholdParty:
         x = private_key
         s1 = c1 ** x
         s2 = c2 ** x
-        message1 = d1 * s1 ** -1
-        message2 = d2 * s2 ** -1
+        message1 = d1 * s1**-1
+        message2 = d2 * s2**-1
         int_length = self.voting_curve.order.bit_length() // 2
         return concat_bits(message1, message2, int_length)
 
@@ -270,8 +270,24 @@ class ThresholdParty:
 
         # compute s_i = f(i) and publish h_i = g^s_i
         self.secret_value = sum(self.polynomial.value_at(x) for x in messages) % self.voting_curve.order
+        self.save_secret()
         g = self.voting_curve.generator
         self.publish_value(g ** self.secret_value)
+
+    def save_secret(self):
+        """save secret value to file"""
+        b_secret = list_to_bytes(self.secret_value)
+        with open(SECRET_FILE, 'wb') as f:
+            f.write(b_secret)
+
+    def load_secret(self):
+        """load secret value from file"""
+        try:
+            with open(SECRET_FILE, 'rb') as f:
+                b_secret = f.readall()
+                self.secret_value = bytes_to_list(b_secret)
+        except IOError:
+            print("could not open file %s\n" % SECRET_FILE)
 
     def generate_zkp(self, c):
         """variable names follow Tomer page 4 and page 5 bottom.
@@ -315,7 +331,6 @@ class ThresholdParty:
 
 class Polynomial:
     """represents a degree t polynomial in the group F_order as a list of t+1 coefficients"""
-
     def __init__(self, coefficients, order):
         self.coefficients = coefficients
         self.order = order
