@@ -1,11 +1,14 @@
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 
+import sys
+
 from Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_base64, list_to_bytes, bytes_to_list
 
-BB_URL = "http://46.101.148.106"  # the address of the Bulletin Board
+BB_URL = "http://46.101.148.106"  # the address of the Bulletin Board`
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
+
 
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
@@ -213,7 +216,7 @@ class ThresholdParty:
         second_half = least_significant(value, int_length)
         m1 = ECGroupMember.from_int(first_half, int_length, self.voting_curve)
         m2 = ECGroupMember.from_int(second_half, int_length, self.voting_curve)
-        return g**r1, m1 * (public_key**r1), g**r2,  m2 * (public_key**r2)
+        return g ** r1, m1 * (public_key ** r1), g ** r2, m2 * (public_key ** r2)
 
     def decrypt_message(self, private_key, cipher_text):
         """returns an int that was encrypted using the encrypt_message"""
@@ -225,8 +228,8 @@ class ThresholdParty:
         x = private_key
         s1 = c1 ** x
         s2 = c2 ** x
-        message1 = d1 * s1**-1
-        message2 = d2 * s2**-1
+        message1 = d1 * s1 ** -1
+        message2 = d2 * s2 ** -1
         int_length = self.voting_curve.order.bit_length() // 2
         return concat_bits(message1, message2, int_length)
 
@@ -332,6 +335,7 @@ class ThresholdParty:
 
 class Polynomial:
     """represents a degree t polynomial in the group F_order as a list of t+1 coefficients"""
+
     def __init__(self, coefficients, order):
         self.coefficients = coefficients
         self.order = order
@@ -339,6 +343,12 @@ class Polynomial:
     def value_at(self, x):
         """returns the value of the polynomial at point x"""
         return sum(c[1] * x ** c[0] for c in enumerate(self.coefficients)) % self.order
+
+
+def zkp_hash_func(G, g, c, h, w, u, v):
+    """hash function used in Zero Knowledge Proof of DLOG Equality"""
+    # TODO: write hash function
+    pass
 
 
 # recommended NIST elliptic curves: http://csrc.nist.gov/groups/ST/toolkit/documents/dss/NISTReCur.pdf
@@ -370,7 +380,24 @@ g_256 = ECGroupMember(curve_256, _Gx, _Gy)
 curve_256.generator = g_256
 
 
-def main():
+VOTING_CURVE = curve_256
+ZKP_HASH_FUNCTION = zkp_hash_func
+T = 5  # number of parties needed for decryption
+N = 7  # total number of parties
+
+
+def run():
+    """run as a party for the first time"""
+    pass
+
+
+def rerun():
+    """if the party closed the Python process during the voting phase,
+    rerun to g"""
+    pass
+
+
+def test():
     g1 = curve_256.get_random_member()
     g2 = curve_256.get_random_member()
     g3 = g1 * g2
@@ -383,6 +410,17 @@ def main():
     print(g2)
     print(g3)
     print(g4)
+
+
+def main():
+    if sys.argv[1] == "test":
+        test()
+    elif sys.argv[1] == "run":
+        run()
+    elif sys.argv[1] == "rerun":
+        rerun()
+    else:
+        print("Error: argument should be one of: run, rerun, test")
 
 
 if __name__ == "__main__":
