@@ -15,7 +15,7 @@ get '/getBBVotes' do
   
   input_race_id = parmas['race_id']    
     
-  if race_id <> -1
+  if race_id != -1
     votes_hash = votes.where(race_id: input_race_id)
   else
     votes_hash = votes.find(:all)
@@ -30,6 +30,6 @@ post '/publishZKP' do
   voteZkp = ZKP.find_by(vote_id: params['vote_id'])
   voteZkp.update("party_#{params[:party_id]}": params['zkp'])
   
-  rescue ActiveRecord::RecordNotFound
+  rescue ActiveRecord::RecordNotFound => e
     create = ZKP.create(vote_id: params['vote_id'].to_i, "party_#{params['party_id']}": params['zkp'])
 end
