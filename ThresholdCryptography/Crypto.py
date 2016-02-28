@@ -1,13 +1,14 @@
+import sys
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 from time import sleep
-import sys
 
 from Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
-    most_significant, list_to_base64, list_to_bytes, bytes_to_list
+    most_significant, list_to_bytes, bytes_to_list
 
 BB_URL = "http://46.101.148.106"  # the address of the Bulletin Board`
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
+PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
 
 
 class EllipticCurve:
@@ -281,7 +282,7 @@ class ThresholdParty:
                 messages.append(message)
             else:
                 print(
-                    "message from party %d does not agree with it's commitment!" % j)  # TODO: handle message not agreeing with commitment
+                    "message from party %d does not agree with it's commitment!" % j)
                 all_valid = False
 
         if not all_valid:
@@ -322,9 +323,10 @@ class ThresholdParty:
         v = h ** r
         cc = self.hash_func(G, g, c, h, w, u, v)
         z = (r + c * x) % G.order
-        self.publish_zkp(c, h, w, u, v, cc, z)
+        proof = zkp(c, h, w, u, v, cc, z)
+        self.publish_zkp(proof)
 
-    def publish_zkp(self, c, h, w, u, v, cc, z):
+    def publish_zkp(self, proof):
         pass  # TODO:publish zkp to the BB
 
     def generate_all_zkps(self, votes):
@@ -333,30 +335,12 @@ class ThresholdParty:
         for m in votes:
             self.generate_zkp(m[0])
 
-    @staticmethod
-    def validate_zkp(hash_func, G, g, c, h, w, u, v, cc, z):
-        """returns True iff the zkp is valid"""
-        # TODO:this function should be computed on the BB
-        return cc == hash_func(G, g, c, h, w, u, v) and u * h ** cc == g ** z and v * w ** cc == h ** z
 
-    @staticmethod
-    def decrypt_vote(curve, party_ids, commitments, d):
-        """decrypts a single vote using Lagrange interpolation on t point
-        party_ids is a list of t integers, commitments is a list of t commitments
-        d is part of the cipher text - (c,d)
-        performed after validating the ZKPs"""
-        # TODO:this function should be computed on the BB
-        q = curve.order
-        lambda_list = []
-        for j in party_ids:
-            l = ((i * mod_inv(i - j, q)) % q for i in party_ids if i != j)
-            lambda_list.append(product(l, q))
-        cs = product(commitments[j] ** lambda_list[j] for j in party_ids)
-        return d * cs ** -1
 
 
 class Polynomial:
     """represents a degree t polynomial in the group F_order as a list of t+1 coefficients"""
+
     def __init__(self, coefficients, order):
         self.coefficients = coefficients
         self.order = order
@@ -366,10 +350,47 @@ class Polynomial:
         return sum(c[1] * x ** c[0] for c in enumerate(self.coefficients)) % self.order
 
 
+class zkp:
+    """represents a Zero Knowledge Proof of DLOG equality
+    c, h, w, u, v are group members
+    cc, z are large integers"""
+
+    def __init__(self, c, h, w, u, v, cc, z):
+        self.c = c
+        self.h = h
+        self.w = w
+        self.u = u
+        self.v = v
+        self.cc = cc
+        self.z = z
+
+
 def zkp_hash_func(G, g, c, h, w, u, v):
-    """hash function used in Zero Knowledge Proof of DLOG Equality"""
+    """hash function used in Zero Knowledge Proof of DLOG Equality
+    returns an integer between 1 and G.order"""
     # TODO: write hash function
     pass
+
+
+def decrypt_vote(curve, party_ids, commitments, d):
+    """decrypts a single vote using Lagrange interpolation on t point
+        party_ids is a list of t integers, commitments is a list of t commitments
+        d is part of the cipher text - (c,d)
+        performed after validating the ZKPs"""
+    # TODO:this function should be computed on the BB
+    q = curve.order
+    lambda_list = []
+    for j in party_ids:
+        l = ((i * mod_inv(i - j, q)) % q for i in party_ids if i != j)
+        lambda_list.append(product(l, q))
+    cs = product(commitments[j] ** lambda_list[j] for j in party_ids)
+    return d * cs ** -1
+
+
+def validate_zkp(hash_func, G, g, c, h, w, u, v, cc, z):
+    """returns True iff the zkp is valid"""
+    # TODO:this function should be computed on the BB
+    return cc == hash_func(G, g, c, h, w, u, v) and u * h ** cc == g ** z and v * w ** cc == h ** z
 
 
 # recommended NIST elliptic curves: http://csrc.nist.gov/groups/ST/toolkit/documents/dss/NISTReCur.pdf
@@ -400,6 +421,7 @@ curve_256 = EllipticCurve(-3, _b, _p, _r)
 g_256 = ECGroupMember(curve_256, _Gx, _Gy)
 curve_256.generator = g_256
 
+
 VOTING_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
 T = 5  # number of parties needed for decryption
@@ -408,6 +430,7 @@ SLEEP_TIME = 1
 
 
 def get_sign_key():
+    """reads the private key used for signing from local file"""
     pass
 
 
@@ -428,6 +451,18 @@ def get_sent_messages_confirmation():
 def get_votes():
     """returns all the votes from the BB.
     Each vote is a tuple (c,d) of group members"""
+    pass
+
+
+def get_votes_local():
+    """same as get_votes, but gets data from the local DB"""
+    pass
+
+
+def get_zkps_local():
+    """returns all the zkps from the BB.
+    output is a list of N lists (N is the number of parties).
+    each sub list contains """
     pass
 
 
@@ -465,7 +500,7 @@ def phase1():
 
 
 def phase2():
-    """steps 10-11 in threshold workflow - run only after voting stopped
+    """step 10 in threshold workflow - run only after voting stopped
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
     party_id = int(sys.argv[2])
@@ -481,6 +516,18 @@ def phase2():
 
     print("phase 2 completed successfully - decryption can now start on the Bulletin Board!")
     sys.exit()
+
+
+def phase3():
+    """step 11 in threshold workflow - run on the BB after phase 2 ended
+    https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
+    print("retrieving voting data from the Database")
+    votes = get_votes_local()
+
+    print("retrieving zero knowledge proofs from the database")
+    zkps = get_zkps_local()
+
+
 
 
 def test():
@@ -507,8 +554,10 @@ def main():
         phase1()
     elif sys.argv[1] == "phase2":
         phase2()
+    elif sys.argv[1] == "phase3":
+        phase3()
     else:
-        print("Error: argument should be one of: phase1, phase2, test")
+        print("Error: argument should be one of: phase1, phase2, phase3, test")
 
 
 if __name__ == "__main__":
