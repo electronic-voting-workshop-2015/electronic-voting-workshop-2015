@@ -504,7 +504,8 @@ def get_votes_local():
 def get_zkps_local():
     """returns all the zkps from the BB.
     output is a list of lists , one sub-list for every vote cast.
-    each sub-list contains N zkp objects, one for every party"""
+    each sub-list contains N tuples, one for every party
+    the tuple contains the ZKP object as the first member and the party id as the second"""
     # TODO: add to JSON API
     pass
 
