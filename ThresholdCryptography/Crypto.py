@@ -1,3 +1,4 @@
+import hashlib
 import sys
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
@@ -14,13 +15,15 @@ PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private si
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
     self.order is the order of the generator g
+    self.int_length is the size in bits of each coordinate
     """
 
-    def __init__(self, a, b, p, order):
+    def __init__(self, a, b, p, order, int_length):
         self.a = a
         self.b = b
         self.p = p
         self.order = order
+        self.int_length = int_length
         self.generator = None  # assigned after initializing
 
     def get_zero_member(self):
@@ -32,6 +35,9 @@ class EllipticCurve:
     def get_random_exponent(self):
         rng = SystemRandom()
         return rng.randint(1, self.order)
+
+    def get_member(self, num):
+        return self.generator ** num
 
     def __str__(self):
         return self.a.__str__() + ", " + self.b.__str__() + ", " + self.p.__str__()
@@ -335,7 +341,33 @@ class ThresholdParty:
         for m in votes:
             self.generate_zkp(m[0])
 
-
+    def sign(self, message):
+        """ Signs message using ECDSA.
+        :param message: bytes to sign
+        :return: bytes representing r, s.
+        """
+        m = hashlib.sha256()
+        m.update(message)
+        e = m.digest()
+        ln = self.sign_curve.order.bit_length() // 8
+        n = self.sign_curve.order
+        z = e[0:ln]
+        z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
+        certificate = 0
+        while certificate == 0:
+            rng = SystemRandom()
+            k = rng.randint(1, n)
+            kg = self.sign_curve.get_member(k)
+            r = kg.x
+            if r == 0:
+                continue
+            s = (mod_inv(k, n) * (z + (r * self.sign_key) % n) % n) % n
+            if s == 0:
+                continue
+            l = [r, s]
+            int_length = self.sign_curve.int_length
+            certificate = list_to_bytes(l, int_length)
+        return certificate
 
 
 class Polynomial:
@@ -399,7 +431,7 @@ _r = 6277101735386680763835789423176059013767194773182842284081
 _b = 0x64210519e59c80e70fa7e9ab72243049feb8deecc146b9b1
 _Gx = 0x188da80eb03090f67cbf20eb43a18800f4ff0afd82ff1012
 _Gy = 0x07192b95ffc8da78631011ed6b24cdd573f977a11e794811
-curve_192 = EllipticCurve(-3, _b, _p, _r)
+curve_192 = EllipticCurve(-3, _b, _p, _r, 192)
 g_192 = ECGroupMember(curve_192, _Gx, _Gy)
 curve_192.generator = g_192
 
@@ -408,7 +440,7 @@ _r = 26959946667150639794667015087019625940457807714424391721682722368061
 _b = 0xb4050a850c04b3abf54132565044b0b7d7bfd8ba270b39432355ffb4
 _Gx = 0xb70e0cbd6bb4bf7f321390b94a03c1d356c21122343280d6115c1d21
 _Gy = 0xbd376388b5f723fb4c22dfe6cd4375a05a07476444d5819985007e34
-curve_224 = EllipticCurve(-3, _b, _p, _r)
+curve_224 = EllipticCurve(-3, _b, _p, _r, 224)
 g_224 = ECGroupMember(curve_224, _Gx, _Gy)
 curve_224.generator = g_224
 
@@ -417,10 +449,9 @@ _r = 115792089210356248762697446949407573529996955224135760342422259061068512044
 _b = 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b
 _Gx = 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296
 _Gy = 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5
-curve_256 = EllipticCurve(-3, _b, _p, _r)
+curve_256 = EllipticCurve(-3, _b, _p, _r, 256)
 g_256 = ECGroupMember(curve_256, _Gx, _Gy)
 curve_256.generator = g_256
-
 
 VOTING_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
@@ -526,8 +557,6 @@ def phase3():
 
     print("retrieving zero knowledge proofs from the database")
     zkps = get_zkps_local()
-
-
 
 
 def test():
