@@ -329,7 +329,7 @@ class ThresholdParty:
         v = h ** r
         cc = self.hash_func(g, c, h, w, u, v)
         z = (r + c * x) % G.order
-        proof = zkp(c, h, w, u, v, cc, z)
+        proof = ZKP(c, h, w, u, v, cc, z)
         self.publish_zkp(proof)
 
     def publish_zkp(self, proof):
@@ -384,7 +384,7 @@ class Polynomial:
         return sum(c[1] * x ** c[0] for c in enumerate(self.coefficients)) % self.order
 
 
-class zkp:
+class ZKP:
     """represents a Zero Knowledge Proof of DLOG equality
     c, h, w, u, v are group members
     cc, z are large integers
@@ -430,10 +430,17 @@ def decrypt_vote(curve, party_ids, commitments, d):
     return d * cs ** -1
 
 
-def validate_zkp(hash_func, g, c, h, w, u, v, cc, z):
+def validate_zkp(hash_func, g, proof):
     """returns True iff the zkp is valid"""
     # TODO:this function should be computed on the BB
-    return cc == hash_func(g, c, h, w, u, v) and u * h ** cc == g ** z and v * w ** cc == h ** z
+    c = proof.c
+    h = proof.h
+    w = proof.w
+    u = proof.u
+    v = proof.v
+    cc = proof.cc
+    z = proof.z
+    return cc == hash_func(g, c, h, w, u, v) and u * h**cc == g**z and v * w**cc == h**z
 
 
 # recommended NIST elliptic curves: http://csrc.nist.gov/groups/ST/toolkit/documents/dss/NISTReCur.pdf
@@ -510,6 +517,12 @@ def get_zkps_local():
     pass
 
 
+def get_voting_curve_local():
+    """returns the voting curve"""
+    # TODO: add to JSON API
+    pass
+
+
 def phase1():
     """steps 1-8 in threshold workflow - voting can only begin after this phase ends successfully
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
@@ -571,9 +584,32 @@ def phase3():
     print("retrieving zero knowledge proofs from the database")
     zkps = get_zkps_local()
 
+    print("verifying validity of zero knowledge proofs and decrypting")
+    curve = get_voting_curve_local()
+    g = curve.generator
+    decrypted_votes = []  # a list of tuples: (vote_id, vote)
 
+    for vote_list in enumerate(zkps):
+        A = []  # the list of valid zkps
 
+        for zkp in vote_list[1]:
+            if len(A) == T:  # we got t valid parties, we can now decrypt the message
+                break
+            proof = zkp[0]
+            if validate_zkp(ZKP_HASH_FUNCTION, g, proof):
+                A.append(zkp)
+        if len(A) < T:
+            print("Fatal Error: could not decrypt a vote: not enough parties provided the required data")
+            sys.exit()
 
+        party_ids = [zkp[1] for zkp in A]
+        commitments = [zkp[0].w for zkp in A]
+        vote_id = vote_list[0]
+        d = votes[vote_id]  # the encrypted vote
+        decrypted_vote = decrypt_vote(curve, party_ids, commitments, d)
+        decrypted_votes.append((vote_id, decrypted_vote))
+
+    #  TODO: process decrypted_votes and print the results of the election
 
 
 def test():
