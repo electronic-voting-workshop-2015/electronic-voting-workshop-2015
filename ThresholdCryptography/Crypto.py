@@ -251,7 +251,7 @@ class ThresholdParty:
         message = self.polynomial.value_at(j)
         public_key = self.get_public_key(j)
         cipher_text = self.encrypt_message(public_key, message)
-        publish_list(cipher_text, 0, self.party_id, signature=None, table_id=None, recipient_id=j,
+        publish_list(cipher_text, 0, self.party_id, certificate=None, table_id=None, recipient_id=j,
                      url=BB_URL)  # TODO: supply proper arguments
 
     def send_values(self):
@@ -333,7 +333,9 @@ class ThresholdParty:
         self.publish_zkp(proof)
 
     def publish_zkp(self, proof):
-        pass  # TODO:publish zkp to the BB
+        cert = self.sign(bytes(proof))
+        publish_list(proof, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
+                     url=BB_URL)  # TODO: supply proper arguments
 
     def generate_all_zkps(self, votes):
         """generate a zkp for every vote.
@@ -385,7 +387,8 @@ class Polynomial:
 class zkp:
     """represents a Zero Knowledge Proof of DLOG equality
     c, h, w, u, v are group members
-    cc, z are large integers"""
+    cc, z are large integers
+    """
 
     def __init__(self, c, h, w, u, v, cc, z):
         self.c = c
@@ -395,6 +398,11 @@ class zkp:
         self.v = v
         self.cc = cc
         self.z = z
+
+    def __bytes__(self):
+        first_part = list_to_bytes([self.c, self.h, self.w, self.u, self.v])
+        second_part = list_to_bytes([self.cc, self.z], self.c.curve)
+        return first_part + second_part
 
 
 def zkp_hash_func(G, g, c, h, w, u, v):
