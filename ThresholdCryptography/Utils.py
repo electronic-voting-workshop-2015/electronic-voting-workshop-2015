@@ -58,12 +58,13 @@ def mod_inv(a, p):
 
 
 def list_to_bytes(l, int_length = 0):
-    """returns bytes object formed from concatenating members of list l"""
+    """returns bytes object formed from concatenating members of list l
+    int_length is the length in bytes of every integer"""
     res = bytes(0)  # empty string of bytes
     for i in l:
         if isinstance(i, int):
             res += i.to_bytes(int_length, 'little')
-        else:  # object is ECGroupMember
+        else:  # object is ECGroupMember or zkp
             res += bytes(i)
     return res
 
@@ -102,11 +103,13 @@ def base64_to_list(b, member_length=0, curve=None):
     return bytes_to_list(base64_to_bytes(b), member_length, curve)
 
 
-def publish_list(list_data, int_length, sender_id, signature, table_id, recipient_id, url):
+def publish_list(list_data, int_length, sender_id, certificate, table_id, recipient_id, url):
     """publishes list l to url using POST request
-    if list is a list of group_members, int_length should be 0"""
+    if list is a list of group_members, int_length should be 0
+    certificate is a bytes object"""
     base64_data = list_to_base64(list_data, int_length)
-    json_data = json.dumps([sender_id, base64_data, signature, table_id, recipient_id])
+    base64_certificate = bytes_to_base64(certificate)
+    json_data = json.dumps([sender_id, base64_data, base64_certificate, table_id, recipient_id])
     req = urllib.request.Request(url, json_data, {'Content-Type': 'application/json'})
     with urllib.request.urlopen(req) as response:
         read_value = response.read()  # read_value is a bytes object
