@@ -327,7 +327,7 @@ class ThresholdParty:
         r = G.get_random_exponent()
         u = g ** r
         v = h ** r
-        cc = self.hash_func(G, g, c, h, w, u, v)
+        cc = self.hash_func(g, c, h, w, u, v)
         z = (r + c * x) % G.order
         proof = zkp(c, h, w, u, v, cc, z)
         self.publish_zkp(proof)
@@ -401,15 +401,18 @@ class zkp:
 
     def __bytes__(self):
         first_part = list_to_bytes([self.c, self.h, self.w, self.u, self.v])
-        second_part = list_to_bytes([self.cc, self.z], self.c.curve)
+        second_part = list_to_bytes([self.cc, self.z], self.c.curve.int_length)
         return first_part + second_part
 
 
-def zkp_hash_func(G, g, c, h, w, u, v):
+def zkp_hash_func(g, c, h, w, u, v):
     """hash function used in Zero Knowledge Proof of DLOG Equality
     returns an integer between 1 and G.order"""
-    # TODO: write hash function
-    pass
+    bytes_data = list_to_bytes([g, c, h, w, u, v])
+    m = hashlib.sha256()
+    m.update(bytes_data)
+    bytes_hash = m.digest()
+    return int.from_bytes(bytes_hash, 'little') % g.curve.order
 
 
 def decrypt_vote(curve, party_ids, commitments, d):
@@ -427,10 +430,10 @@ def decrypt_vote(curve, party_ids, commitments, d):
     return d * cs ** -1
 
 
-def validate_zkp(hash_func, G, g, c, h, w, u, v, cc, z):
+def validate_zkp(hash_func, g, c, h, w, u, v, cc, z):
     """returns True iff the zkp is valid"""
     # TODO:this function should be computed on the BB
-    return cc == hash_func(G, g, c, h, w, u, v) and u * h ** cc == g ** z and v * w ** cc == h ** z
+    return cc == hash_func(g, c, h, w, u, v) and u * h ** cc == g ** z and v * w ** cc == h ** z
 
 
 # recommended NIST elliptic curves: http://csrc.nist.gov/groups/ST/toolkit/documents/dss/NISTReCur.pdf
@@ -500,8 +503,8 @@ def get_votes_local():
 
 def get_zkps_local():
     """returns all the zkps from the BB.
-    output is a list of N lists (N is the number of parties).
-    each sub list contains """
+    output is a list of lists , one sub-list for every vote cast.
+    each sub-list contains N zkp objects, one for every party"""
     pass
 
 
@@ -567,6 +570,10 @@ def phase3():
     zkps = get_zkps_local()
 
 
+
+
+
+
 def test():
     g1 = curve_256.get_random_member()
     g2 = curve_256.get_random_member()
@@ -583,9 +590,7 @@ def test():
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("Error: exactly one argument expected")
-    elif sys.argv[1] == "test":
+    if sys.argv[1] == "test":
         test()
     elif sys.argv[1] == "phase1":
         phase1()
