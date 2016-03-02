@@ -351,8 +351,10 @@ public class VotingBoothImp implements VotingBooth {
 		Ballot b = new Ballot();
 
 		f.setSize(b.getWidth(), b.getHeight());
-		f.getContentPane().add(b, BorderLayout.NORTH);
-		f.setVisible(true);
+		f.setUndecorated(true);
+		f.getContentPane().add(b);
+		f.pack();
+		
 		Paper p = new Paper();
 		int dpi = java.awt.Toolkit.getDefaultToolkit().getScreenResolution();
 		p.setImageableArea((105*dpi)/24.5, 0, (80*dpi/24.5), (140*dpi/24.5));
@@ -424,12 +426,14 @@ public class VotingBoothImp implements VotingBooth {
 		Ballot b = new Ballot();
 
 		f.setSize(b.getWidth(), b.getHeight());
-		f.getContentPane().add(b, BorderLayout.NORTH);
-		f.setVisible(true);
+		f.setUndecorated(true);
+		f.getContentPane().add(b);
+		f.pack();		
+		
 		Paper p = new Paper();
 		int dpi = java.awt.Toolkit.getDefaultToolkit().getScreenResolution();
-		p.setImageableArea((105*dpi)/24.5, 0, (100*dpi/24.5), (90*dpi/24.5));
-		p.setSize((int)100*dpi/24.5, (int)90*dpi/24.5);
+		p.setImageableArea((105*dpi)/24.5, 0, (120*dpi/24.5), (90*dpi/24.5));
+		p.setSize((int)120*dpi/24.5, (int)90*dpi/24.5);
 		PageFormat pf = new PageFormat();
 		pf.setPaper(p);
 
