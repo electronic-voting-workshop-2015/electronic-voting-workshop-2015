@@ -252,61 +252,85 @@ public class VotingBoothImp implements VotingBooth {
  	*            be chosen in each race.
  	* @param qrPng QR png file.
  	*/
-	public void printPage(final File qrPng,final ArrayList<Race> votesInAllRaces) {
+	public void printPage(File qrPng, ArrayList<Race> votesInAllRaces) {
 		class Ballot extends JPanel implements Printable{
 		
 			public Ballot(){
-				GridLayout mainLayout = new GridLayout(4,1);
+				GridBagLayout mainLayout = new GridBagLayout();
 				this.setLayout(mainLayout);	
-				JPanel emptyPanel, tapePanel, votePanel, qrPanel;
-			
-				int votePanelH = 54, width = 242, rows = 0;
-			
-				emptyPanel = new JPanel();
-				emptyPanel.add(new JTextField("fuck"));
-				votePanel = new JPanel();
-				tapePanel = new JPanel();
-				tapePanel.add(new JTextField("You"));
-				qrPanel = new JPanel();
-			  	this.setSize(new Dimension(242,312));
-				emptyPanel.setSize(new Dimension(242,54));
-				votePanel.setSize(new Dimension(242,54));
-				tapePanel.setSize(new Dimension(242,13));
-				qrPanel.setSize(new Dimension(242,191));
 				
+				JPanel votePanel, qrPanel;
+				int dpi = java.awt.Toolkit.getDefaultToolkit().getScreenResolution();
+				int votePanelH = (int)(20*dpi/25.4), width = (int)(70*dpi/25.4), rows = 0;
+				
+				votePanel = new JPanel();qrPanel = new JPanel();
+
+			  	this.setSize(new Dimension(width,(int)(140*dpi/25.4)));
 				for(Race r : votesInAllRaces){
 					if(r.getCurRaceProp().getNumOfSlots() >= rows)
 						rows = r.getCurRaceProp().getNumOfSlots();
 				}
 			
-			
+				int enouRows = 0;
 				GridLayout votePanelLayout = new GridLayout(1,votesInAllRaces.size());
 				votePanel.setLayout(votePanelLayout);
+				votePanel.setSize(new Dimension(votePanelH,width));
 				for(Race r : votesInAllRaces){
 					JPanel p = new JPanel();
-					p.setSize(new Dimension(width/votesInAllRaces.size(),votePanelH));
-				
+					p.setSize(new Dimension(votePanelH,width/votesInAllRaces.size()));
 					GridLayout l = new GridLayout(rows+1,1);
 					p.setLayout(l);
 					JTextField raceName = new JTextField(r.getCurRaceProp().getNameOfRace());
 					p.add(raceName);
 					for(String s:r.getVotesArray()){
 						JTextField jtf = new JTextField(s);
-						p.add(jtf);								
-					}				
+						p.add(jtf);	
+						enouRows++;
+					}
+					if(enouRows < rows){//needs to add a blank lables
+						for(int i = enouRows; i < rows; i++){
+							JTextField jtf = new JTextField("");
+							p.add(jtf);	
+						}
+					}
+					enouRows = 0;
 					votePanel.add(p);
 				}
 			
-				ImageIcon qrIcon = new ImageIcon(qrPng.getPath());
+				ImageIcon qrIcon = new ImageIcon(qrPng.getAbsolutePath());
 				JLabel imagelabel = new JLabel(qrIcon, JLabel.CENTER);
-				qrPanel.add(imagelabel);
+				qrPanel.add(imagelabel ,JPanel.CENTER_ALIGNMENT);
+				
+				//build each panel width and height
+				JPanel mainPanel  = new JPanel();
+				mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+				mainPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+				
+				
+				JLabel em = new JLabel("\n");
+				mainPanel.add(em);
+				JLabel em1 = new JLabel("\n");
+				mainPanel.add(em1);
+				JLabel em2 = new JLabel("\n");
+				mainPanel.add(em2);
+				JLabel em3 = new JLabel("\n");
+				mainPanel.add(em3);
+				JLabel em4 = new JLabel("\n");
+				mainPanel.add(em4);
+				JLabel em5 = new JLabel("\n");
+				mainPanel.add(em5);
+				
+				mainPanel.add(votePanel);
 			
-				this.add(emptyPanel);
-				this.add(votePanel);
-				this.add(tapePanel);
-				this.add(qrPanel);
-
+				JLabel emptyType = new JLabel("\n");
+				mainPanel.add(emptyType);
 			
+				mainPanel.add(qrPanel);
+				
+				JLabel em6 = new JLabel("\n");
+				mainPanel.add(em6);
+				
+				this.add(mainPanel);
 				this.setVisible(true);
 			}
 		
@@ -324,19 +348,102 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		//end of class
 		JFrame f = new JFrame();
-		f.setSize(new Dimension(242,312));
-		Ballot b = new Ballot();	
-		f.add(b);
+		Ballot b = new Ballot();
+
+		f.setSize(b.getWidth(), b.getHeight());
+		f.getContentPane().add(b, BorderLayout.NORTH);
 		f.setVisible(true);
+		Paper p = new Paper();
+		int dpi = java.awt.Toolkit.getDefaultToolkit().getScreenResolution();
+		p.setImageableArea((105*dpi)/24.5, 0, (80*dpi/24.5), (140*dpi/24.5));
+		p.setSize((int)100*dpi/24.5, (int)140*dpi/24.5);
+		PageFormat pf = new PageFormat();
+		pf.setPaper(p);
+
 		PrinterJob pj = PrinterJob.getPrinterJob();
-    		PageFormat pf = pj.pageDialog(pj.defaultPage());
-    		pj.setPrintable(b,pf);
+		pj.setPrintable(b, pf);
+		
    		try {
         		pj.print();
     		} catch (PrinterException pe) {
         		pe.printStackTrace(System.err);
     		} 
+  	
 	}
+	
+	public void printAudit(File qrPng) {
+		class Ballot extends JPanel implements Printable{
+		
+			public Ballot(){
+				GridBagLayout mainLayout = new GridBagLayout();
+				this.setLayout(mainLayout);	
+				
+				JPanel qrPanel;
+				int dpi = java.awt.Toolkit.getDefaultToolkit().getScreenResolution();
+				int width = (int)(70*dpi/25.4);
+				
+				qrPanel = new JPanel();
+
+			  	this.setSize(new Dimension(width,(int)(55*dpi/25.4)));
+			
+				ImageIcon qrIcon = new ImageIcon(qrPng.getAbsolutePath());
+				JLabel imagelabel = new JLabel(qrIcon, JLabel.CENTER);
+				qrPanel.add(imagelabel ,JPanel.CENTER_ALIGNMENT);
+				
+				//build on mainPanel the audit panel and a space at the end
+				JPanel mainPanel  = new JPanel();
+				mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+				mainPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+				
+				JLabel emptyType = new JLabel("\n");
+				mainPanel.add(emptyType);
+			
+				mainPanel.add(qrPanel);
+				
+				JLabel em6 = new JLabel("\n");
+				mainPanel.add(em6);
+				
+				this.add(mainPanel);
+				this.setVisible(true);
+			}
+		
+		
+		@Override
+	    	public int print(Graphics g, PageFormat pf, int i) throws PrinterException {
+	        	if (i > 0) {
+	            	return NO_SUCH_PAGE;
+	        	}
+	        	Graphics2D g2d = (Graphics2D) g;
+	        	g2d.translate(pf.getImageableX(), pf.getImageableY());
+	        	Ballot.this.printAll(g);
+	        	return Printable.PAGE_EXISTS;
+	    	}
+		}
+		//end of class
+		JFrame f = new JFrame();
+		Ballot b = new Ballot();
+
+		f.setSize(b.getWidth(), b.getHeight());
+		f.getContentPane().add(b, BorderLayout.NORTH);
+		f.setVisible(true);
+		Paper p = new Paper();
+		int dpi = java.awt.Toolkit.getDefaultToolkit().getScreenResolution();
+		p.setImageableArea((105*dpi)/24.5, 0, (100*dpi/24.5), (90*dpi/24.5));
+		p.setSize((int)100*dpi/24.5, (int)90*dpi/24.5);
+		PageFormat pf = new PageFormat();
+		pf.setPaper(p);
+
+		PrinterJob pj = PrinterJob.getPrinterJob();
+		pj.setPrintable(b, pf);
+		
+   		try {
+        		pj.print();
+    		} catch (PrinterException pe) {
+        		pe.printStackTrace(System.err);
+    		} 
+  	
+	}
+	
 	/**
 	 * set the required QR Properties to the given data QR Properties
 	 * @param qr
