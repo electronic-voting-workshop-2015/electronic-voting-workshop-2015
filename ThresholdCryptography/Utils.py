@@ -104,7 +104,7 @@ def list_to_bytes(l, int_length = 0):
 def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
     """member length is the size in bytes of each member in the list
     list is either of ints (curve=None) or of ECGroupMembers (member_length=None), or ZKPs (is_zkp=True)"""
-    from ThresholdCryptography.Crypto import ECGroupMember, ZKP
+    from .Crypto import ECGroupMember, ZKP
     res = []
     if is_zkp:
         member_length = 12 * curve.p.bit_length // 8

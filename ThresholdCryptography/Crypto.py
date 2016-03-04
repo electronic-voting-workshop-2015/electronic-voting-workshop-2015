@@ -4,7 +4,7 @@ from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 from time import sleep
 import cProfile
-from ThresholdCryptography.Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
+from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list
 
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
