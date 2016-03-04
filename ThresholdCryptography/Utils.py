@@ -2,9 +2,15 @@ import json
 import base64
 import urllib.request
 
+# gmpy2 needs to be installed: https://code.google.com/archive/p/gmpy/wikis/InstallingGmpy2.wiki
+# makes mod_inv computation much faster
+gmpy2_installed = True
+try:
+    import gmpy2
+except ImportError:
+    gmpy2_installed = False
 
 BB_API_ERROR = "error"  # TODO: define error message from BB
-
 
 def bits(n):
     """Generates binary digits of n, starting from least significant bit.
@@ -62,16 +68,26 @@ def extended_gcd(a, p):
     return lastremainder, lastx * (-1 if a < 0 else 1), lasty * (-1 if p < 0 else 1)
 
 
-def mod_inv(a, p):
+def mod_inv_slow(a, p):
     """computes modular inverse of a in field F_p
     from https://rosettacode.org/wiki/Modular_inverse#Python"""
-    # TODO: use gmpy2 library to improve speed if needed: http://stackoverflow.com/a/4801358
     g, x, y = extended_gcd(a, p)
     if g != 1:
         print(a, p)
         raise Exception('modular inverse does not exist')
     else:
         return x % p
+
+
+def mod_inv_fast(a, p):
+    """computes modular inverse of a in field F_p
+    using gmpy2 library"""
+    return int(gmpy2.invert(a, p))
+
+if gmpy2_installed:
+    mod_inv = mod_inv_fast
+else:
+    mod_inv = mod_inv_slow
 
 def list_to_bytes(l, int_length = 0):
     """returns bytes object formed from concatenating members of list l
