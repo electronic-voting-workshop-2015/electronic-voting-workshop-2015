@@ -3,11 +3,13 @@ import sys
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 from time import sleep
+import cProfile
 
 from Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list
 
-BB_URL = "http://46.101.148.106"  # the address of the Bulletin Board`
+BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
+BB_URL = "http://10.0.0.12:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
 
@@ -76,10 +78,10 @@ class ECGroupMember:
         p = self.curve.p
 
         if self == g:
-            m = (3 * self.x ** 2 + a) * mod_inv((2 * self.y), p)
+            m = (3 * self.x ** 2 + a) * mod_inv((2 * self.y) % p, p)
             m %= p
         else:
-            m = (self.y - g.y) * mod_inv((self.x - g.x), p)
+            m = (self.y - g.y) * mod_inv((self.x - g.x) % p, p)
             m %= p
 
         xr = (pow(m, 2, p) - self.x - g.x) % p
@@ -89,6 +91,7 @@ class ECGroupMember:
 
     def __pow__(self, n, modulo=None):
         """returns multiplication scalar n"""
+        # TODO: use faster algorithm if needed: https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Point_multiplication
         if n == -1:
             return self.modinv()
         res = self.curve.get_zero_member()
@@ -174,7 +177,7 @@ class ECGroupMember:
 class ThresholdParty:
     """represents a member participating in the decryption process
     n is the number of parties, t is the number of parties required to decrypt
-    sign_key is the private key unique to the party, used for creating certificates
+    sign_key is the private key unique to the party, used for creating certificates (an integer)
     sign_curve is the curve used for signing
     is_phase1 is a boolean value, signifying that the party is in phase1 of the threshold process
     algorithms from: http://moodle.tau.ac.il/pluginfile.php/217242/mod_resource/content/1/Tomer.pdf
@@ -199,11 +202,16 @@ class ThresholdParty:
     def publish_commitment(self):
         """publish the values g^v_i,g^a_i1...,g^a_it to the BB"""
         g = self.voting_curve.generator
-        for coefficient in self.polynomial.coefficients:
-            self.publish_value(g ** coefficient)
+        commitments = [g ** coefficient for coefficient in self.polynomial.coefficients]
+        cert = self.sign(list_to_bytes(commitments))
+        publish_list(commitments, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
+                     url=BB_URL)  # TODO: supply proper arguments
 
     def publish_value(self, value):
-        pass  # TODO:publish the value to the BB
+        """publish commitment to secret value"""
+        cert = self.sign(bytes(value))
+        publish_list(value, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
+                     url=BB_URL)  # TODO: supply proper arguments
 
     def get_commitment(self, j):
         """returns A_j's commitment to coefficients"""
@@ -211,7 +219,7 @@ class ThresholdParty:
         pass
 
     def get_public_key(self, j):
-        """returns A_j's public key"""
+        """returns A_j's public key: g^v_j"""
         # TODO:get public key from the BB
         pass
 
@@ -373,7 +381,8 @@ class ThresholdParty:
 
 
 class Polynomial:
-    """represents a degree t polynomial in the group F_order as a list of t+1 coefficients"""
+    """represents a degree t polynomial in the group F_order as a list of t+1 coefficients
+    P(x) = coefficients[0]*x^0 + coefficients[1]*x^1 +..."""
 
     def __init__(self, coefficients, order):
         self.coefficients = coefficients
@@ -381,7 +390,7 @@ class Polynomial:
 
     def value_at(self, x):
         """returns the value of the polynomial at point x"""
-        return sum(c[1] * x ** c[0] for c in enumerate(self.coefficients)) % self.order
+        return sum(coefficient * x ** exponent for exponent, coefficient in enumerate(self.coefficients)) % self.order
 
 
 class ZKP:
@@ -403,6 +412,17 @@ class ZKP:
         first_part = list_to_bytes([self.c, self.h, self.w, self.u, self.v])
         second_part = list_to_bytes([self.cc, self.z], self.c.curve.int_length)
         return first_part + second_part
+
+    @staticmethod
+    def from_bytes(data, curve):
+        int_length = curve.p.bit_length() // 8
+        if len(data) != 12 * int_length:
+            raise Exception('binary data does not match curve parameters')
+        first_part = data[0:5 * 2 * int_length]  # 5 group members, each one is size 2*int_length
+        second_part = data[5 * 2 * int_length:]
+        c, h, w, u, v = bytes_to_list(first_part, curve=curve)
+        cc, z = bytes_to_list(second_part, member_length=int_length)
+        return ZKP(c, h, w, u, v, cc, z)
 
 
 def zkp_hash_func(g, c, h, w, u, v):
@@ -440,7 +460,7 @@ def validate_zkp(hash_func, g, proof):
     v = proof.v
     cc = proof.cc
     z = proof.z
-    return cc == hash_func(g, c, h, w, u, v) and u * h**cc == g**z and v * w**cc == h**z
+    return cc == hash_func(g, c, h, w, u, v) and u * h ** cc == g ** z and v * w ** cc == h ** z
 
 
 # recommended NIST elliptic curves: http://csrc.nist.gov/groups/ST/toolkit/documents/dss/NISTReCur.pdf
@@ -512,7 +532,7 @@ def get_zkps_local():
     """returns all the zkps from the BB.
     output is a list of lists , one sub-list for every vote cast.
     each sub-list contains N tuples, one for every party
-    the tuple contains the ZKP object as the first member and the party id as the second"""
+    the tuple contains the party id as the first object and ZKP as the second"""
     # TODO: add to JSON API
     pass
 
@@ -528,8 +548,8 @@ def phase1():
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
     party_id = int(sys.argv[2])
-    sign_key = get_sign_key()  # TODO: write functions that read from public configuration files
-    sign_curve = get_sign_curve()
+    sign_key = get_sign_key()  # TODO: write function that reads from private configuration file
+    sign_curve = get_sign_curve()  # TODO: write functions that read from public configuration files
     party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=True)
 
     print("publishing commitment")
@@ -589,42 +609,38 @@ def phase3():
     g = curve.generator
     decrypted_votes = []  # a list of tuples: (vote_id, vote)
 
-    for vote_list in enumerate(zkps):
+    for vote_list in zkps:
         A = []  # the list of valid zkps
 
-        for zkp in vote_list[1]:
+        for party_id, proof in vote_list:
             if len(A) == T:  # we got t valid parties, we can now decrypt the message
                 break
-            proof = zkp[0]
             if validate_zkp(ZKP_HASH_FUNCTION, g, proof):
-                A.append(zkp)
+                A.append(proof)
         if len(A) < T:
             print("Fatal Error: could not decrypt a vote: not enough parties provided the required data")
             sys.exit()
 
-        party_ids = [zkp[1] for zkp in A]
-        commitments = [zkp[0].w for zkp in A]
-        vote_id = vote_list[0]
+        party_ids = [zkp[0] for zkp in A]
+        commitments = [zkp[1].w for zkp in A]
+        vote_id = vote_list[0]  # TODO: how to get the vote_id?
         d = votes[vote_id]  # the encrypted vote
         decrypted_vote = decrypt_vote(curve, party_ids, commitments, d)
         decrypted_votes.append((vote_id, decrypted_vote))
 
-    #  TODO: process decrypted_votes and print the results of the election
+        #  TODO: process decrypted_votes and print the results of the election
 
 
 def test():
-    g1 = curve_256.get_random_member()
-    g2 = curve_256.get_random_member()
-    g3 = g1 * g2
-    g4 = g1 ** 2
-    print(ECGroupMember.verify_point(g1.x, g1.y, curve_256))
-    print(ECGroupMember.verify_point(g2.x, g2.y, curve_256))
-    print(ECGroupMember.verify_point(g3.x, g3.y, curve_256))
-    print(ECGroupMember.verify_point(g3.x, g3.y, curve_256))
-    print(g1)
-    print(g2)
-    print(g3)
-    print(g4)
+    sign_curve = VOTING_CURVE
+    sign_keys = [sign_curve.get_random_exponent() for _ in range(N)]
+    parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i], sign_curve, is_phase1=True) for i
+               in range(N)]
+
+    for party in parties:
+        party.publish_commitment()
+    for party in parties:
+        party.send_values()
 
 
 def main():
@@ -642,4 +658,5 @@ def main():
 
 if __name__ == "__main__":
     # execute only if run as a script
+    #cProfile.run('main()')
     main()
