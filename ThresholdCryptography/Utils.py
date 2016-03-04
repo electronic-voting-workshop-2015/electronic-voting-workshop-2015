@@ -52,10 +52,26 @@ def product(l, p=0):
     return res
 
 
-def mod_inv(a, p):
-    """computes modular inverse of a in field F_p"""
-    return pow(a, p-2, p)  # mod inverse: http://stackoverflow.com/a/4798776
+def extended_gcd(a, p):
+    lastremainder, remainder = abs(a), abs(p)
+    x, lastx, y, lasty = 0, 1, 1, 0
+    while remainder:
+        lastremainder, (quotient, remainder) = remainder, divmod(lastremainder, remainder)
+        x, lastx = lastx - quotient*x, x
+        y, lasty = lasty - quotient*y, y
+    return lastremainder, lastx * (-1 if a < 0 else 1), lasty * (-1 if p < 0 else 1)
 
+
+def mod_inv(a, p):
+    """computes modular inverse of a in field F_p
+    from https://rosettacode.org/wiki/Modular_inverse#Python"""
+    # TODO: use gmpy2 library to improve speed if needed: http://stackoverflow.com/a/4801358
+    g, x, y = extended_gcd(a, p)
+    if g != 1:
+        print(a, p)
+        raise Exception('modular inverse does not exist')
+    else:
+        return x % p
 
 def list_to_bytes(l, int_length = 0):
     """returns bytes object formed from concatenating members of list l
@@ -64,23 +80,27 @@ def list_to_bytes(l, int_length = 0):
     for i in l:
         if isinstance(i, int):
             res += i.to_bytes(int_length, 'little')
-        else:  # object is ECGroupMember or zkp
+        else:  # object is ECGroupMember or ZKP
             res += bytes(i)
     return res
 
 
-def bytes_to_list(b, member_length=0, curve=None):
+def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
     """member length is the size in bytes of each member in the list
-    list is either of ints (curve=None) or of ECGroupMembers (member_length=None)"""
-    from Crypto import ECGroupMember
+    list is either of ints (curve=None) or of ECGroupMembers (member_length=None), or ZKPs (is_zkp=True)"""
+    from Crypto import ECGroupMember, ZKP
     res = []
+    if is_zkp:
+        member_length = 12 * curve.p.bit_length // 8
     if member_length == 0:  #
         member_length = 2 * curve.p.bit_length() // 8
     for i in split_every(member_length, b):
-        if curve is None:
+        if curve is None:  # object in integer
             res.append(int.from_bytes(i, 'little'))
-        else:  # object is ECGroupMember
+        elif not is_zkp:  # object is ECGroupMember
             res.append(ECGroupMember.from_bytes(i, curve))
+        else:  # object is ZKP
+            res.append(ZKP.from_bytes(i, curve))
     return res
 
 
@@ -99,8 +119,8 @@ def list_to_base64(l, int_length):
     return bytes_to_base64(list_to_bytes(l, int_length))
 
 
-def base64_to_list(b, member_length=0, curve=None):
-    return bytes_to_list(base64_to_bytes(b), member_length, curve)
+def base64_to_list(b, member_length=0, curve=None, is_zkp=False):
+    return bytes_to_list(base64_to_bytes(b), member_length, curve, is_zkp)
 
 
 def publish_list(list_data, int_length, sender_id, certificate, table_id, recipient_id, url):
@@ -109,7 +129,8 @@ def publish_list(list_data, int_length, sender_id, certificate, table_id, recipi
     certificate is a bytes object"""
     base64_data = list_to_base64(list_data, int_length)
     base64_certificate = bytes_to_base64(certificate)
-    json_data = json.dumps([sender_id, base64_data, base64_certificate, table_id, recipient_id])
+    json_data = json.dumps([sender_id, base64_data, base64_certificate, table_id, recipient_id]).encode('utf-8')
+    json_encoded_data = urllib.request.urlparse(json_data)
     req = urllib.request.Request(url, json_data, {'Content-Type': 'application/json'})
     with urllib.request.urlopen(req) as response:
         read_value = response.read()  # read_value is a bytes object
