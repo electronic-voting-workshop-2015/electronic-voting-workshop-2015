@@ -63,7 +63,7 @@ public class VotingBoothImp implements VotingBooth {
 		// encrypt the vote
 		for (Race race : curVote) {
 			for (String name : race.getVotesArray()) {
-				encryptResult = Parameters.cryptoClient.encryptGroupMember(
+				encryptResult = ((ECClientCryptographyModule)(Parameters.cryptoClient)).encryptGroupMember(
 						Parameters.publicKey,
 						Parameters.candidatesMap.get(name));
 				char[] cipherChars = new char[encryptResult[0].length];
@@ -75,18 +75,18 @@ public class VotingBoothImp implements VotingBooth {
 					randomnessChars[i] = (char)encryptResult[1][i];
 				}
 				byte[] groupElem = Parameters.candidatesMap.get(name);
-				char[] groupElemToCharArr = new char[groupElem.length]
+				char[] groupElemToCharArr = new char[groupElem.length];
 				for (int i = 0; i < groupElem.length; i++) {
 					groupElemToCharArr[i] = (char)groupElem[i];
 				}
 				sbCiphertext.append(cipherChars);
-				sbRandomness.append(groupElemToCharArr)
+				sbRandomness.append(groupElemToCharArr);
 				sbRandomness.append(randomnessChars); 
-				// the opposite operation (for those who read the QR) is:
-				// char[] ch = strFromQR.toCharArray();
-				// and then cast it element by element to byte
-			}
-		}
+						// the opposite operation (for those who read the QR) is:
+						// char[] ch = strFromQR.toCharArray();
+						// and then cast it element by element to byte
+					}
+				}
 		sbCiphertext.append(addSignatureAndTimeStamp(machineNum)); // add machine signature and timestamp to ciphertext
 		ciphertext = sbCiphertext.toString();
 		auditRandomness = sbRandomness.toString();
