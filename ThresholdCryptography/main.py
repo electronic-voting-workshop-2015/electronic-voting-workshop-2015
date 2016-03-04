@@ -2,7 +2,6 @@ from ThresholdCryptography.Crypto.Crypto import test, phase1, phase2, phase3
 import sys
 import cProfile
 
-
 def main():
     if len(sys.argv) < 2:
         print("not enough arguments")
