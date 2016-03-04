@@ -425,6 +425,34 @@ class ZKP:
         return ZKP(c, h, w, u, v, cc, z)
 
 
+def verify_certificate(publicKey, encrypted_message, certificate, sign_curve):
+    int_length = sign_curve.int_length
+    l = bytes_to_list(certificate, int_length)
+    r = l[0]
+    s = l[1]
+    print(r)
+    print(s)
+    if r < 1 or r > sign_curve.order:
+        return False
+    if s < 1 or s > sign_curve.order:
+        return False
+    m = hashlib.sha256()
+    m.update(encrypted_message)
+    e = m.digest()
+    ln = sign_curve.order.bit_length()
+    n = sign_curve.order
+    z = e[0:ln]
+    z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
+    w = mod_inv(s, n)
+    u1 = (z * w) % n
+    u2 = (w * r) % n
+    gu1 = sign_curve.get_member(u1)
+    pu2 = publicKey.__pow__(u2)
+    x1y1 = gu1.__mul__(pu2)
+    x1 = x1y1.x
+    return r == x1
+
+
 def zkp_hash_func(g, c, h, w, u, v):
     """hash function used in Zero Knowledge Proof of DLOG Equality
     returns an integer between 1 and G.order"""
@@ -658,5 +686,5 @@ def main():
 
 if __name__ == "__main__":
     # execute only if run as a script
-    #cProfile.run('main()')
-    main()
+    cProfile.run('main()')
+    #main()
