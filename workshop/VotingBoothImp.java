@@ -66,15 +66,21 @@ public class VotingBoothImp implements VotingBooth {
 				encryptResult = Parameters.cryptoClient.encryptGroupMember(
 						Parameters.publicKey,
 						Parameters.candidatesMap.get(name));
-				char[] cipherChars = new char[encryptResult[0]];
-				char[] randomnessChars = new char[encryptResult[1]];
+				char[] cipherChars = new char[encryptResult[0].length];
+				char[] randomnessChars = new char[encryptResult[1].length];
 				for (int i = 0; i < cipherChars.length; i++) {
 					cipherChars[i] = (char)encryptResult[0][i];
 				}
 				for (int i = 0; i < randomnessChars.length; i++) {
 					randomnessChars[i] = (char)encryptResult[1][i];
 				}
+				byte[] groupElem = Parameters.candidatesMap.get(name);
+				char[] groupElemToCharArr = new char[groupElem.length]
+				for (int i = 0; i < groupElem.length; i++) {
+					groupElemToCharArr[i] = (char)groupElem[i];
+				}
 				sbCiphertext.append(cipherChars);
+				sbRandomness.append(groupElemToCharArr)
 				sbRandomness.append(randomnessChars); 
 				// the opposite operation (for those who read the QR) is:
 				// char[] ch = strFromQR.toCharArray();
