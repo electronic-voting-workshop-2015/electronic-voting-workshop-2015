@@ -672,6 +672,9 @@ def test():
 
 
 def main():
+    if len(sys.argv) < 2:
+        print("not enough arguments")
+        sys.exit()
     if sys.argv[1] == "test":
         test()
     elif sys.argv[1] == "phase1":
