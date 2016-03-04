@@ -3,8 +3,8 @@ import sys
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 from time import sleep
-import cProfile
-from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
+
+from ThresholdCryptography.Crypto.Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list
 
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
@@ -670,23 +670,4 @@ def test():
         party.send_values()
 
 
-def main():
-    if len(sys.argv) < 2:
-        print("not enough arguments")
-        sys.exit()
-    if sys.argv[1] == "test":
-        test()
-    elif sys.argv[1] == "phase1":
-        phase1()
-    elif sys.argv[1] == "phase2":
-        phase2()
-    elif sys.argv[1] == "phase3":
-        phase3()
-    else:
-        print("Error: argument should be one of: phase1, phase2, phase3, test")
 
-
-if __name__ == "__main__":
-    # execute only if run as a script
-    cProfile.run('main()')
-    #main()
