@@ -5,7 +5,7 @@ from random import SystemRandom
 from time import sleep
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
-    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json, base64_to_bytes
+    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json
 
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
 BB_URL = "http://10.0.0.12:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
@@ -341,6 +341,7 @@ class ThresholdParty:
 
     def publish_zkp(self, proof):
         cert = self.sign(bytes(proof))
+        dictionary = None
         publish_list(proof, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
                      url=BB_URL)  # TODO: supply proper arguments
 
@@ -580,6 +581,27 @@ def get_voting_curve_local():
     pass
 
 
+def get_commitments_local():
+    """returns a list of list, each sub-list is a list of commitments"""
+    # TODO: add to JSON API
+    pass
+
+
+def publish_voting_public_key_local(public_key):
+    """updates the voting public key on the BB
+    requires a certificate"""
+    # TODO: add to JSON API
+    pass
+
+
+def compute_public_key():
+    """step 4 in threshold workflow - computes the voting public key from the commitments
+    runs on the Bulletin Board"""
+    commitments = get_commitments_local()
+    public_key = product(coefficients[0] for coefficients in commitments)
+    publish_voting_public_key_local(public_key)
+
+
 def phase1():
     """steps 1-8 in threshold workflow - voting can only begin after this phase ends successfully
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
@@ -595,6 +617,7 @@ def phase1():
         if get_public_key_confirmation():
             break
         sleep(SLEEP_TIME)
+        print('.')  # gives an indication to user that work is being done
 
     print("sending secret values to other parties")
     party.send_values()
@@ -602,6 +625,7 @@ def phase1():
         if get_sent_messages_confirmation():
             break
         sleep(SLEEP_TIME)
+        print('.')
 
     print("validating messages from other parties")
     if not party.validate_all_messages():
