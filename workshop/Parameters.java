@@ -3,6 +3,7 @@ package workshop;
 import ECCryptography.ECClientCryptographyModule;
 import java.util.*;
 import org.json.*;
+import java.math.BigInteger;
 
 /**
  * The fixed parameters file, to be edited by all teams The initial system
