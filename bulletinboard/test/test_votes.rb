@@ -43,7 +43,7 @@ class VotesAPITest < MiniTest::Unit::TestCase
   end
 
 	def test_zkp
-    
+    	
 		get "/getBBVotes/-1"
 		allVotes = JSON.parse last_response.body
 
@@ -56,7 +56,7 @@ class VotesAPITest < MiniTest::Unit::TestCase
 		get "/getZKP"
 		assert last_response.ok?
 		allZKP = JSON.parse last_response.body
-#		puts allZKP
+		assert_equal allVotes.count, allZKP.count
 
   	end
 end
