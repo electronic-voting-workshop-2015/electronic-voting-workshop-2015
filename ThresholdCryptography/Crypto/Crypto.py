@@ -6,7 +6,7 @@ from time import sleep
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json, bytes_to_base64, \
-    list_to_base64
+    list_to_base64, base64_to_list
 
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
 BB_URL = "http://10.0.0.12:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
@@ -100,7 +100,6 @@ class ECGroupMember:
 
     def __pow__(self, n, modulo=None):
         """returns multiplication scalar n"""
-        # TODO: use faster algorithm if needed: https://en.wikipedia.org/wiki/Elliptic_curve_point_multiplication#Point_multiplication
         if n == -1:
             return self.modinv()
         res = self.curve.get_zero_member()
@@ -370,7 +369,7 @@ class ThresholdParty:
         """generate a zkp for every vote.
         votes is a list of dictionaries"""
         for vote in votes:
-            c = None  # TODO: extract c value from dictionary
+            c, d = base64_to_list(vote['vote_value'], curve=self.voting_curve)
             proof = self.generate_zkp(c)
             self.publish_zkp(proof, vote)
 
@@ -501,7 +500,6 @@ def decrypt_vote(curve, party_ids, commitments, d):
         party_ids is a list of t integers, commitments is a list of t commitments
         d is part of the cipher text - (c,d)
         performed after validating the ZKPs"""
-    # TODO:this function should be computed on the BB
     q = curve.order
     lambda_list = []
     for j in party_ids:
@@ -513,7 +511,6 @@ def decrypt_vote(curve, party_ids, commitments, d):
 
 def validate_zkp(hash_func, g, proof):
     """returns True iff the zkp is valid"""
-    # TODO:this function should be computed on the BB
     c = proof.c
     h = proof.h
     w = proof.w
