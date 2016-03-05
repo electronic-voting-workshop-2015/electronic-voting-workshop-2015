@@ -71,11 +71,8 @@ public class VotingBoothImp implements VotingBooth {
 			for (String name : race.getVotesArray()) {
 				encryptResult = ((ECClientCryptographyModule) (Parameters.cryptoClient))
 						.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
-				sbCiphertext.append(new String(encryptResult[0]));
-				sbRandomness.append(new String(Parameters.candidateMap.get(name)));
-				sbRandomness.append(new String(encryptResult[1]));
 				
-				/*char[] cipherChars = new char[encryptResult[0].length];
+				char[] cipherChars = new char[encryptResult[0].length];
 				char[] randomnessChars = new char[encryptResult[1].length];
 				for (int i = 0; i < cipherChars.length; i++) {
 					cipherChars[i] = (char) encryptResult[0][i];
@@ -90,7 +87,7 @@ public class VotingBoothImp implements VotingBooth {
 				}
 				sbCiphertext.append(cipherChars);
 				sbRandomness.append(groupElemToCharArr);
-				sbRandomness.append(randomnessChars);*/
+				sbRandomness.append(randomnessChars);
 				
 				// the opposite operation (for those who read the QR) is:
 				// char[] ch = strFromQR.toCharArray();
