@@ -154,6 +154,38 @@ def publish_list(list_data, int_length, sender_id, certificate, table_id, recipi
         return None
 
 
+def publish_dict(dict, url):
+    # TODO test
+    """
+    :param dict: the dictionary to publish.
+    :param url: the url to publish to.
+    :return: TODO
+    """
+    req = urllib.request.Request(url)
+    req.add_header('Content-Type', 'application/json; charset=utf-8')
+    jsondata = json.dumps(dict)
+    jsondataasbytes = jsondata.encode('utf-8')   # needs to be bytes
+    req.add_header('Content-Length', len(jsondataasbytes))
+    response = urllib.request.urlopen(req, jsondataasbytes)
+
+
+def get_bb_data(url):
+    # TODO test
+    response = urllib.urlopen(url)
+    data = json.loads(response.read())
+    return data
+
+
+def get_value_from_json(json_data, name):
+    # TODO test
+    """
+    :param json_data: json data
+    :param name: string name of the field
+    :return:
+    """
+    return json_data[name]
+
+
 def mod_sqrt(a, p):
     """ Find a quadratic residue (mod p) of 'a'. p
         must be an odd prime.
