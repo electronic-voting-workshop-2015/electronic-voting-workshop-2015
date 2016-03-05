@@ -12,7 +12,7 @@ public class Parameters {
 	// The group we use for encrypting the votes
 	public static Group ourGroup;
 	// The cryptography module we use
-	public static ECClientCryptographyModule cryptoClient;
+	public static ClientCryptographyModule cryptoClient;
 	// The public key for the encryption
 	public static byte[] publicKey;
 	// The cipher-text QR version
@@ -56,7 +56,7 @@ public class Parameters {
 		return result;
 	}
 
-	public static void setParameters(Group ourGroup1, ECClientCryptographyModule cryptoClient1, byte[] publicKey1, int topQRLevel1,
+	public static void setParameters(Group ourGroup1, ClientCryptographyModule cryptoClient1, byte[] publicKey1, int topQRLevel1,
 			int bottomQRLevel1, HashSet<String> candidatesNames1,
 			ArrayList<RaceProperties> racesProperties1, int timeStampLevel1, int numOfMachines1) {
 		ourGroup = ourGroup1;
@@ -100,5 +100,34 @@ public class Parameters {
 				return false;
 		}
 		return true;
+	}
+	
+		/**
+	 * Parsing the initialization JSON into the main array which defines the
+	 * election system
+	 * 
+	 * @param jsonRepr
+	 * @return
+	 * @throws JSONException
+	 */
+	public static ArrayList<RaceProperties> parseInitJSON(JSONArray jsonRepr) throws JSONException {
+		ArrayList<RaceProperties> res = new ArrayList<RaceProperties>();
+		for (int i = 0; i < jsonRepr.length(); i++) {
+			JSONObject curElement = jsonRepr.getJSONObject(i);
+			String name = curElement.getString("position");
+			int slotsNum = curElement.getInt("slots");
+			boolean order = false;
+			if (curElement.getInt("type") == 3) {
+				order = true;
+			}
+			JSONArray names = curElement.getJSONArray("candidatesPool");
+			Set<String> namesPool = new HashSet<String>();
+			for (int j = 0; j < names.length(); j++) {
+				namesPool.add(names.getString(j));
+			}
+			RaceProperties cur = new RaceProperties(namesPool, name, slotsNum, order);
+			res.add(cur);
+		}
+		return res;
 	}
 }
