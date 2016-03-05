@@ -3,8 +3,14 @@ require 'models/ZKP'
 
 post '/sendVote' do
 
-  #todo: verify signature. need to have table for public keys
-  
+=begin
+	_party_id = 7 + params['ballot_box'].to_i
+	_signature = params['signature']
+	get "/getPublicKey", party_id: _party_id
+    publicKey = JSON.parse last_response.body
+	verify = `python main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{params['votes']}" "#{_signature}"`
+=end
+  #if answer from verify is true then
   for index in 0 ... params['votes'].size
     create = Votes.create(vote_value: params['votes'].fetch(index)['vote_value'],
                           ballot_box: params['ballot_box'].to_i,
@@ -35,7 +41,12 @@ post '/publishZKP' do
 		_party_id = params['party_id'].to_i
 		_zkp = params['zkp']
 
-		#todo: verify signature. need to have table for public keys
+=begin
+	get "/getPublicKey", party_id: _party_id
+    publicKey = JSON.parse last_response.body
+	verify = `python main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{params['zkp']}" "#{_signature}"`
+=end
+  #if answer from verify is true then
 	
 		voteZkp = ZKP.find_by!(vote_id: _vote_id, race_id: _race_id, party_id: _party_id)
 		raise "ZKP already exists for vote_id #{_vote_id}, race_id #{_race_id}, party_id #{_party_id}, zkp: #{_zkp}"
