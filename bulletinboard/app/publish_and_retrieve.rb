@@ -1,6 +1,5 @@
 require 'models/commitment'
 require 'models/message'
-require 'pry'
 
 def publish_and_retrieve( model, publish_url, retrieve_url )
     post publish_url do
