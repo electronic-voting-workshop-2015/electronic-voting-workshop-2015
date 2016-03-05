@@ -3,6 +3,7 @@ package workshop;
 import ECCryptography.ECClientCryptographyModule;
 import java.util.*;
 import org.json.*;
+import java.math.BigInteger;
 
 /**
  * The fixed parameters file, to be edited by all teams The initial system
@@ -23,7 +24,7 @@ public class Parameters {
 	// number of voting machines
 	public static int numOfMachines;
 	// maps machine to its signature
-	public static HashMap<Integer,byte[]> mapMachineToSignature;
+	public static HashMap<Integer, byte[]> mapMachineToSignature;
 	// Set of the names of all the candidates in these elections - for the
 	// mapping.
 	public static HashSet<String> candidatesNames;
@@ -42,8 +43,7 @@ public class Parameters {
 	 * 
 	 * @param candidates
 	 */
-	public static HashMap<String, byte[]> mapCandidates(
-			HashSet<String> candidates) {
+	private static HashMap<String, byte[]> mapCandidates(HashSet<String> candidates) {
 		HashMap<String, byte[]> result = new HashMap<String, byte[]>();
 		HashMap<String, Integer> tempMap = new HashMap<String, Integer>();
 		int n = 0;
@@ -57,30 +57,48 @@ public class Parameters {
 		return result;
 	}
 
-	public static void setParameters(Group ourGroup1, ClientCryptographyModule cryptoClient1, byte[] publicKey1, int topQRLevel1,
-			int bottomQRLevel1, HashSet<String> candidatesNames1,
-			ArrayList<RaceProperties> racesProperties1, int timeStampLevel1, int numOfMachines1) {
-		ourGroup = ourGroup1;
-		cryptoClient = cryptoClient1;
-		publicKey = publicKey1;
-		topQRLevel = topQRLevel1;
-		bottomQRLevel = bottomQRLevel1;
-		candidatesNames = candidatesNames1;
-		candidatesMap = mapCandidates(candidatesNames);
-		racesProperties = racesProperties1;
-		timeStampLevel = timeStampLevel1;
-		numOfMachines = numOfMachines1;
-		mapMachineToSignature = setMachinesSignatures();
+	private static void setParameters(String _order, String _ElementSizeInBytes, String _a, String _b, String _p,
+			String _generator_X, String _generator_Y, int _numOfMachines, ArrayList<RaceProperties> _racesProperties,
+			int _timeStampLevel) {
+		numOfMachines = _numOfMachines;
+		timeStampLevel = _timeStampLevel;
+		racesProperties = _racesProperties;
+		BigInteger a = new BigInteger(_a);
+		BigInteger b = new BigInteger(_b);
+		BigInteger p = new BigInteger(_p);
+		EllipticCurve curve = new EllipticCurve(a, b, p);
+		BigInteger gx = new BigInteger(_generator_X);
+	        BigInteger gy = new BigInteger(_generator_Y);
+	        ECPoint g = new ECPoint(curve, gx, gy);
+	        int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
+	        BigInteger order = new BigInteger(_order);
+	        ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(sizeInBytes), sizeInBytes, order.toByteArray());
+	        cryptoClient = new ECClientCryptographyModule((ECGroup)ourGroup, (ECGroup)ourGroup);
+	        candidatesNames = new HashSet<>();
+	        for (RaceProperties race : racesProperties){
+	        	for (String name : race.getPossibleCandidates()){
+	        		candidatesNames.add(name);
+	        	}
+	        }
+	        candidatesMap = mapCandidates(candidatesNames);
+	        mapMachineToSignature = setMachinesSignatures();
+	        
+	        // instead of "5" there will be the private key!!! TODO
+	        publicKey = ourGroup.getElement(new BigInteger("5").toByteArray()); 
 	}
-	
-	public static HashMap<Integer,byte[]> setMachinesSignatures() {
-		HashMap<Integer,byte[]> map = new HashMap<>();
+
+
+
+	private static HashMap<Integer, byte[]> setMachinesSignatures() {
+		HashMap<Integer, byte[]> map = new HashMap<>();
 		Random rn = new Random();
-		boolean validSignature = true; // valid that each machine's signature is different from the previous ones
+		boolean validSignature = true; // valid that each machine's signature is
+										// different from the previous ones
 		for (int i = 1; i <= numOfMachines; i++) {
 			byte[] signature = new byte[ourGroup.getElementSize()];
 			rn.nextBytes(signature);
-			// loop to check that the signature of machine #i is different from all the previous machines' signatures
+			// loop to check that the signature of machine #i is different from
+			// all the previous machines' signatures
 			for (int j = 1; j < i; j++) {
 				if (isSameArray(signature, map.get(j))) {
 					validSignature = false;
@@ -94,16 +112,16 @@ public class Parameters {
 		}
 		return map;
 	}
-	
-	public static boolean isSameArray(byte[] arr1, byte[] arr2) {
+
+	private static boolean isSameArray(byte[] arr1, byte[] arr2) {
 		for (int i = 0; i < arr1.length; i++) {
 			if (arr1[i] != arr2[i])
 				return false;
 		}
 		return true;
 	}
-	
-		/**
+
+	/**
 	 * Parsing the initialization JSON into the main array which defines the
 	 * election system
 	 * 
@@ -131,4 +149,3 @@ public class Parameters {
 		}
 		return res;
 	}
-}
