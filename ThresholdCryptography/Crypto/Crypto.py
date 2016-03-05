@@ -15,6 +15,7 @@ PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private si
 PRIVATE_KEYS_PATH = "/" # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
 PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
+GET_SECRET_COMMITMENT_TABLE = "/getSecretCommitment"
 PUBLISH_MESSAGE_TABLE = "/publishMessage"
 PUBLISH_VOTING_PUBLIC_KEY_TABLE = "/publishVotingPublicKey"
 SEND_VOTE_TABLE = "/sendVote"
@@ -22,6 +23,7 @@ GET_VOTES_TABLE = "/getBBVotes"
 PUBLISH_ZKP_TABLE = "/publishZKP"
 GET_ZKP_TABLE = "/getZKP"
 GET_PUBLIC_KEY_TABLE = "/getPublicKey"
+GET_COMMITMENT_TABLE = "/getCommitment"
 
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
@@ -226,9 +228,11 @@ class ThresholdParty:
         dictionary = {'party_id' : self.party_id, 'value' : base64_value, 'signature' : base64_cert}  # TODO: fix dictionary
         publish_dict(dictionary, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
-    def get_commitment(self, j):
-        """returns A_j's commitment to coefficients"""
+    def get_commitments(self):
+        """returns all commitment to coefficients"""
         # TODO:get commitment from BB
+        json_data = get_bb_data(BB_URL + GET_COMMITMENT_TABLE)
+        # TODO: convert json_data to list of lists
         pass
 
     def get_public_key(self, j):
@@ -302,12 +306,13 @@ class ThresholdParty:
         agree with their commitments. Also computes and stores the secret value,
         and publishes commitment to secret value"""
         messages = []
+        commitments = self.get_commitments()
         all_valid = True  # flag signifies all messages agree with commitments
         for j in range(self.n):
             if j == self.party_id:
                 continue
             message = self.get_message(j)
-            commitment = self.get_commitment(j)
+            commitment = commitments[j]  # TODO: extract commitment from dictionary
             if self.validate_message(j, message, commitment):
                 messages.append(message)
             else:
