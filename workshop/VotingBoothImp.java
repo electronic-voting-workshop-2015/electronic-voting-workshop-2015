@@ -72,26 +72,13 @@ public class VotingBoothImp implements VotingBooth {
 				encryptResult = ((ECClientCryptographyModule) (Parameters.cryptoClient))
 						.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
 				
-				char[] cipherChars = new char[encryptResult[0].length];
-				char[] randomnessChars = new char[encryptResult[1].length];
-				for (int i = 0; i < cipherChars.length; i++) {
-					cipherChars[i] = (char) encryptResult[0][i];
-				}
-				for (int i = 0; i < randomnessChars.length; i++) {
-					randomnessChars[i] = (char) encryptResult[1][i];
-				}
-				byte[] groupElem = Parameters.candidatesMap.get(name);
-				char[] groupElemToCharArr = new char[groupElem.length];
-				for (int i = 0; i < groupElem.length; i++) {
-					groupElemToCharArr[i] = (char) groupElem[i];
-				}
-				sbCiphertext.append(cipherChars);
-				sbRandomness.append(groupElemToCharArr);
-				sbRandomness.append(randomnessChars);
+				sbCiphertext.append(new String(encryptResult[0], "ISO-8859-1"));
+				sbRandomness.append(new String(groupElemToCharArr, "ISO-8859-1"));
+				sbRandomness.append(new String(encryptResult[1], "ISO-8859-1"));
 				
 				// the opposite operation (for those who read the QR) is:
-				// char[] ch = strFromQR.toCharArray();
-				// and then cast it element by element to byte
+				// byte[] arr = str.getBytes("ISO-8859-1");
+			
 			}
 		}
 		sbCiphertext.append(addSignatureAndTimeStamp(machineNum)); // add
@@ -114,7 +101,7 @@ public class VotingBoothImp implements VotingBooth {
 	 *            state. otherwise, terminates the voting booth state.
 	 */
 	public void audit(boolean isAudit) {
-		// TODO Auto-generated method stub
+		
 	}
 
 	/**
