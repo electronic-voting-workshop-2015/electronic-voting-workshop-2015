@@ -12,7 +12,7 @@ class PublishRetrieveAPITest < MiniTest::Unit::TestCase
     party_id = randomString
     signature = randomString
     
-    [ Commitment, Message ].each do |model|
+    [ Commitment, Message, Complaint ].each do |model|
         post "/publish#{model}", party_id: party_id, singature: signature, content: { numbers: ["5", "6"], names: ["Yosi", "Haim"] }
         assert last_response.ok?
         post "/publish#{model}", party_id: party_id, signature: signature, content: { numbers: ["7", "8"], faces: ["nice", "angry"] }
