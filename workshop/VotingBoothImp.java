@@ -101,7 +101,14 @@ public class VotingBoothImp implements VotingBooth {
 	 *            state. otherwise, terminates the voting booth state.
 	 */
 	public void audit(boolean isAudit) {
+		if (!isAudit){
+			return;
+		}
+		// Create the top QR
+		QRGenerator qrGenerator = new QRGenerator(topQR, bottomQR);
+		File auditQr = qrGenerator.createQRImage(auditRandomness, true);
 		
+		printAudit(auditQr); // print the ballot
 	}
 
 	/**
