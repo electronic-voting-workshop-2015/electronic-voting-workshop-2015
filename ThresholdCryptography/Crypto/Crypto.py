@@ -11,7 +11,7 @@ BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin 
 BB_URL = "http://10.0.0.12:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
-
+PRIVATE_KEYS_PATH = "/" # The paths were the private keys will be saved on the server when generated.
 
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
@@ -433,8 +433,8 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     """
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
-    publicKey = ECGroupMember(curve_256, public_key_first, public_key_second)
-    sign_curve = curve_256
+    publicKey = ECGroupMember(VOTING_CURVE, public_key_first, public_key_second)
+    sign_curve = VOTING_CURVE
     int_length = sign_curve.int_length
     l = bytes_to_list(certificate, int_length)
     r = l[0]
@@ -666,6 +666,20 @@ def phase3():
         decrypted_votes.append((vote_id, decrypted_vote))
 
         #  TODO: process decrypted_votes and print the results of the election
+
+
+def generate_keys(party_id):
+    """ generates a private key and saves it to a file. publishes public key to BB.
+    """
+    rng = SystemRandom()
+    private_key = rng.randint(2, VOTING_CURVE.order)
+    public_key = VOTING_CURVE.get_member(private_key)
+    data = dict(party_id=party_id, first=public_key.x, second=public_key.y)
+    publish_dict(data, "http://localhost:4567/getPublicKey")
+    filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
+    f = open(filename, 'w')
+    f.write(str(private_key))
+    f.close()
 
 
 def test():

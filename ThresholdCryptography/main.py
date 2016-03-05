@@ -1,4 +1,4 @@
-from Crypto.Crypto import test, phase1, phase2, phase3, verify_certificate  # TODO: fix import error in PyCharm
+from Crypto.Crypto import test, phase1, phase2, phase3, verify_certificate, generate_keys  # TODO: fix import error in PyCharm
 import sys
 import cProfile
 
@@ -15,6 +15,9 @@ def main():
         phase2()
     elif sys.argv[1] == "phase3":
         phase3()
+    elif sys.argv[1] == "generateKeys":
+        party_id = sys.argv[2]
+        generate_keys(party_id)
     elif sys.argv[1] == "verifyCertificate":
         public_key_first = sys.argv[2]
         public_key_second = sys.argv[3]
