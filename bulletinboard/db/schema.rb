@@ -13,10 +13,6 @@
 
 ActiveRecord::Schema.define(version: 20160305171556) do
 
-  create_table "VotingPublicKeys", id: false, force: :cascade do |t|
-    t.binary "content", limit: 65535
-  end
-
   create_table "ZKP", force: :cascade do |t|
     t.integer "vote_id",  limit: 4
     t.integer "party_id", limit: 4
@@ -46,6 +42,10 @@ ActiveRecord::Schema.define(version: 20160305171556) do
     t.integer "ballot_box",    limit: 4,     null: false
     t.integer "serial_number", limit: 4,     null: false
     t.integer "race_id",       limit: 4,     null: false
+  end
+
+  create_table "voting_public_keys", id: false, force: :cascade do |t|
+    t.binary "content", limit: 65535
   end
 
 end
