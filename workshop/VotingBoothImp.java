@@ -36,13 +36,13 @@ public class VotingBoothImp implements VotingBooth {
 	private ArrayList<Race> curVote; // the list of Race objects, representing
 										// the votes of the voter in each race.
 
-	private static final int TOP_QR_SIZE = (int) (60 * java.awt.Toolkit.getDefaultToolkit().getScreenResolution()
+	private final int TOP_QR_SIZE = (int) (60 * java.awt.Toolkit.getDefaultToolkit().getScreenResolution()
 			/ 25.4);
-	private static final int BOTTOM_QR_SIZE = (int) (50 * java.awt.Toolkit.getDefaultToolkit().getScreenResolution()
+	private final int BOTTOM_QR_SIZE = (int) (50 * java.awt.Toolkit.getDefaultToolkit().getScreenResolution()
 			/ 25.4);
-	private static QRProperties topQR = new QRProperties(Parameters.ourGroup.getElementSize(), TOP_QR_SIZE,
+	private QRProperties topQR = new QRProperties(Parameters.ourGroup.getElementSize(), TOP_QR_SIZE,
 			TOP_QR_SIZE); // Valid vote QR properties
-	private static QRProperties bottomQR = new QRProperties(Parameters.ourGroup.getElementSize(), BOTTOM_QR_SIZE,
+	private QRProperties bottomQR = new QRProperties(Parameters.ourGroup.getElementSize(), BOTTOM_QR_SIZE,
 			BOTTOM_QR_SIZE);// Audit QR properties
 
 	/**
@@ -71,7 +71,11 @@ public class VotingBoothImp implements VotingBooth {
 			for (String name : race.getVotesArray()) {
 				encryptResult = ((ECClientCryptographyModule) (Parameters.cryptoClient))
 						.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
-				char[] cipherChars = new char[encryptResult[0].length];
+				sbCiphertext.append(new String(encryptResult[0]));
+				sbRandomness.append(new String(Parameters.candidateMap.get(name)));
+				sbRandomness.append(new String(encryptResult[1]));
+				
+				/*char[] cipherChars = new char[encryptResult[0].length];
 				char[] randomnessChars = new char[encryptResult[1].length];
 				for (int i = 0; i < cipherChars.length; i++) {
 					cipherChars[i] = (char) encryptResult[0][i];
@@ -86,19 +90,15 @@ public class VotingBoothImp implements VotingBooth {
 				}
 				sbCiphertext.append(cipherChars);
 				sbRandomness.append(groupElemToCharArr);
-				sbRandomness.append(randomnessChars);
+				sbRandomness.append(randomnessChars);*/
+				
 				// the opposite operation (for those who read the QR) is:
 				// char[] ch = strFromQR.toCharArray();
 				// and then cast it element by element to byte
 			}
 		}
 		sbCiphertext.append(addSignatureAndTimeStamp(machineNum)); // add
-																	// machine
-																	// signature
-																	// and
-																	// timestamp
-																	// to
-																	// ciphertext
+						// machine signature and timestamp to ciphertext
 		ciphertext = sbCiphertext.toString();
 		auditRandomness = sbRandomness.toString();
 
