@@ -14,6 +14,9 @@ SECRET_FILE = "secret.txt"  # the local file where each party's secret value is 
 PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
 PRIVATE_KEYS_PATH = "/" # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
+PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
+PUBLISH_MESSAGE_TABLE = "/publishMessage"
+PUBLISH_VOTING_PUBLIC_KEY_TABLE = "/publishVotingPublicKey"
 SEND_VOTE_TABLE = "/sendVote"
 GET_VOTES_TABLE = "/getBBVotes"
 PUBLISH_ZKP_TABLE = "/publishZKP"
@@ -210,19 +213,19 @@ class ThresholdParty:
         g = self.voting_curve.generator
         commitments = [g ** coefficient for coefficient in self.polynomial.coefficients]
         cert = self.sign(list_to_bytes(commitments))
-        publish_list(commitments, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
-                     url=BB_URL)  # TODO: supply proper arguments
+        base64_cert = bytes_to_base64(cert)
+        base64_data = list_to_base64(commitments, int_length=0)
+        dictionary = {"party_id" : self.party_id, "commitment" : base64_data, "signature" : base64_cert}
+        publish_dict(dictionary, BB_URL + PUBLISH_COMMITMENT_TABLE)
 
-    def publish_value(self, value):
+    def publish_secret_commitment(self, value):
         """publish commitment to secret value"""
         cert = self.sign(bytes(value))
         base64_cert = bytes_to_base64(cert)
         int_length = self.voting_curve.order.bit_length // 8
         base64_value = list_to_base64(value, int_length)
-        dictionary = {'value' : base64_value, 'cert' : base64_cert}
-        publish_dict(dictionary, BB_URL + PUBLISH_COMMITMENT_TABLE)
-        publish_list(value, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
-                     url=BB_URL)  # TODO: supply proper arguments
+        dictionary = {'party_id' : self.party_id, 'value' : base64_value, 'signature' : base64_cert}  # TODO: fix dictionary
+        publish_dict(dictionary, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
     def get_commitment(self, j):
         """returns A_j's commitment to coefficients"""
@@ -270,8 +273,11 @@ class ThresholdParty:
         message = self.polynomial.value_at(j)
         public_key = self.get_public_key(j)
         cipher_text = self.encrypt_message(public_key, message)
-        publish_list(cipher_text, 0, self.party_id, certificate=None, table_id=None, recipient_id=j,
-                     url=BB_URL)  # TODO: supply proper arguments
+        cert = self.sign(list_to_bytes(cipher_text, int_length=0))
+        base64_cert = bytes_to_base64(cert)
+        base64_data = list_to_base64(cipher_text, int_length=0)
+        dictionary = {"party_id" : self.party_id, "recipient_id" : j, "message" : base64_data, "signature" : base64_cert}
+        publish_dict(dictionary, BB_URL + PUBLISH_MESSAGE_TABLE)
 
     def send_values(self):
         """send values f_i(j) to all parties A_j"""
@@ -317,7 +323,7 @@ class ThresholdParty:
         self.secret_value = sum(self.polynomial.value_at(x) for x in messages) % self.voting_curve.order
         self.save_secret()
         g = self.voting_curve.generator
-        self.publish_value(g ** self.secret_value)
+        self.publish_secret_commitment(g ** self.secret_value)
         return True
 
     def save_secret(self):
@@ -349,19 +355,24 @@ class ThresholdParty:
         cc = self.hash_func(g, c, h, w, u, v)
         z = (r + c * x) % G.order
         proof = ZKP(c, h, w, u, v, cc, z)
-        self.publish_zkp(proof)
+        return proof
 
-    def publish_zkp(self, proof):
+    def publish_zkp(self, proof, vote):
         cert = self.sign(bytes(proof))
-        dictionary = None
-        publish_list(proof, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
-                     url=BB_URL)  # TODO: supply proper arguments
+        base64_cert = bytes_to_base64(cert)
+        base64_data = list_to_base64(proof, int_length=0)
+        vote_id = vote['vote_id']
+        race_id = vote['race_id']
+        dictionary = {"vote_id" : vote_id, "race_id" : race_id, "party_id" : self.party_id, "zkp" : base64_data, "signature" : base64_cert}
+        publish_dict(dictionary, BB_URL + PUBLISH_ZKP_TABLE)
 
     def generate_all_zkps(self, votes):
         """generate a zkp for every vote.
-        votes is a list of tuples m=(c,d)"""
-        for m in votes:
-            self.generate_zkp(m[0])
+        votes is a list of dictionaries"""
+        for vote in votes:
+            c = None  # TODO: extract c value from dictionary
+            proof = self.generate_zkp(c)
+            self.publish_zkp(proof, vote)
 
     def sign(self, message):
         """ Signs message using ECDSA.
@@ -569,7 +580,7 @@ def get_sent_messages_confirmation():
 
 def get_votes():
     """returns all the votes from the BB.
-    Each vote is a tuple (c,d) of group members"""
+    Each vote is a python dictionary"""
     pass
 
 
@@ -601,9 +612,10 @@ def get_commitments_local():
 
 def publish_voting_public_key_local(public_key):
     """updates the voting public key on the BB
-    requires a certificate"""
-    # TODO: add to JSON API
-    pass
+    does not requires a certificate because it is local to the BB"""
+    base64_data = list_to_base64(public_key, int_length=0)
+    dictionary = {"content" : base64_data}
+    publish_dict(dictionary, BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
 
 
 def compute_public_key():
