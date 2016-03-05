@@ -2,6 +2,7 @@ package workshop;
 
 import ECCryptography.ECClientCryptographyModule;
 import java.util.*;
+import org.json.*;
 
 /**
  * The fixed parameters file, to be edited by all teams The initial system
@@ -78,7 +79,7 @@ public class Parameters {
 		boolean validSignature = true; // valid that each machine's signature is different from the previous ones
 		for (int i = 1; i <= numOfMachines; i++) {
 			byte[] signature = new byte[ourGroup.getElementSize()];
-			new Random().nextBytes(signature);
+			rn.nextBytes(signature);
 			// loop to check that the signature of machine #i is different from all the previous machines' signatures
 			for (int j = 1; j < i; j++) {
 				if (isSameArray(signature, map.get(j))) {
