@@ -1,5 +1,5 @@
-require_relative '../models/votes'
-require_relative '../models/ZKP'
+require 'models/votes'
+require 'models/ZKP'
 
 post '/sendVote' do
 
