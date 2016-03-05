@@ -2,9 +2,9 @@ class CreateZkp < ActiveRecord::Migration
   	def up
 		create_table :ZKP do |t|
 		  t.integer  :vote_id
-		  7.times do |i| # N = number of parties
-		    t.text  :"party_#{i+1}"
-		  end
+		  t.integer  :party_id
+		  t.integer :race_id
+		  t.text :zkp
     	end #ZKP
 	end #up
 
