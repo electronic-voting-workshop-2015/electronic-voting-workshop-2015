@@ -8,7 +8,7 @@ post '/sendVote' do
 	_signature = params['signature']
 	get "/getPublicKey", party_id: _party_id
     publicKey = JSON.parse last_response.body
-	verify = `python main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{params['votes']}" "#{_signature}"`
+	verify = `python ../ThresholdCryptography/main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{params['votes']}" "#{_signature}"`
 =end
   #if answer from verify is true then
   for index in 0 ... params['votes'].size
@@ -44,7 +44,7 @@ post '/publishZKP' do
 =begin
 	get "/getPublicKey", party_id: _party_id
     publicKey = JSON.parse last_response.body
-	verify = `python main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{params['zkp']}" "#{_signature}"`
+	verify = `python ../ThresholdCryptography/main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{params['zkp']}" "#{_signature}"`
 =end
   #if answer from verify is true then
 	
