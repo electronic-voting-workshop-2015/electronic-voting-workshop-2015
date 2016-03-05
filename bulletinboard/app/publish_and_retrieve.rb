@@ -1,7 +1,7 @@
 require 'models/commitment'
 require 'models/message'
 require 'models/complaint'
-require 'models/votingPublicKey'
+require 'models/VotingPublicKey'
 
 def publish_and_retrieve( model, publish_url, retrieve_url )
     post publish_url do
