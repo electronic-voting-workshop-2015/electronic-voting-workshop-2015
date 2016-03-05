@@ -16,10 +16,11 @@ def main():
     elif sys.argv[1] == "phase3":
         phase3()
     elif sys.argv[1] == "verifyCertificate":
-        publicKey = sys.argv[2]
-        encrypted_message = sys.argv[3]
-        certificate = sys.argv[4]
-        if verify_certificate(publicKey, encrypted_message, certificate):
+        public_key_first = sys.argv[2]
+        public_key_second = sys.argv[3]
+        encrypted_message = sys.argv[4]
+        certificate = sys.argv[5]
+        if verify_certificate(public_key_first, public_key_second, encrypted_message, certificate):
             print("true")
         else:
             print("false")

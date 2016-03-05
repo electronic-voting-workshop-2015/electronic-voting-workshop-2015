@@ -5,7 +5,7 @@ from random import SystemRandom
 from time import sleep
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
-    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json
+    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json, base64_to_bytes
 
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
 BB_URL = "http://10.0.0.12:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
@@ -424,7 +424,7 @@ class ZKP:
         return ZKP(c, h, w, u, v, cc, z)
 
 
-def verify_certificate(publicKey, encrypted_message, certificate):
+def verify_certificate(public_key_first, public_key_second, encrypted_message, certificate):
     """
     :param publicKey:
     :param encrypted_message: text in 64 form (as sent by parties / voting booths)
@@ -433,7 +433,7 @@ def verify_certificate(publicKey, encrypted_message, certificate):
     """
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
-    publicKey = base64_to_bytes(publicKey)
+    publicKey = ECGroupMember(curve_256, public_key_first, public_key_second)
     sign_curve = curve_256
     int_length = sign_curve.int_length
     l = bytes_to_list(certificate, int_length)
