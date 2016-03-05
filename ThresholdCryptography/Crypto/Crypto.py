@@ -5,13 +5,20 @@ from random import SystemRandom
 from time import sleep
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
-    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json
+    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json, bytes_to_base64, \
+    list_to_base64
 
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
 BB_URL = "http://10.0.0.12:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
 PRIVATE_KEYS_PATH = "/" # The paths were the private keys will be saved on the server when generated.
+PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
+SEND_VOTE_TABLE = "/sendVote"
+GET_VOTES_TABLE = "/getBBVotes"
+PUBLISH_ZKP_TABLE = "/publishZKP"
+GET_ZKP_TABLE = "/getZKP"
+GET_PUBLIC_KEY_TABLE = "/getPublicKey"
 
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
@@ -209,6 +216,11 @@ class ThresholdParty:
     def publish_value(self, value):
         """publish commitment to secret value"""
         cert = self.sign(bytes(value))
+        base64_cert = bytes_to_base64(cert)
+        int_length = self.voting_curve.order.bit_length // 8
+        base64_value = list_to_base64(value, int_length)
+        dictionary = {'value' : base64_value, 'cert' : base64_cert}
+        publish_dict(dictionary, BB_URL + PUBLISH_COMMITMENT_TABLE)
         publish_list(value, 0, self.party_id, certificate=cert, table_id=None, recipient_id=None,
                      url=BB_URL)  # TODO: supply proper arguments
 
