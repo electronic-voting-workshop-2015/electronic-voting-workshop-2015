@@ -250,8 +250,8 @@ public class VotingBoothImp implements VotingBooth {
 	private String addSignatureAndTimeStamp(byte[] message) throws UnsupportedEncodingException {
 		StringBuilder signAndTimeStamp = new StringBuilder();
 		byte[] signature = Parameters.cryptoClient.sign(privateKey, message);
-		signAndTimeStamp.append(new String(signature,  "ISO-8859-1"));
-		
+		signAndTimeStamp.append(new String(signature,  "ISO-8859-1")); // add signature
+		signAndTimeStamp.append(new String(partyId, "ISO-8859-1")); // add partyId
 		
 		// the timestamp according to the required precision (chosen in the
 		// parameters file)
@@ -271,7 +271,7 @@ public class VotingBoothImp implements VotingBooth {
 			timeArray[1] = (char) cal.get(Calendar.MINUTE);
 			timeArray[2] = (char) cal.get(Calendar.SECOND);
 		}
-		signAndTimeStamp.append(timeArray);
+		signAndTimeStamp.append(timeArray); // add timeStamp
 		return signAndTimeStamp.toString(); // return the signature of the
 											// machine and the time stamp
 											// concatenated together.
