@@ -48,12 +48,14 @@ def concat_bits(a, b, b_len):
 
 def product(l, p=0):
     """computes product of list, mod p if second passed second argument"""
-    res = 1
+    iterlist = iter(l)
+    next(iterlist)  # skip the first member
+    res = l[0]
     if p == 0:
-        for i in l:
+        for i in iterlist:
             res *= i
     else:
-        for i in l:
+        for i in iterlist:
             res *= i % p
     return res
 
@@ -88,6 +90,7 @@ if gmpy2_installed:
     mod_inv = mod_inv_fast
 else:
     mod_inv = mod_inv_slow
+
 
 def list_to_bytes(l, int_length = 0):
     """returns bytes object formed from concatenating members of list l
@@ -171,8 +174,8 @@ def publish_dict(dict, url):
 
 def get_bb_data(url):
     # TODO test
-    response = urllib.urlopen(url)
-    data = json.loads(response.read())
+    response = urllib.request.urlopen(url)
+    data = json.loads(response.read().decode('utf-8'))
     return data
 
 

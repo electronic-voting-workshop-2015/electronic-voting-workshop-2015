@@ -6,13 +6,14 @@ from time import sleep
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json, bytes_to_base64, \
-    list_to_base64, base64_to_list
+    list_to_base64, base64_to_list, base64_to_bytes
 
+# TODO: organize constants
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
-BB_URL = "http://10.0.0.12:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
+BB_URL = "http://localhost:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
-PRIVATE_KEYS_PATH = "/" # The paths were the private keys will be saved on the server when generated.
+PRIVATE_KEYS_PATH = "/"  # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
 PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
 GET_SECRET_COMMITMENT_TABLE = "/getSecretCommitment"
@@ -22,8 +23,11 @@ SEND_VOTE_TABLE = "/sendVote"
 GET_VOTES_TABLE = "/getBBVotes"
 PUBLISH_ZKP_TABLE = "/publishZKP"
 GET_ZKP_TABLE = "/getZKP"
+GET_VOTING_PUBLIC_KEY_TABLE = "/retrieveVotingPublicKey"
 GET_PUBLIC_KEY_TABLE = "/getPublicKey"
-GET_COMMITMENT_TABLE = "/getCommitment"
+GET_COMMITMENT_TABLE = "/retrieveCommitment"
+GET_MESSAGES_TABLE = "/retrieveMessage"
+
 
 class EllipticCurve:
     """ a curve of the form y^2 = x^3+ax+b (mod p)
@@ -208,6 +212,7 @@ class ThresholdParty:
         self.hash_func = hash_func  # the cryptographic hash function used for ZKP
         self.sign_key = sign_key
         self.sign_curve = sign_curve
+        self.other_commitments = None  # caches the other parties commitments used in phase 1
 
     def publish_commitment(self):
         """publish the values g^v_i,g^a_i1...,g^a_it to the BB"""
@@ -216,8 +221,9 @@ class ThresholdParty:
         cert = self.sign(list_to_bytes(commitments))
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(commitments, int_length=0)
-        dictionary = {"party_id" : self.party_id, "commitment" : base64_data, "signature" : base64_cert}
-        publish_dict(dictionary, BB_URL + PUBLISH_COMMITMENT_TABLE)
+        dictionary = {"party_id": self.party_id, "commitment": base64_data, "signature": base64_cert}
+        dictionary2 = {"content": dictionary}
+        publish_dict(dictionary2, BB_URL + PUBLISH_COMMITMENT_TABLE)
 
     def publish_secret_commitment(self, value):
         """publish commitment to secret value"""
@@ -225,20 +231,21 @@ class ThresholdParty:
         base64_cert = bytes_to_base64(cert)
         int_length = self.voting_curve.order.bit_length // 8
         base64_value = list_to_base64(value, int_length)
-        dictionary = {'party_id' : self.party_id, 'value' : base64_value, 'signature' : base64_cert}  # TODO: fix dictionary
+        dictionary = {'party_id': self.party_id, 'value': base64_value,
+                      'signature': base64_cert}  # TODO: fix dictionary
         publish_dict(dictionary, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
-    def get_commitments(self):
-        """returns all commitment to coefficients"""
-        # TODO:get commitment from BB
-        json_data = get_bb_data(BB_URL + GET_COMMITMENT_TABLE)
-        # TODO: convert json_data to list of lists
-        pass
+    def retrieve_commitments(self):
+        """retrieves all commitment to coefficients"""
+        self.other_commitments = get_bb_data(BB_URL + GET_COMMITMENT_TABLE)
 
     def get_public_key(self, j):
         """returns A_j's public key: g^v_j"""
-        # TODO:get public key from the BB
-        pass
+        self.retrieve_commitments()
+        commitments = self.other_commitments
+        base64_commitment = {dictionary['commitment'] for dictionary in commitments if dictionary['party_id'] == j}.pop()
+        commitment = base64_to_list(base64_commitment, curve=self.voting_curve)
+        return product(commitment)
 
     def encrypt_message(self, public_key, value):
         """returns encrypted value using public_key
@@ -279,25 +286,30 @@ class ThresholdParty:
         cert = self.sign(list_to_bytes(cipher_text, int_length=0))
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(cipher_text, int_length=0)
-        dictionary = {"party_id" : self.party_id, "recipient_id" : j, "message" : base64_data, "signature" : base64_cert}
-        publish_dict(dictionary, BB_URL + PUBLISH_MESSAGE_TABLE)
+        dictionary = {"party_id": self.party_id, "recipient_id": j, "message": base64_data, "signature": base64_cert}
+        dictionary2 = {"content": dictionary}
+        publish_dict(dictionary2, BB_URL + PUBLISH_MESSAGE_TABLE)
 
     def send_values(self):
         """send values f_i(j) to all parties A_j"""
-        for j in range(self.n):
+        for j in range(1, self.n + 1):
             if j == self.party_id:
                 continue  # don't send message to myself
             self.send_message(j)
 
-    def get_message(self, j):
-        """returns A_j's message: f_j(i)"""
-        cipher_text = None  # TODO:get cipher text from BB
+    def get_messages(self):
+        """returns the other parties' messages as a dictionary
+        mapping party_id j to f_j(i)"""
+        # TODO: add to BB API - get messages with recipient_id = j
+        json_data = get_bb_data(BB_URL + GET_MESSAGES_TABLE)  # TODO:get cipher text from BB
+        encrypted_messages = {dictionary['party_id']}
         private_key = self.polynomial.coefficients[0]
         return self.decrypt_message(private_key, cipher_text)
 
     def validate_message(self, j, message, commitment):
         """returns True iff the message from A_j agrees with A_j's commitment"""
-        exponent = self.polynomial.value_at(j)
+        j_polynomial = Polynomial(commitment, self.voting_curve.order)
+        exponent = j_polynomial.value_at(j)
         g = self.voting_curve.generator
         return message == g ** exponent
 
@@ -305,16 +317,17 @@ class ThresholdParty:
         """returns True iff all the messages from the other parties
         agree with their commitments. Also computes and stores the secret value,
         and publishes commitment to secret value"""
-        messages = []
-        commitments = self.get_commitments()
+        messages = self.get_messages()
+        valid_messages = []
+        commitments = self.other_commitments
         all_valid = True  # flag signifies all messages agree with commitments
-        for j in range(self.n):
+        for j in range(1, self.n + 1):
             if j == self.party_id:
                 continue
             message = self.get_message(j)
-            commitment = commitments[j]  # TODO: extract commitment from dictionary
+            commitment = base64_to_list(commitments[j]['commitment'], curve=self.voting_curve)  # TODO: extract commitment from dictionary
             if self.validate_message(j, message, commitment):
-                messages.append(message)
+                valid_messages.append(message)
             else:
                 print(
                     "message from party %d does not agree with it's commitment!" % j)
@@ -324,7 +337,7 @@ class ThresholdParty:
             return False
 
         # compute s_i = f(i) and publish h_i = g^s_i
-        self.secret_value = sum(self.polynomial.value_at(x) for x in messages) % self.voting_curve.order
+        self.secret_value = sum(self.polynomial.value_at(x) for x in valid_messages) % self.voting_curve.order
         self.save_secret()
         g = self.voting_curve.generator
         self.publish_secret_commitment(g ** self.secret_value)
@@ -367,7 +380,8 @@ class ThresholdParty:
         base64_data = list_to_base64(proof, int_length=0)
         vote_id = vote['vote_id']
         race_id = vote['race_id']
-        dictionary = {"vote_id" : vote_id, "race_id" : race_id, "party_id" : self.party_id, "zkp" : base64_data, "signature" : base64_cert}
+        dictionary = {"vote_id": vote_id, "race_id": race_id, "party_id": self.party_id, "zkp": base64_data,
+                      "signature": base64_cert}
         publish_dict(dictionary, BB_URL + PUBLISH_ZKP_TABLE)
 
     def generate_all_zkps(self, votes):
@@ -616,7 +630,7 @@ def publish_voting_public_key_local(public_key):
     """updates the voting public key on the BB
     does not requires a certificate because it is local to the BB"""
     base64_data = list_to_base64(public_key, int_length=0)
-    dictionary = {"content" : base64_data}
+    dictionary = {"content": base64_data}
     publish_dict(dictionary, BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
 
 
@@ -735,13 +749,12 @@ def generate_keys(party_id):
 def test():
     sign_curve = VOTING_CURVE
     sign_keys = [sign_curve.get_random_exponent() for _ in range(N)]
-    parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i], sign_curve, is_phase1=True) for i
-               in range(N)]
+    parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i-1], sign_curve, is_phase1=True) for i
+               in range(1,N+1)]
 
     for party in parties:
         party.publish_commitment()
     for party in parties:
         party.send_values()
-
-
-
+    for party in parties:
+        party.validate_all_messages()
