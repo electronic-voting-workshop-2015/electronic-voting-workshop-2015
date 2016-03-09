@@ -302,9 +302,10 @@ class ThresholdParty:
         mapping party_id j to f_j(i)"""
         # TODO: add to BB API - get messages with recipient_id = j
         json_data = get_bb_data(BB_URL + GET_MESSAGES_TABLE)  # TODO:get cipher text from BB
-        encrypted_messages = {dictionary['party_id']}
+        #encrypted_messages = {dictionary['party_id']}
         private_key = self.polynomial.coefficients[0]
-        return self.decrypt_message(private_key, cipher_text)
+        #return self.decrypt_message(private_key, cipher_text)
+        return None
 
     def validate_message(self, j, message, commitment):
         """returns True iff the message from A_j agrees with A_j's commitment"""
@@ -324,7 +325,7 @@ class ThresholdParty:
         for j in range(1, self.n + 1):
             if j == self.party_id:
                 continue
-            message = self.get_message(j)
+            message = None  # TODO: extract message from messages
             commitment = base64_to_list(commitments[j]['commitment'], curve=self.voting_curve)  # TODO: extract commitment from dictionary
             if self.validate_message(j, message, commitment):
                 valid_messages.append(message)
@@ -597,7 +598,7 @@ def get_sent_messages_confirmation():
 def get_votes():
     """returns all the votes from the BB.
     Each vote is a python dictionary"""
-    pass
+    return get_bb_data(BB_URL + GET_VOTES_TABLE + '/-1')
 
 
 def get_votes_local():
@@ -747,6 +748,7 @@ def generate_keys(party_id):
 
 
 def test():
+    print("phase 1")
     sign_curve = VOTING_CURVE
     sign_keys = [sign_curve.get_random_exponent() for _ in range(N)]
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i-1], sign_curve, is_phase1=True) for i
@@ -758,3 +760,9 @@ def test():
         party.send_values()
     for party in parties:
         party.validate_all_messages()
+
+    print("phase 2")
+    votes = get_votes()
+    for party in parties:
+        party.generate_all_zkps(votes)
+
