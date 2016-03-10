@@ -121,32 +121,57 @@ public class Parameters {
 	}
 
 	/**
-	 * Parsing the initialization JSON into the main array which defines the
-	 * election system
+	 * Parsing the JSONArray which represents the races and their properties
 	 * 
 	 * @param jsonRepr
 	 * @return
 	 * @throws JSONException
 	 */
-	public static ArrayList<RaceProperties> parseInitJSON(JSONArray jsonRepr) throws JSONException {
+	private static ArrayList<RaceProperties> parseRaceProps(JSONArray jsonRepr) throws JSONException {
 		ArrayList<RaceProperties> res = new ArrayList<RaceProperties>();
-		for (int i = 0; i < jsonRepr.length(); i++) {
+		for (int i = 0; i < jsonRepr.length(); i++) {//go over races
 			JSONObject curElement = jsonRepr.getJSONObject(i);
 			String name = curElement.getString("position");
 			int slotsNum = curElement.getInt("slots");
 			boolean order = false;
-			if (curElement.getInt("type") == 3) {
+			if (curElement.getInt("type") == 2) {
 				order = true;
 			}
-			JSONArray names = curElement.getJSONArray("candidatesPool");
+			JSONArray names = curElement.getJSONArray("candidates");
 			Set<String> namesPool = new HashSet<String>();
 			for (int j = 0; j < names.length(); j++) {
-				namesPool.add(names.getString(j));
-			}
-			RaceProperties cur = new RaceProperties(namesPool, name, slotsNum, order);
-			res.add(cur);
+				namesPool.add(names.getJSONObject(j).getString("name"));
+			}	 
+			res.add(new RaceProperties(namesPool, name, slotsNum, order));
 		}
 		return res;
+	}
+	/**
+	 * Parsing the initialization JSON into the main array which defines the
+	 * election system
+	 * 
+	 * @param initFormat
+	 * @param pkey
+	 */
+	public static void parseJSONInit(JSONArray initFormat, String pkey){
+		ArrayList<RaceProperties> racesProperties=parseRaceProps(initFormat.getJSONObject(0).getJSONArray("RaceProperties"));
+		JSONArray group=initFormat.getJSONObject(1).getJSONArray("Group");
+		String order=group.getJSONObject(0).getString("order");
+		String elementSizeInBytes=group.getJSONObject(1).getString("ElementSizeInBytes");
+		JSONArray ec=group.getJSONObject(2).getJSONArray("EC");
+		String a=ec.getJSONObject(0).getString("a");
+		String b=ec.getJSONObject(1).getString("b");
+		String p=ec.getJSONObject(2).getString("p");
+		String totalgen=group.getJSONObject(3).getString("Generator");		
+		String[] gen=totalgen.split(",");		
+		String generator_X=gen[0];
+		String generator_Y=gen[1];				
+		int numOfMachines=initFormat.getJSONObject(2).getInt("NumOfMachines");		
+		int timeStampLevel=initFormat.getJSONObject(3).getInt("TimeStampLevel");
+		String publicKey=pkey;
+		setParameters(order, elementSizeInBytes, a, b, p,
+				generator_X, generator_Y, numOfMachines, racesProperties, timeStampLevel,
+				publicKey);		
 	}
 
 }
