@@ -68,22 +68,22 @@ public class Parameters {
 		BigInteger p = new BigInteger(_p);
 		EllipticCurve curve = new EllipticCurve(a, b, p);
 		BigInteger gx = new BigInteger(_generator_X);
-        BigInteger gy = new BigInteger(_generator_Y);
-        ECPoint g = new ECPoint(curve, gx, gy);
-        int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
-        BigInteger order = new BigInteger(_order);
-        ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(sizeInBytes), sizeInBytes, order.toByteArray());
-        cryptoClient = new ECClientCryptographyModule((ECGroup)ourGroup, (ECGroup)ourGroup);
-        candidatesNames = new HashSet<>();
-        for (RaceProperties race : racesProperties){
-        	for (String name : race.getPossibleCandidates()){
-        		candidatesNames.add(name);
-        	}
-        }
-        candidatesMap = mapCandidates(candidatesNames);
-        mapMachineToSignature = setMachinesSignatures();
-        
-        publicKey = new BigInteger(_publicKey).toByteArray();
+	        BigInteger gy = new BigInteger(_generator_Y);
+	        ECPoint g = new ECPoint(curve, gx, gy);
+	        int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
+	        BigInteger order = new BigInteger(_order);
+	        ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(sizeInBytes), sizeInBytes, order.toByteArray());
+	        cryptoClient = new ECClientCryptographyModule((ECGroup)ourGroup, (ECGroup)ourGroup);
+	        candidatesNames = new HashSet<>();
+	        for (RaceProperties race : racesProperties){
+	        	for (String name : race.getPossibleCandidates()){
+	        		candidatesNames.add(name);
+	        	}
+	        }
+	        candidatesMap = mapCandidates(candidatesNames);
+	        mapMachineToSignature = setMachinesSignatures();
+	        
+	        publicKey = new BigInteger(_publicKey).toByteArray();
 	}
 
 
