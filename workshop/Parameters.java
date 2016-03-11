@@ -153,7 +153,7 @@ public class Parameters {
 	 * @param initFormat
 	 * @param pkey
 	 */
-	public static void parseJSONInit(JSONArray initFormat, String pkey){
+	private static void parseJSONInit(JSONArray initFormat, String pkey){
 		ArrayList<RaceProperties> racesProperties=parseRaceProps(initFormat.getJSONObject(0).getJSONArray("RaceProperties"));
 		JSONArray group=initFormat.getJSONObject(1).getJSONArray("Group");
 		String order=group.getJSONObject(0).getString("order");
@@ -172,6 +172,10 @@ public class Parameters {
 		setParameters(order, elementSizeInBytes, a, b, p,
 				generator_X, generator_Y, numOfMachines, racesProperties, timeStampLevel,
 				publicKey);		
+	}
+	
+	public static void init(){
+		
 	}
 
 }
