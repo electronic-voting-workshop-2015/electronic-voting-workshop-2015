@@ -49,9 +49,9 @@ public class VotingBoothImp implements VotingBooth {
 	private ArrayList<Race> curVote; // the list of Race objects, representing
 										// the votes of the voter in each race.
 	
-	private byte[] privateKey = getInfoFromFile("privateKey.txt");
+	private byte[] privateKey;
 	
-	private byte[] partyId = getInfoFromFile("partyId.txt"); 
+	private byte[] partyId; 
 
 	private final int TOP_QR_SIZE = (int) (60 * java.awt.Toolkit.getDefaultToolkit().getScreenResolution()
 			/ 25.4);
@@ -61,6 +61,17 @@ public class VotingBoothImp implements VotingBooth {
 			TOP_QR_SIZE); // Valid vote QR properties
 	private QRProperties bottomQR = new QRProperties(Parameters.ourGroup.getElementSize(), BOTTOM_QR_SIZE,
 			BOTTOM_QR_SIZE);// Audit QR properties
+			
+	private int votingBoothNumber;
+	private static int numOfVotingBooths = 0;
+	
+	public VottingBoothImp(){
+		numOfVotingBooths++;
+		votingBoothNumber = numOfVotingBooths;
+		String pathName = "privateKey_" + votingBoothNumber + ".txt";
+		partyId = getInfoFromFile(pathName, false); 
+		partyId = getInfoFromFile(pathName, true); 
+	}
 	
 	
 	/**
@@ -159,12 +170,17 @@ public class VotingBoothImp implements VotingBooth {
 	 */
 	
 	
-	private byte[] getInfoFromFile(String filePath) {
+	private byte[] getInfoFromFile(String filePath, boolean isPrivateKey) {
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(filePath));
-		    String line = br.readLine();
-		    return new BigInteger(line).toByteArray();
+		    	String line = br.readLine();
+		    	line = br.readLine();
+			if (isPrivateKey){
+		    		line = br.readLine();
+		    		line = br.readLine();
+		    	}
+		    	return new BigInteger(line).toByteArray();
 		} catch (FileNotFoundException e){
 			System.err.println("File path '" + filePath + "' is invalid!");	
 		} catch (IOException e){
