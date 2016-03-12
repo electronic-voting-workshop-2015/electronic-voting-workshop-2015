@@ -65,7 +65,7 @@ public class VotingBoothImp implements VotingBooth {
 	private int votingBoothNumber;
 	private static int numOfVotingBooths = 0;
 	
-	public VottingBoothImp(){
+	public VotingBoothImp(){
 		numOfVotingBooths++;
 		votingBoothNumber = numOfVotingBooths;
 		String pathName = "privateKey_" + votingBoothNumber + ".txt";
