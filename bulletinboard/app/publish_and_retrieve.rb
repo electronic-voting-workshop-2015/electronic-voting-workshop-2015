@@ -11,8 +11,7 @@ def publish_and_retrieve( model, publish_url, retrieve_url )
 
     get retrieve_url do
         all = model.all.to_a.map do |publication| 
-            hash = JSON.parse publication.content
-            hash
+            JSON.parse publication.content
         end
         all.to_json
     end
