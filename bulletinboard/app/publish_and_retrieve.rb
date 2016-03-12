@@ -32,6 +32,5 @@ def publish_and_retrieve_without_signature( model, publish_url, retrieve_url )
 end
 
 publish_and_retrieve Commitment, '/publishCommitment', '/retrieveCommitment'
-publish_and_retrieve Message, '/publishMessage', '/retrieveMessage'
 publish_and_retrieve_without_signature Complaint, '/publishComplaint', '/retrieveComplaint'
 publish_and_retrieve_without_signature VotingPublicKey, '/publishVotingPublicKey', '/retrieveVotingPublicKey'
