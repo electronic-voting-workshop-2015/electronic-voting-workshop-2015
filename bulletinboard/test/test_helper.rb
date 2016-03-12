@@ -11,7 +11,13 @@ module TestHelper
     end
 
     def setup
-         ActiveRecord::Base.subclasses.each(&:delete_all)
+         ActiveRecord::Base.subclasses.each do |model|
+             begin
+                 model.delete_all
+             rescue ActiveRecord::StatementInvalid => e
+                 puts "skipping #{model}, it's probably a model without a table (exception was #{e})"
+             end
+         end
     end
 
     def randomInteger

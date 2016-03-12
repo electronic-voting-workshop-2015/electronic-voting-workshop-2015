@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160312193057) do
+ActiveRecord::Schema.define(version: 20160312203012) do
 
   create_table "ZKP", force: :cascade do |t|
     t.integer "vote_id",  limit: 4
@@ -20,13 +20,12 @@ ActiveRecord::Schema.define(version: 20160312193057) do
     t.text    "zkp",      limit: 65535
   end
 
-  create_table "commitments", id: false, force: :cascade do |t|
+  create_table "arbitrary_jsons", id: false, force: :cascade do |t|
     t.binary "content", limit: 65535
+    t.string "type",    limit: 255
   end
 
-  create_table "complaints", id: false, force: :cascade do |t|
-    t.binary "content", limit: 65535
-  end
+  add_index "arbitrary_jsons", ["type"], name: "index_arbitrary_jsons_on_type", using: :btree
 
   create_table "messages", id: false, force: :cascade do |t|
     t.integer "party_id",     limit: 4
