@@ -232,8 +232,7 @@ class ThresholdParty:
         """publish commitment to secret value"""
         cert = self.sign(bytes(value))
         base64_cert = bytes_to_base64(cert)
-        int_length = self.voting_curve.order.bit_length // 8
-        base64_value = list_to_base64(value, int_length)
+        base64_value = list_to_base64([value], int_length=0)
         dictionary = {'party_id': self.party_id, 'value': base64_value,
                       'signature': base64_cert}  # TODO: fix dictionary
         publish_dict(dictionary, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
@@ -352,7 +351,7 @@ class ThresholdParty:
 
     def save_secret(self):
         """save secret value to file"""
-        b_secret = list_to_bytes(self.secret_value)
+        b_secret = list_to_bytes([self.secret_value], int_length=self.voting_curve.order.bit_length())
         with open(SECRET_FILE, 'wb') as f:
             f.write(b_secret)
 
@@ -361,7 +360,7 @@ class ThresholdParty:
         try:
             with open(SECRET_FILE, 'rb') as f:
                 b_secret = f.readall()
-                self.secret_value = bytes_to_list(b_secret)
+                self.secret_value = bytes_to_list(b_secret, member_length=self.voting_curve.order.bit_length())
         except IOError:
             print("could not open file %s\n" % SECRET_FILE)
 
