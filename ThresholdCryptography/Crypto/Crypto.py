@@ -160,7 +160,9 @@ class ECGroupMember:
         return y ** 2 % p == (x ** 3 + a * x + b) % p
 
     def __str__(self):
-        return self.x.__str__() + ", " + self.y.__str__() + ", " + self.curve.__str__()
+        return "(" + self.x.__str__() + ", " + self.y.__str__() + ")"
+
+    __repr__ = __str__
 
     def __eq__(self, other):
         return self.curve == other.curve and self.x == other.x and self.y == other.y
@@ -205,7 +207,7 @@ class ThresholdParty:
         self.party_id = party_id  # a number between 0 and n-1
 
         if is_phase1:
-            self.polynomial = Polynomial([voting_curve.get_random_exponent() for _ in range(t)], voting_curve.order)
+            self.polynomial = Polynomial([voting_curve.get_random_exponent() for _ in range(t+1)], voting_curve.order)
             self.secret_value = None  # the value f(j), assigned after calling validate_all_messages
         else:
             self.load_secret()  # load secret value from file if in phase2
@@ -309,14 +311,13 @@ class ThresholdParty:
         private_key = self.polynomial.coefficients[0]
         res = {dictionary['party_id']: self.decrypt_message(private_key, base64_to_list(dictionary['message'], curve=self.voting_curve))
                 for dictionary in json_data}
-        print(res)
         return res
 
     def validate_message(self, j, message, commitment):
         """returns True iff the message from A_j agrees with A_j's commitment"""
-        assert len(commitment) == self.t
+        assert len(commitment) == self.t + 1
         g = self.voting_curve.generator
-        return g ** message == product(value ** (j**i) for i, value in enumerate(commitment))
+        return g ** message == product(value ** (self.party_id**i) for i, value in enumerate(commitment))
 
     def validate_all_messages(self):
         """returns True iff all the messages from the other parties
@@ -329,7 +330,7 @@ class ThresholdParty:
         valid_messages = []
         commitments = self.other_commitments
         all_valid = True  # flag signifies all messages agree with commitments
-        for j in messages:
+        for j in messages:  # TODO: sort dictionary by party_id
             message = messages[j]  # TODO: extract message from messages
             commitment = base64_to_list(commitments[j-1]['commitment'], curve=self.voting_curve)  # TODO: extract commitment from dictionary
             if self.validate_message(j, message, commitment):
