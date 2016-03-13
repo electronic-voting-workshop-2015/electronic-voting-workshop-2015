@@ -33,11 +33,11 @@ def least_significant(num, n):
     return num & mask
 
 
-def most_significant(num, n):
-    """returns the most significant (leftmost) n bits of num"""
-    length = num.bit_length()
-    mask = (2**n - 1) * 2**(length-n)
-    return num & mask
+def most_significant(num, return_size, total_size):
+    """returns the most significant (leftmost) return_size bits of num,
+    num is interpreted as a total_size bits number (zeroes are appended to the left if necessary"""
+    mask = (2**total_size - 1) * 2**(total_size-return_size)
+    return (num & mask) // (2 ** (total_size-return_size))
 
 
 def concat_bits(a, b, b_len):

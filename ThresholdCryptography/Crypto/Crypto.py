@@ -259,12 +259,10 @@ class ThresholdParty:
         r1 = self.voting_curve.get_random_exponent()
         r2 = self.voting_curve.get_random_exponent()
         int_length = self.voting_curve.order.bit_length() // 2
-        first_half = most_significant(value, int_length)
         second_half = least_significant(value, int_length)
-        print(value, first_half, second_half)
+        first_half = most_significant(value, return_size=int_length, total_size=int_length*2)
         m1 = ECGroupMember.from_int(first_half, int_length, self.voting_curve)
         m2 = ECGroupMember.from_int(second_half, int_length, self.voting_curve)
-        print(m1, m2)
         return g ** r1, m1 * (public_key ** r1), g ** r2, m2 * (public_key ** r2)
 
     def decrypt_message(self, private_key, cipher_text):
@@ -279,11 +277,9 @@ class ThresholdParty:
         s2 = c2 ** x
         message1 = d1 * s1 ** -1
         message2 = d2 * s2 ** -1
-        print(message1, message2)
         int_length = self.voting_curve.order.bit_length() // 2
         int1 = ECGroupMember.to_int(message1, self.voting_curve, int_length)
         int2 = ECGroupMember.to_int(message2, self.voting_curve, int_length)
-        print(int1, int2)
         return concat_bits(int1, int2, int_length)
 
     def send_message(self, j):
@@ -291,7 +287,6 @@ class ThresholdParty:
         message = self.polynomial.value_at(j)
         public_key = self.get_public_key(j)
         cipher_text = self.encrypt_message(public_key, message)
-        print("sent message: %d %d %d %s %s" % (message, self.party_id, j, public_key, cipher_text))
         cert = self.sign(list_to_bytes(cipher_text, int_length=0))
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(cipher_text, int_length=0)
