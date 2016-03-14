@@ -17,9 +17,7 @@ import com.google.zxing.qrcode.QRCodeWriter;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
 public class QRGenerator {
-	public enum QRSize {
-		Small, Big
-	}
+	public static final String ENCODING = "ISO-8859-1";
 
 	private QRProperties topQR;
 	private QRProperties bottomQR;
@@ -29,13 +27,15 @@ public class QRGenerator {
 		this.bottomQR = bottomQR;
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public File createQRImage(String qrCodeText, boolean isAudit) throws WriterException, IOException {
+		int length = qrCodeText.length();
 		QRProperties qr = isAudit ? bottomQR : topQR;
 		ErrorCorrectionLevel l = qr.getEcc();
-		Hashtable<EncodeHintType, ErrorCorrectionLevel> hintMap = new Hashtable<EncodeHintType, ErrorCorrectionLevel>();
-
+		Hashtable hintMap = new Hashtable();
 		File qrFile = new File("qrCode.png");
 		hintMap.put(EncodeHintType.ERROR_CORRECTION, l);
+		hintMap.put(EncodeHintType.CHARACTER_SET, ENCODING);
 		QRCodeWriter qrCodeWriter = new QRCodeWriter();
 		BitMatrix byteMatrix = qrCodeWriter.encode(qrCodeText, BarcodeFormat.QR_CODE, qr.getWidth(), qr.getHeight(), hintMap);
 		// Make the BufferedImage that are to hold the QRCode
