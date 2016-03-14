@@ -70,7 +70,7 @@ public class VotingBoothImp implements VotingBooth {
 		votingBoothNumber = numOfVotingBooths;
 		String pathName = "privateKey_" + votingBoothNumber + ".txt";
 		partyId = getInfoFromFile(pathName, false); 
-		partyId = getInfoFromFile(pathName, true); 
+		privateKey = getInfoFromFile(pathName, true); 
 	}
 	
 	
