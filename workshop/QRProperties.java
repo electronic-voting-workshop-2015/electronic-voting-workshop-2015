@@ -30,15 +30,15 @@ public class QRProperties {
 	 * Returns the highest possible ECC for the given number of bytes,
 	 */
 	static private ErrorCorrectionLevel calculateECC(int numberOfBytes) {
-		if (numberOfBytes < 890) {
+		if (numberOfBytes < 440) {
 			return ErrorCorrectionLevel.H;
 		}
-		if (numberOfBytes < 1160) {
+		if (numberOfBytes < 550) {
 			return ErrorCorrectionLevel.Q;
 		}
-		if (numberOfBytes < 1620) {
+		if (numberOfBytes < 800) {
 			return ErrorCorrectionLevel.M;
-		} // >= 1620
+		} // >= 800
 		return ErrorCorrectionLevel.L;
 	}
 
