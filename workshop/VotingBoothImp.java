@@ -85,7 +85,6 @@ public class VotingBoothImp implements VotingBooth {
 		StringBuilder sbCiphertext = new StringBuilder();
 		StringBuilder sbRandomness = new StringBuilder();
 		byte[][] encryptResult;
-		int machineNum;
 		try {
 			curVote = parseJSON(jsonRepr); // parse the JSONArray to get info
 											// about the vote
@@ -180,7 +179,7 @@ public class VotingBoothImp implements VotingBooth {
 		    		line = br.readLine();
 		    		line = br.readLine();
 		    	}
-		    	return new BigInteger(line).toByteArray();
+		    	return new BigInteger(line, 16).toByteArray();
 		} catch (FileNotFoundException e){
 			System.err.println("File path '" + filePath + "' is invalid!");	
 		} catch (IOException e){
@@ -220,12 +219,12 @@ public class VotingBoothImp implements VotingBooth {
 			result.add(raceNum, new Race(rp));
 			Set<String> validNames = rp.getPossibleCandidates();
 			String[] curRaceArrayOfNames = new String[rp.getNumOfSlots()];
-			if ((rp.isOrdered() && curRace.getInt("type") != 2) || (rp.getNumOfSlots() > 1 && curRace.getInt("type") > 0)) {// type
+			if ((rp.isOrdered() && curRace.getInt("type") != 2) || (rp.getNumOfSlots() > 1 && curRace.getInt("type") == 0)) {// type
 																														// check
 				JSONException exp = new org.json.JSONException("Invalid vote format, mismatching types");
 				throw (exp);
 			}
-			if (!(rp.getNameOfRace().equals(curRace.get("position")))) {// race
+			if (!(rp.getNameOfRace().equals(curRace.get("position").toString()))) {// race
 																		// name
 																		// match
 																		// check
@@ -311,7 +310,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * @param qrPng
 	 *            QR png file.
 	 */
-	public void printPage(File qrPng, ArrayList<Race> votesInAllRaces) {
+	public void printPage(final File qrPng, final ArrayList<Race> votesInAllRaces) {
 		class Ballot extends JPanel implements Printable {
 
 			public Ballot() {
@@ -431,7 +430,7 @@ public class VotingBoothImp implements VotingBooth {
 
 	}
 
-	public void printAudit(File qrPng) {
+	public void printAudit(final File qrPng) {
 		class Ballot extends JPanel implements Printable {
 
 			public Ballot() {
