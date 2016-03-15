@@ -284,6 +284,14 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         }
         return result;
     }
+    
+    public ECGroup getEncryptGroup() {
+        return encryptGroup;
+    }
+    
+    public ECGroup getSignGroup() {
+        return signGroup;
+    }
 
     // Turns a bigInteger to a little endian bytes array of fixed size. Not verified for negative BigIntegers.
     private static byte[] toUnsignedLittleEndian(BigInteger n, int arrlength) {
