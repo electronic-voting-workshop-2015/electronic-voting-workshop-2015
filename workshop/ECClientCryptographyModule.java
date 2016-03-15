@@ -230,11 +230,6 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         byte[] sBytes = Arrays.copyOfRange(certificate, certificate.length / 2, certificate.length);
         BigInteger r = fromUnsignedLittleEndian(rBytes);
         BigInteger s = fromUnsignedLittleEndian(sBytes);
-        return verifyCertificate(r, s, encryptedMessage, certificate);
-    }
-    
-    
-    public boolean verifyCertificate(BigInteger r, BigInteger s, byte[] encryptedMessage, byte[] certificate) {    
         if (logEncryptionMethods) {
             System.out.println("Verify certificate: r = " + r + "\ns = " + s);
         }
@@ -288,6 +283,14 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
             result.put(i, encryptGroup.getElement(BigInteger.valueOf(i).toByteArray()));
         }
         return result;
+    }
+    
+    public ECGroup getEncryptGroup() {
+        return encryptGroup;
+    }
+    
+    public ECGroup getSignGroup() {
+        return signGroup;
     }
 
     // Turns a bigInteger to a little endian bytes array of fixed size. Not verified for negative BigIntegers.
