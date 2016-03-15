@@ -158,7 +158,6 @@ def publish_list(list_data, int_length, sender_id, certificate, table_id, recipi
 
 
 def publish_dict(dict, url):
-    # TODO test
     """
     :param dict: the dictionary to publish.
     :param url: the url to publish to.
@@ -173,14 +172,13 @@ def publish_dict(dict, url):
 
 
 def get_bb_data(url):
-    # TODO test
     response = urllib.request.urlopen(url)
     data = json.loads(response.read().decode('utf-8'))
     return data
 
 
 def get_value_from_json(json_data, name):
-    # TODO test
+    # TODO why is this needed?
     """
     :param json_data: json data
     :param name: string name of the field
