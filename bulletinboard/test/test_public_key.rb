@@ -10,8 +10,11 @@ class PublishRetrieveAPITest < MiniTest::Unit::TestCase
   end
 
   def test_get_public_key
-    PublicKey.create! party_id: 10, first: 11, second: 12
-    PublicKey.create! party_id: 11, first: 13, second: 14
+    #PublicKey.create! party_id: 10, first: 11, second: 12
+    #PublicKey.create! party_id: 11, first: 13, second: 14
+
+	post "/publishPublicKey", party_id: 10, first: 11, second: 12
+	post "/publishPublicKey", party_id: 11, first: 13, second: 14
     
     get "/getPublicKey", party_id: 10
     assert last_response.ok?

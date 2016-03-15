@@ -21,6 +21,7 @@ PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
 GET_SECRET_COMMITMENT_TABLE = "/getSecretCommitment"
 PUBLISH_MESSAGE_TABLE = "/publishMessage"
 PUBLISH_VOTING_PUBLIC_KEY_TABLE = "/publishVotingPublicKey"
+PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES = "/publishPublicKey"
 SEND_VOTE_TABLE = "/sendVote"
 GET_VOTES_TABLE = "/getBBVotes"
 PUBLISH_ZKP_TABLE = "/publishZKP"
@@ -760,7 +761,7 @@ def generate_keys(party_id):
     private_key = rng.randint(2, VOTING_CURVE.order)
     public_key = VOTING_CURVE.get_member(private_key)
     data = dict(party_id=party_id, first=public_key.x, second=public_key.y)
-    publish_dict(data, "http://localhost:4567/getPublicKey")
+    publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
     filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
     f = open(filename, 'w')
     f.write(str(private_key))
