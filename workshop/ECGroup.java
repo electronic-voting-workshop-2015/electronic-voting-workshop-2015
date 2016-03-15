@@ -32,6 +32,10 @@ public class ECGroup extends Group {
         return curve.multiply(generator, new BigInteger(exponent)).toByteArray(elementByteSize / 2);
     }
 
+    byte[] getMember(BigInteger x, BigInteger y) {
+        return new ECPoint(curve, x, y).toByteArray(elementByteSize / 2);
+    }
+    
     @Override
     public byte[] getOrder() {
         return order.toByteArray();
