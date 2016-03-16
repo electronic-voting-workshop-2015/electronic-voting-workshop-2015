@@ -18,8 +18,8 @@ def main():
     elif sys.argv[1] == "phase3":
         phase3()
     elif sys.argv[1] == "generateKeys":
-        party_id = sys.argv[2]
-        generate_keys(party_id)
+        parties_number = sys.argv[2]
+        generate_keys(parties_number)
     elif sys.argv[1] == "verifyCertificate":
         public_key_first = sys.argv[2]
         public_key_second = sys.argv[3]
