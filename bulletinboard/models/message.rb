@@ -1,2 +1,2 @@
-class Commitment < ActiveRecord::Base
+class Message < ActiveRecord::Base
 end

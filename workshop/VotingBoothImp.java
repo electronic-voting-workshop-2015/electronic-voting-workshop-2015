@@ -1,27 +1,40 @@
 package workshop;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Set;
 
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 
 import org.json.*;
+
+import com.google.zxing.WriterException;
 
 public class VotingBoothImp implements VotingBooth {
 
@@ -35,6 +48,10 @@ public class VotingBoothImp implements VotingBooth {
 									// encryptions.
 	private ArrayList<Race> curVote; // the list of Race objects, representing
 										// the votes of the voter in each race.
+	
+	private byte[] privateKey;
+	
+	private byte[] partyId; 
 
 	private final int TOP_QR_SIZE = (int) (60 * java.awt.Toolkit.getDefaultToolkit().getScreenResolution()
 			/ 25.4);
@@ -44,7 +61,19 @@ public class VotingBoothImp implements VotingBooth {
 			TOP_QR_SIZE); // Valid vote QR properties
 	private QRProperties bottomQR = new QRProperties(Parameters.ourGroup.getElementSize(), BOTTOM_QR_SIZE,
 			BOTTOM_QR_SIZE);// Audit QR properties
-
+			
+	private int votingBoothNumber;
+	private static int numOfVotingBooths = 0;
+	
+	public VotingBoothImp(){
+		numOfVotingBooths++;
+		votingBoothNumber = numOfVotingBooths;
+		String pathName = "privateKey_" + votingBoothNumber + ".txt";
+		partyId = getInfoFromFile(pathName, false); 
+		privateKey = getInfoFromFile(pathName, true); 
+	}
+	
+	
 	/**
 	 * processes the choice of the voter, encrypt it and prints the ballot.
 	 * 
@@ -56,7 +85,6 @@ public class VotingBoothImp implements VotingBooth {
 		StringBuilder sbCiphertext = new StringBuilder();
 		StringBuilder sbRandomness = new StringBuilder();
 		byte[][] encryptResult;
-		int machineNum;
 		try {
 			curVote = parseJSON(jsonRepr); // parse the JSONArray to get info
 											// about the vote
@@ -71,25 +99,39 @@ public class VotingBoothImp implements VotingBooth {
 			for (String name : race.getVotesArray()) {
 				encryptResult = ((ECClientCryptographyModule) (Parameters.cryptoClient))
 						.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
-				
-				sbCiphertext.append(new String(encryptResult[0], "ISO-8859-1"));
-				sbRandomness.append(new String(groupElemToCharArr, "ISO-8859-1"));
-				sbRandomness.append(new String(encryptResult[1], "ISO-8859-1"));
+				try {
+					sbCiphertext.append(new String(encryptResult[0], "ISO-8859-1"));
+					sbRandomness.append(new String(Parameters.candidatesMap.get(name), "ISO-8859-1"));
+					sbRandomness.append(new String(encryptResult[1], "ISO-8859-1"));
 				
 				// the opposite operation (for those who read the QR) is:
 				// byte[] arr = str.getBytes("ISO-8859-1");
-			
+				} catch (UnsupportedEncodingException e){
+					e.printStackTrace();
+				}
 			}
 		}
-		sbCiphertext.append(addSignatureAndTimeStamp(machineNum)); // add
+		String encryptions = sbCiphertext.toString();
+		try {
+			sbCiphertext.append(addSignatureAndTimeStamp(encryptions.getBytes("ISO-8859-1"))); // add
 						// machine signature and timestamp to ciphertext
+		}
+		catch (UnsupportedEncodingException e){
+			e.printStackTrace();
+		}
 		ciphertext = sbCiphertext.toString();
 		auditRandomness = sbRandomness.toString();
 
 		// Create the top QR
 		QRGenerator qrGenerator = new QRGenerator(topQR, bottomQR);
-		File topQr = qrGenerator.createQRImage(ciphertext, false);
-		
+		File topQr = null;
+		try {
+			topQr = qrGenerator.createQRImage(ciphertext, false);
+		} catch (WriterException | IOException e) {
+			System.err.println("An error occured while generating the QR! The ballot will not be printed!");
+			e.printStackTrace();
+			return;
+		}
 		printPage(topQr, curVote); // print the ballot
 	}
 
@@ -99,6 +141,8 @@ public class VotingBoothImp implements VotingBooth {
 	 *            represents whether the voter wanted to audit. if true, prints
 	 *            the rest of the voting paper and terminates the voting booth
 	 *            state. otherwise, terminates the voting booth state.
+	 * @throws IOException 
+	 * @throws WriterException 
 	 */
 	public void audit(boolean isAudit) {
 		if (!isAudit){
@@ -106,11 +150,56 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		// Create the top QR
 		QRGenerator qrGenerator = new QRGenerator(topQR, bottomQR);
-		File auditQr = qrGenerator.createQRImage(auditRandomness, true);
+		File auditQr;
+		try {
+			auditQr = qrGenerator.createQRImage(auditRandomness, true);
+		} catch (WriterException | IOException e) {
+			System.err.println("An error occured while generating the Audit-QR! The ballot will not be printed!");
+			e.printStackTrace();
+			return;
+		}
 		
 		printAudit(auditQr); // print the ballot
 	}
 
+	/**
+	 * 
+	 * @param filePath. the file path of the information.
+	 * @return byte[] of the information from the file.
+	 */
+	
+	
+	private byte[] getInfoFromFile(String filePath, boolean isPrivateKey) {
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(filePath));
+		    	String line = br.readLine();
+		    	line = br.readLine();
+			if (isPrivateKey){
+		    		line = br.readLine();
+		    		line = br.readLine();
+		    	}
+		    	return new BigInteger(line, 16).toByteArray();
+		} catch (FileNotFoundException e){
+			System.err.println("File path '" + filePath + "' is invalid!");	
+		} catch (IOException e){
+			System.err.println("IOException trying to read from file: " + filePath + "'!");		
+			e.printStackTrace();
+		} finally {
+			try{
+				if (br != null){
+					br.close();	
+				}
+			}
+			catch (Exception e){
+				System.err.println("An error occured while closing the file: " + filePath);
+			}
+		}
+		return null;
+	}
+	
+	
+	
 	/**
 	 * 
 	 * @param jsonRepr
@@ -130,12 +219,12 @@ public class VotingBoothImp implements VotingBooth {
 			result.add(raceNum, new Race(rp));
 			Set<String> validNames = rp.getPossibleCandidates();
 			String[] curRaceArrayOfNames = new String[rp.getNumOfSlots()];
-			if ((rp.isOrdered() && curRace.get("type") != 2) || (rp.getNumOfSlots() > 1 && curRace.get("type") > 0)) {// type
+			if ((rp.isOrdered() && curRace.getInt("type") != 2) || (rp.getNumOfSlots() > 1 && curRace.getInt("type") == 0)) {// type
 																														// check
 				JSONException exp = new org.json.JSONException("Invalid vote format, mismatching types");
 				throw (exp);
 			}
-			if (!(rp.getNameOfRace().equals(curRace.get("position")))) {// race
+			if (!(rp.getNameOfRace().equals(curRace.get("position").toString()))) {// race
 																		// name
 																		// match
 																		// check
@@ -171,18 +260,14 @@ public class VotingBoothImp implements VotingBooth {
 	 * method. Prepares the current timestamp.
 	 * 
 	 * @return a string which is a concatenation of the signature and timestamp.
+	 * @throws UnsupportedEncodingException 
 	 */
-	private String addSignatureAndTimeStamp(int machineNum) {
+	private String addSignatureAndTimeStamp(byte[] message) throws UnsupportedEncodingException {
 		StringBuilder signAndTimeStamp = new StringBuilder();
-		// the machine's signature
-		byte[] signatureByteArray = Parameters.mapMachineToSignature.get(machineNum);
-		char[] signatureCharArray = new char[signatureByteArray.length];
-		// remember: the mapping from machines serial numbers to their signature
-		// is int->byte[]
-		// so we have to cast to char array
-		for (int i = 0; i < signatureCharArray.length; i++)
-			signatureCharArray[i] = (char) signatureByteArray[i];
-		signAndTimeStamp.append(signatureCharArray);
+		byte[] signature = Parameters.cryptoClient.sign(privateKey, message);
+		signAndTimeStamp.append(new String(signature,  "ISO-8859-1")); // add signature
+		signAndTimeStamp.append(new String(partyId, "ISO-8859-1")); // add partyId
+		
 		// the timestamp according to the required precision (chosen in the
 		// parameters file)
 		// precision level 1: only hour and minute (2 bytes total)
@@ -201,7 +286,7 @@ public class VotingBoothImp implements VotingBooth {
 			timeArray[1] = (char) cal.get(Calendar.MINUTE);
 			timeArray[2] = (char) cal.get(Calendar.SECOND);
 		}
-		signAndTimeStamp.append(timeArray);
+		signAndTimeStamp.append(timeArray); // add timeStamp
 		return signAndTimeStamp.toString(); // return the signature of the
 											// machine and the time stamp
 											// concatenated together.
@@ -225,7 +310,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * @param qrPng
 	 *            QR png file.
 	 */
-	public void printPage(File qrPng, ArrayList<Race> votesInAllRaces) {
+	public void printPage(final File qrPng, final ArrayList<Race> votesInAllRaces) {
 		class Ballot extends JPanel implements Printable {
 
 			public Ballot() {
@@ -345,7 +430,7 @@ public class VotingBoothImp implements VotingBooth {
 
 	}
 
-	public void printAudit(File qrPng) {
+	public void printAudit(final File qrPng) {
 		class Ballot extends JPanel implements Printable {
 
 			public Ballot() {
@@ -418,6 +503,8 @@ public class VotingBoothImp implements VotingBooth {
 		}
 
 	}
+	
+	
 
 	/**
 	 * set the required QR Properties to the given data QR Properties
@@ -425,6 +512,8 @@ public class VotingBoothImp implements VotingBooth {
 	 * @param qr
 	 * @param data
 	 */
+	
+	/*
 	public static void setQR(QRProperties qr, QRProperties data) {
 		qr.setLevel(data.getLevel());
 		qr.setEcc(data.getEcc());
@@ -435,7 +524,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * Our specific QR map, can be further expanded
 	 * 
 	 * @return
-	 */
+	 *//*
 	public static HashMap<Integer, Integer[]> ourQRMap() {
 		HashMap<Integer, Integer[]> qrMap = new HashMap<Integer, Integer[]>();
 		Integer[] curSizes = new Integer[4];
@@ -510,7 +599,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * @param isTop
 	 * @param qrSpecs
 	 * @return
-	 */
+	 *//*
 	public static QRProperties calcQRsettings(int sizeOfElemInBytes, int maxVersion, boolean isTop,
 			HashMap<Integer, Integer[]> qrSpecs) {
 		int totalNumOfElements = 0;
@@ -599,5 +688,5 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		return min;
 	}
-
+*/
 }

@@ -33,11 +33,11 @@ def least_significant(num, n):
     return num & mask
 
 
-def most_significant(num, n):
-    """returns the most significant (leftmost) n bits of num"""
-    length = num.bit_length()
-    mask = (2**n - 1) * 2**(length-n)
-    return num & mask
+def most_significant(num, return_size, total_size):
+    """returns the most significant (leftmost) return_size bits of num,
+    num is interpreted as a total_size bits number (zeroes are appended to the left if necessary"""
+    mask = (2**total_size - 1) * 2**(total_size-return_size)
+    return (num & mask) // (2 ** (total_size-return_size))
 
 
 def concat_bits(a, b, b_len):
@@ -47,14 +47,16 @@ def concat_bits(a, b, b_len):
 
 
 def product(l, p=0):
-    """computes product of list, mod p if second passed second argument"""
-    res = 1
+    """computes product of iterator, mod p if second passed second argument"""
+    iterlist = iter(l)
+    res = next(iterlist)  # skip the first member
     if p == 0:
-        for i in l:
+        for i in iterlist:
             res *= i
     else:
-        for i in l:
-            res *= i % p
+        for i in iterlist:
+            res *= i
+            res %= i
     return res
 
 
@@ -88,6 +90,7 @@ if gmpy2_installed:
     mod_inv = mod_inv_fast
 else:
     mod_inv = mod_inv_slow
+
 
 def list_to_bytes(l, int_length = 0):
     """returns bytes object formed from concatenating members of list l
@@ -155,7 +158,6 @@ def publish_list(list_data, int_length, sender_id, certificate, table_id, recipi
 
 
 def publish_dict(dict, url):
-    # TODO test
     """
     :param dict: the dictionary to publish.
     :param url: the url to publish to.
@@ -170,14 +172,13 @@ def publish_dict(dict, url):
 
 
 def get_bb_data(url):
-    # TODO test
-    response = urllib.urlopen(url)
-    data = json.loads(response.read())
+    response = urllib.request.urlopen(url)
+    data = json.loads(response.read().decode('utf-8'))
     return data
 
 
 def get_value_from_json(json_data, name):
-    # TODO test
+    # TODO why is this needed?
     """
     :param json_data: json data
     :param name: string name of the field

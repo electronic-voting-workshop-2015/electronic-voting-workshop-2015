@@ -1,2 +1,4 @@
-class Message < ActiveRecord::Base
+require 'models/arbitrary_json'
+
+class Commitment < ArbitraryJson
 end
