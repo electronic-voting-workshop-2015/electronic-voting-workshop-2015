@@ -1,6 +1,5 @@
 from Crypto.Crypto import test, phase1, phase2, phase3, verify_certificate, compute_public_key, generate_keys  # TODO: fix import error in PyCharm
 import sys
-import cProfile
 
 
 def main():
@@ -32,6 +31,4 @@ def main():
     else:
         print("Error: argument should be one of: phase1, phase2, phase3, test, verifyCertificate")
 
-
-#cProfile.run('main()')
 main()

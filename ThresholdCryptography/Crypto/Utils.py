@@ -47,9 +47,9 @@ def concat_bits(a, b, b_len):
 
 
 def product(l, p=0):
-    """computes product of iterator, mod p if second passed second argument"""
+    """computes product of iterator, mod p if second argument is passed"""
     iterlist = iter(l)
-    res = next(iterlist)  # skip the first member
+    res = next(iterlist)
     if p == 0:
         for i in iterlist:
             res *= i
