@@ -718,18 +718,22 @@ def phase3():
         #  TODO: process decrypted_votes and print the results of the election
 
 
-def generate_keys(party_id):
+def generate_keys(parties_number):
     """ generates a private key and saves it to a file. publishes public key to BB.
     """
-    rng = SystemRandom()
-    private_key = rng.randint(2, VOTING_CURVE.order)
-    public_key = VOTING_CURVE.get_member(private_key)
-    data = dict(party_id=party_id, first=public_key.x, second=public_key.y)
-    publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
-    filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
-    f = open(filename, 'w')
-    f.write(str(private_key))
-    f.close()
+    private_keys = []
+    for party_id in range(1, parties_number + 1):
+        rng = SystemRandom()
+        private_key = rng.randint(2, VOTING_CURVE.order)
+        while (private_key in private_keys):
+            private_key = rng.randint(2, VOTING_CURVE.order)
+        public_key = VOTING_CURVE.get_member(private_key)
+        data = dict(party_id=party_id, first=public_key.x, second=public_key.y)
+        publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
+        filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
+        f = open(filename, 'w')
+        f.write(str(private_key))
+        f.close()
 
 
 def test():
