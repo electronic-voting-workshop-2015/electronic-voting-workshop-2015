@@ -95,13 +95,13 @@ else:
 def list_to_bytes(l, int_length = 0):
     """returns bytes object formed from concatenating members of list l
     int_length is the length in bytes of every integer"""
-    res = bytes(0)  # empty string of bytes
+    res = bytearray(0)  # empty string of bytes
     for i in l:
         if isinstance(i, int):
             res += i.to_bytes(int_length, 'little')
         else:  # object is ECGroupMember or ZKP
             res += bytes(i)
-    return res
+    return bytes(res)
 
 
 def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
