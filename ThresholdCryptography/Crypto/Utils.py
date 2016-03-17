@@ -56,7 +56,7 @@ def product(l, p=0):
     else:
         for i in iterlist:
             res *= i
-            res %= i
+            res %= p
     return res
 
 
@@ -110,7 +110,7 @@ def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
     from .Crypto import ECGroupMember, ZKP
     res = []
     if is_zkp:
-        member_length = 12 * curve.p.bit_length // 8
+        member_length = 12 * curve.p.bit_length() // 8
     if member_length == 0:  #
         member_length = 2 * curve.p.bit_length() // 8
     for i in split_every(member_length, b):
