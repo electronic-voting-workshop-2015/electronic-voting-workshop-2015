@@ -349,7 +349,8 @@ class ThresholdParty:
             return False
 
         # compute s_i = f(i) and publish h_i = g^s_i
-        self.secret_value = sum(self.polynomial.value_at(x) for x in valid_messages) % self.voting_curve.order
+        assert len(valid_messages) == N - 1
+        self.secret_value = (self.polynomial.value_at(self.party_id) + sum(valid_messages)) % self.voting_curve.order
         self.save_secret()
         g = self.voting_curve.generator
         # TODO: uncomment when API is ready
@@ -528,16 +529,17 @@ def zkp_hash_func(g, c, h, w, u, v):
 
 def decrypt_vote(curve, party_ids, commitments, d):
     """decrypts a single vote using Lagrange interpolation on t point
-        party_ids is a list of t integers, commitments is a list of t dictionaries,
+        party_ids is a list of t integers, commitments is a dictionary,
         mapping party_id's to commitments,
         d is part of the cipher text - (c,d)
         performed after validating the ZKPs"""
     q = curve.order
-    lambda_list = {}
+    assert len(party_ids) == len(commitments) == T + 1
+    lambdas = {}
     for j in party_ids:
-        l = ((i * mod_inv(i - j, q)) % q for i in party_ids if i != j)
-        lambda_list[j] = product(l, q)
-    cs = product(commitments[j] ** lambda_list[j] for j in party_ids)
+        l = [(i * mod_inv((i - j) % q, q)) % q for i in party_ids if i != j]
+        lambdas[j] = product(l, q)
+    cs = product([commitments[j] ** lambdas[j] for j in party_ids])
     return d * cs ** -1
 
 
@@ -681,7 +683,6 @@ def publish_voting_public_key(public_key, local=False):
 def compute_voting_public_key():
     """step 4 in threshold workflow - computes the voting public key from the commitments
     runs on the Bulletin Board"""
-    json_commitments = get_commitments(local=True)
     commitments = get_commitments(local=True)
     public_key = product(coefficients[0] for coefficients in commitments.values())
     return public_key
@@ -695,17 +696,17 @@ def decrypt_all_votes(votes, zkps, curve):
         A = set()  # the set of valid zkps
         zkp_set = zkps[vote_id]
         for proof, party_id in zkp_set:
-            if len(A) == T:  # we got t valid parties, we can now decrypt the message
+            if len(A) == T + 1:  # we got t + 1 valid parties, we can now decrypt the message
                 break
             if validate_zkp(ZKP_HASH_FUNCTION, g, proof):
                 A.add((proof, party_id))
-        if len(A) < T:
+        if len(A) < T + 1:
             print("Fatal Error: could not decrypt vote %d: not enough parties provided the required data" % vote_id)
             sys.exit()
 
         party_ids = [zkp[1] for zkp in A]
         commitments = {zkp[1]: zkp[0].w for zkp in A}
-        d = votes[vote_id][0][1]  # the encrypted vote
+        d = votes[vote_id][0][1]
         decrypted_vote = decrypt_vote(curve, party_ids, commitments, d)
         race_id = votes[vote_id][1]
         decrypted_votes.append((race_id, decrypted_vote))
@@ -862,8 +863,9 @@ def test():
 
     print("phase 2")
     voting_public_key = compute_voting_public_key()
-    generate_votes(1, 1, parties[0], voting_public_key)
+    generate_votes(3, 3, parties[0], voting_public_key)
     votes = get_votes()
+
     for party in shuffled(parties):
         party.generate_all_zkps(votes)
 
