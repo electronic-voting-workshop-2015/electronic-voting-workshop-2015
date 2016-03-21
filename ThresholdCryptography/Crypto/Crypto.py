@@ -6,6 +6,7 @@ from time import sleep
 from collections import defaultdict
 from json import dumps
 from operator import itemgetter
+import math
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, bytes_to_base64, \
@@ -18,7 +19,7 @@ LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 RESULT_FILE = "result.txt"  # the file where the final results are stored
 PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
-PRIVATE_KEYS_PATH = "/"  # The paths were the private keys will be saved on the server when generated.
+PRIVATE_KEYS_PATH = ""  # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
 PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
 GET_SECRET_COMMITMENT_TABLE = "/retrieveSecretCommitment"
@@ -493,14 +494,12 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     """
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
-    publicKey = ECGroupMember(VOTING_CURVE, public_key_first, public_key_second)
+    publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length
+    int_length = sign_curve.int_length // 8 + 1
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
-    print(r)
-    print(s)
     if r < 1 or r > sign_curve.order:
         return False
     if s < 1 or s > sign_curve.order:
@@ -508,10 +507,10 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     m = hashlib.sha256()
     m.update(encrypted_message)
     e = m.digest()
-    ln = sign_curve.order.bit_length()
     n = sign_curve.order
+    ln = int(math.log(n))
     z = e[0:ln]
-    z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
+    z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
     w = mod_inv(s, n)
     u1 = (z * w) % n
     u2 = (w * r) % n
@@ -808,10 +807,13 @@ def generate_keys(parties_number):
         while (private_key in private_keys):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
-        data = dict(party_id=party_id, first=public_key.x, second=public_key.y)
+        data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
         publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
         filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
         f = open(filename, 'w')
+        f.write("party id:")
+        f.write(str(party_id))
+        f.write("private key:")
         f.write(str(private_key))
         f.close()
 
