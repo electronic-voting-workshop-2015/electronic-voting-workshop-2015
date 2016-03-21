@@ -10,7 +10,7 @@ try:
 except ImportError:
     gmpy2_installed = False
 
-BB_API_ERROR = "error"  # TODO: define error message from BB
+BB_API_ERROR = "certificate_error"  # TODO: BB should return this string on certificate error
 
 def bits(n):
     """Generates binary digits of n, starting from least significant bit.
@@ -176,15 +176,6 @@ def get_bb_data(url):
     data = json.loads(response.read().decode('utf-8'))
     return data
 
-
-def get_value_from_json(json_data, name):
-    # TODO why is this needed?
-    """
-    :param json_data: json data
-    :param name: string name of the field
-    :return:
-    """
-    return json_data[name]
 
 
 def mod_sqrt(a, p):
