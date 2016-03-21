@@ -5,6 +5,7 @@ from random import SystemRandom
 from time import sleep
 from collections import defaultdict
 from operator import itemgetter
+import math
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json, bytes_to_base64, \
@@ -491,7 +492,7 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length // 8
+    int_length = sign_curve.int_length // 8 + 1
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
@@ -504,10 +505,10 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     m = hashlib.sha256()
     m.update(encrypted_message)
     e = m.digest()
-    ln = sign_curve.order.bit_length()
     n = sign_curve.order
+    ln = int(math.log(n))
     z = e[0:ln]
-    z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
+    z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
     w = mod_inv(s, n)
     u1 = (z * w) % n
     u2 = (w * r) % n
