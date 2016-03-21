@@ -496,8 +496,6 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
-    print(r)
-    print(s)
     if r < 1 or r > sign_curve.order:
         return False
     if s < 1 or s > sign_curve.order:
