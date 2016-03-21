@@ -47,16 +47,16 @@ def concat_bits(a, b, b_len):
 
 
 def product(l, p=0):
-    """computes product of iterator, mod p if second passed second argument"""
+    """computes product of iterator, mod p if second argument is passed"""
     iterlist = iter(l)
-    res = next(iterlist)  # skip the first member
+    res = next(iterlist)
     if p == 0:
         for i in iterlist:
             res *= i
     else:
         for i in iterlist:
             res *= i
-            res %= i
+            res %= p
     return res
 
 
@@ -95,13 +95,13 @@ else:
 def list_to_bytes(l, int_length = 0):
     """returns bytes object formed from concatenating members of list l
     int_length is the length in bytes of every integer"""
-    res = bytes(0)  # empty string of bytes
+    res = bytearray(0)  # empty string of bytes
     for i in l:
         if isinstance(i, int):
             res += i.to_bytes(int_length, 'little')
         else:  # object is ECGroupMember or ZKP
             res += bytes(i)
-    return res
+    return bytes(res)
 
 
 def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
@@ -110,7 +110,7 @@ def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
     from .Crypto import ECGroupMember, ZKP
     res = []
     if is_zkp:
-        member_length = 12 * curve.p.bit_length // 8
+        member_length = 12 * curve.p.bit_length() // 8
     if member_length == 0:  #
         member_length = 2 * curve.p.bit_length() // 8
     for i in split_every(member_length, b):
@@ -158,7 +158,6 @@ def publish_list(list_data, int_length, sender_id, certificate, table_id, recipi
 
 
 def publish_dict(dict, url):
-    # TODO test
     """
     :param dict: the dictionary to publish.
     :param url: the url to publish to.
@@ -173,14 +172,13 @@ def publish_dict(dict, url):
 
 
 def get_bb_data(url):
-    # TODO test
     response = urllib.request.urlopen(url)
     data = json.loads(response.read().decode('utf-8'))
     return data
 
 
 def get_value_from_json(json_data, name):
-    # TODO test
+    # TODO why is this needed?
     """
     :param json_data: json data
     :param name: string name of the field

@@ -1,14 +1,13 @@
-from Crypto.Crypto import test, phase1, phase2, phase3, verify_certificate, compute_public_key, generate_keys  # TODO: fix import error in PyCharm
+from Crypto.Crypto import test, phase1, phase2, phase3, verify_certificate, compute_voting_public_key, generate_keys  # TODO: fix import error in PyCharm
 import sys
-import cProfile
 
 
 def main():
     if len(sys.argv) < 2:
         print("not enough arguments")
         sys.exit()
-    elif sys.argv[1] == "compute_public_key":
-        compute_public_key()
+    elif sys.argv[1] == "compute_voting_public_key":
+        compute_voting_public_key()
     elif sys.argv[1] == "test":
         test()
     elif sys.argv[1] == "phase1":
@@ -18,8 +17,8 @@ def main():
     elif sys.argv[1] == "phase3":
         phase3()
     elif sys.argv[1] == "generateKeys":
-        party_id = sys.argv[2]
-        generate_keys(party_id)
+        parties_number = sys.argv[2]
+        generate_keys(parties_number)
     elif sys.argv[1] == "verifyCertificate":
         public_key_first = sys.argv[2]
         public_key_second = sys.argv[3]
@@ -32,6 +31,4 @@ def main():
     else:
         print("Error: argument should be one of: phase1, phase2, phase3, test, verifyCertificate")
 
-
-#cProfile.run('main()')
 main()

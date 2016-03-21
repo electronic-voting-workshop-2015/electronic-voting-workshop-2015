@@ -155,8 +155,9 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
     private byte[][] elgamalEncrypt(ECGroup group, byte[] publicKey, byte[] m) {
         // Generate the private key r.
         byte[] r = new byte[group.getElementSize()];
-        random.nextBytes(r);
-        BigInteger temp = new BigInteger(r);
+        byte[] tempR = new byte[r.length - 1];
+        random.nextBytes(tempR);
+        BigInteger temp = new BigInteger(tempR);
         // If you find a bug, comment out this line and change it to:
         // temp = new BigInteger(<String of the printed r>);
         temp = temp.mod(new BigInteger(group.getOrder()));
@@ -297,6 +298,14 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
             result.put(i, encryptGroup.getElement(BigInteger.valueOf(i).toByteArray()));
         }
         return result;
+    }
+    
+    public ECGroup getEncryptGroup() {
+        return encryptGroup;
+    }
+    
+    public ECGroup getSignGroup() {
+        return signGroup;
     }
 
     // Turns a bigInteger to a little endian bytes array of fixed size. Not verified for negative BigIntegers.
