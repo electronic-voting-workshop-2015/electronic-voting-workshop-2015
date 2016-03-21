@@ -25,9 +25,9 @@ def main():
         encrypted_message = sys.argv[4]
         certificate = sys.argv[5]
         if verify_certificate(public_key_first, public_key_second, encrypted_message, certificate):
-            print("true")
+            print("true",end="")
         else:
-            print("false")
+            print("false",end="")
     else:
         print("Error: argument should be one of: phase1, phase2, phase3, test, verifyCertificate")
 
