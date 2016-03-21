@@ -16,7 +16,7 @@ BB_URL = "http://localhost:4567"  # the address of the Bulletin Board for testin
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
-PRIVATE_KEYS_PATH = "/"  # The paths were the private keys will be saved on the server when generated.
+PRIVATE_KEYS_PATH = ""  # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
 PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
 GET_SECRET_COMMITMENT_TABLE = "/getSecretCommitment"
@@ -488,9 +488,9 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     """
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
-    publicKey = ECGroupMember(VOTING_CURVE, public_key_first, public_key_second)
+    publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length
+    int_length = sign_curve.int_length // 8
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
@@ -803,10 +803,13 @@ def generate_keys(parties_number):
         while (private_key in private_keys):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
-        data = dict(party_id=party_id, first=public_key.x, second=public_key.y)
+        data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
         publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
         filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
         f = open(filename, 'w')
+        f.write("party id:")
+        f.write(str(party_id))
+        f.write("private key:")
         f.write(str(private_key))
         f.close()
 
