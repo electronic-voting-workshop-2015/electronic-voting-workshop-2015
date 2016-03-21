@@ -6,7 +6,7 @@ end
 
 post '/publishPublicKey' do
 	begin
-		publicKet = PublicKey.create!(party_id: params[ "party_id" ], first: params[ "first" ], second: params[ "second" ])
+		publicKey = PublicKey.create!(party_id: params[ "party_id" ], first: params[ "first" ], second: params[ "second" ])
 	rescue
 		raise "Error while inserting public key for party #{params[ "party_id" ]}"
 	end	
