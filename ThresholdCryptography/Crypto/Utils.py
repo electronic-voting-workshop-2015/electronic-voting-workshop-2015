@@ -47,16 +47,16 @@ def concat_bits(a, b, b_len):
 
 
 def product(l, p=0):
-    """computes product of iterator, mod p if second passed second argument"""
+    """computes product of iterator, mod p if second argument is passed"""
     iterlist = iter(l)
-    res = next(iterlist)  # skip the first member
+    res = next(iterlist)
     if p == 0:
         for i in iterlist:
             res *= i
     else:
         for i in iterlist:
             res *= i
-            res %= i
+            res %= p
     return res
 
 
@@ -95,13 +95,13 @@ else:
 def list_to_bytes(l, int_length = 0):
     """returns bytes object formed from concatenating members of list l
     int_length is the length in bytes of every integer"""
-    res = bytes(0)  # empty string of bytes
+    res = bytearray(0)  # empty string of bytes
     for i in l:
         if isinstance(i, int):
             res += i.to_bytes(int_length, 'little')
         else:  # object is ECGroupMember or ZKP
             res += bytes(i)
-    return res
+    return bytes(res)
 
 
 def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
@@ -110,7 +110,7 @@ def bytes_to_list(b, member_length=0, curve=None, is_zkp=False):
     from .Crypto import ECGroupMember, ZKP
     res = []
     if is_zkp:
-        member_length = 12 * curve.p.bit_length // 8
+        member_length = 12 * curve.p.bit_length() // 8
     if member_length == 0:  #
         member_length = 2 * curve.p.bit_length() // 8
     for i in split_every(member_length, b):

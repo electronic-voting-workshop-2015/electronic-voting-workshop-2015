@@ -8,11 +8,13 @@ class PublishRetrieveAPITest < MiniTest::Unit::TestCase
     Sinatra::Application
   end
 
-  def test_save_and_retrieve_proofs_file
+  def test_save_and_retrieve_arbitrary_json_objects
     party_id = randomString
     signature = randomString
+
+    arbitraryJSONs = [ Commitment, Complaint, SecretCommitment ]
     
-    [ Commitment, Complaint ].each do |model|
+    arbitraryJSONs.each do |model|
         post "/publish#{model}", party_id: party_id, singature: signature, content: { numbers: ["5", "6"], names: ["Yosi", "Haim"] }
         assert last_response.ok?
         post "/publish#{model}", party_id: party_id, signature: signature, content: { numbers: ["7", "8"], faces: ["nice", "angry"] }

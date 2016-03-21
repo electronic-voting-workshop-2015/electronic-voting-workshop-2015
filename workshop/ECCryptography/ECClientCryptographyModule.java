@@ -2,11 +2,16 @@ package workshop.ECCryptography;
 
 import workshop.ClientCryptographyModule;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.Base64.Encoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,7 +34,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         this.random = new SecureRandom();
     }
 
-    public static void main(String[] args) throws NoSuchAlgorithmException {
+    public static void main(String[] args) throws NoSuchAlgorithmException, FileNotFoundException, UnsupportedEncodingException {
         BigInteger a = new BigInteger("-3");
         BigInteger b = new BigInteger("5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b", 16);
         BigInteger p = new BigInteger("115792089210356248762697446949407573530086143415290314195533631308867097853951");
@@ -37,7 +42,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         BigInteger gx = new BigInteger("6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296", 16);
         BigInteger gy = new BigInteger("4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5", 16);
         ECPoint g = new ECPoint(curve, gx, gy);
-        int integerSize = 256;
+        int integerSize = 256 / 8;
         BigInteger order = new BigInteger("115792089210356248762697446949407573529996955224135760342422259061068512044369");
         ECGroup group = new ECGroup(curve.toByteArray(), g.toByteArray(integerSize), integerSize * 2, order.toByteArray());
         group.logEncryptionMethods = logEncryptionMethods;
@@ -45,6 +50,15 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
             // exponent of the real publicKey.
         if (logEncryptionMethods) System.out.println("Set group, x = 5, h = " + ECPoint.fromByteArray(curve, publicKey).toString());
         ECClientCryptographyModule module = new ECClientCryptographyModule(group, group); // TODO change signGroup!!!!!!!
+
+        byte[] message = group.getElement(new BigInteger("4444").toByteArray());
+        byte[][] encrypted = module.encryptGroupMember(publicKey, message);
+        PrintWriter file = new PrintWriter("encrypted.txt");
+        Base64.Encoder base64Encoder = Base64.getEncoder();
+        byte[] base64 = base64Encoder.encode(encrypted[0]);
+        String utf8 = new String(base64, "UTF-8");
+        file.println(utf8);
+        file.close();
     }
 
     // TODO used for debugging, remove when done.
@@ -128,7 +142,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
      * Encrypts the message asusuming that m is a valid group member of signGroup.
      * @param publicKey
      * @param m - a valid group member of signGroup. will be assigned with the new encrypted message.
-     * @return The randomness r.
+     * @return Value at result[0] = encrypted message, result[1] = the randomness r.
      */
     public byte[][] encryptGroupMember(byte[] publicKey, byte[] m) {
         return elgamalEncrypt(encryptGroup, publicKey, m);

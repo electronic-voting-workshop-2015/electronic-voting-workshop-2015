@@ -1,6 +1,7 @@
 require 'models/commitment'
 require 'models/message'
 require 'models/complaint'
+require 'models/secret_commitment'
 require 'models/VotingPublicKey'
 
 def publish_and_retrieve( model, publish_url, retrieve_url )
@@ -32,5 +33,6 @@ def publish_and_retrieve_without_signature( model, publish_url, retrieve_url )
 end
 
 publish_and_retrieve Commitment, '/publishCommitment', '/retrieveCommitment'
+publish_and_retrieve SecretCommitment, '/publishSecretCommitment', '/retrieveSecretCommitment'
 publish_and_retrieve_without_signature Complaint, '/publishComplaint', '/retrieveComplaint'
 publish_and_retrieve_without_signature VotingPublicKey, '/publishVotingPublicKey', '/retrieveVotingPublicKey'

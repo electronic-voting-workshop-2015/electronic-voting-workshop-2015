@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160312203012) do
+ActiveRecord::Schema.define(version: 20160321171643) do
 
   create_table "ZKP", force: :cascade do |t|
     t.integer "vote_id",  limit: 4
@@ -38,8 +38,8 @@ ActiveRecord::Schema.define(version: 20160312203012) do
   add_index "messages", ["recepient_id"], name: "index_messages_on_recepient_id", using: :btree
 
   create_table "public_keys", primary_key: "party_id", force: :cascade do |t|
-    t.integer "first",  limit: 8
-    t.integer "second", limit: 8
+    t.string "first",  limit: 255
+    t.string "second", limit: 255
   end
 
   create_table "votes", primary_key: "vote_id", force: :cascade do |t|
