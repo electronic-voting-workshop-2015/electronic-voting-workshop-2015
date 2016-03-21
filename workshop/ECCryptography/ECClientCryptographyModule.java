@@ -44,7 +44,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         ECPoint g = new ECPoint(curve, gx, gy);
         int integerSize = 256 / 8;
         BigInteger order = new BigInteger("115792089210356248762697446949407573529996955224135760342422259061068512044369");
-        ECGroup group = new ECGroup(curve.toByteArray(), g.toByteArray(integerSize), integerSize * 2, order.toByteArray());
+        ECGroup group = new ECGroup(curve.toByteArray(), g.toByteArray(integerSize), integerSize * 2 + 2, order.toByteArray());
         group.logEncryptionMethods = logEncryptionMethods;
         byte[] publicKey = group.getElement(new BigInteger("5").toByteArray()); // Just some example public key. Notice you will not know the
             // exponent of the real publicKey.
@@ -53,11 +53,20 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
 
         byte[] message = group.getElement(new BigInteger("4444").toByteArray());
         byte[][] encrypted = module.encryptGroupMember(publicKey, message);
+        byte[] certificate = module.sign(new BigInteger("123456").toByteArray(), encrypted[0]);
+        byte[] pKey = group.getElement(new BigInteger("123456").toByteArray());
+        boolean verified = module.verifyCertificate(pKey,  encrypted[0], certificate);
+        System.out.println("verified: " + verified);
         PrintWriter file = new PrintWriter("encrypted.txt");
         Base64.Encoder base64Encoder = Base64.getEncoder();
         byte[] base64 = base64Encoder.encode(encrypted[0]);
         String utf8 = new String(base64, "UTF-8");
+        byte[] base64cer = base64Encoder.encode(certificate);
+        String utf8cer = new String(base64cer, "UTF-8");
+        file.println("message:");
         file.println(utf8);
+        file.println("certificate:");
+        file.println(utf8cer);
         file.close();
     }
 
@@ -191,7 +200,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
             int lN = (int) Math.log(new BigInteger(signGroup.getOrder()).doubleValue());
             byte[] certificate = new byte[0];
             BigInteger n = new BigInteger(signGroup.getOrder());
-            BigInteger z = new BigInteger(Arrays.copyOfRange(e, 0, lN));
+            BigInteger z = fromUnsignedLittleEndian(Arrays.copyOfRange(e, 0, lN));
             if (logEncryptionMethods) {
                 System.out.println("Sign: lN = " + lN + ", z = " + z);
             }
@@ -263,7 +272,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
             BigInteger n = new BigInteger(signGroup.getOrder());
             int lN = (int) Math.log(n.doubleValue());
             byte[] zBytes = Arrays.copyOfRange(e, 0, lN);
-            BigInteger z = new BigInteger(zBytes);
+            BigInteger z = fromUnsignedLittleEndian(zBytes);
             BigInteger w = s.modInverse(n);
             BigInteger u1 = z.multiply(w).mod(n);
             BigInteger u2 = r.multiply(w).mod(n);
