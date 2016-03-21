@@ -3,29 +3,28 @@ require 'models/ZKP'
 
 post '/sendVote' do
 
-=begin
 	_party_id = params['ballot_box'].to_i
 	_signature = params['signature']
 	get "/getPublicKey", party_id: _party_id
     publicKey = JSON.parse last_response.body
-	verify = `python ../ThresholdCryptography/main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{params['votes']}" "#{_signature}"`
-=end
+	verify = `python3 ../ThresholdCryptography/main.py verifyCertificate #{publicKey["first"]} #{publicKey["second"]} #{params['votes']} #{_signature}`
 
-	#if verify == "true"
+
+	if verify == "true"
 		  for index in 0 ... params['votes'].size
 			create = Votes.create(vote_value: params['votes'].fetch(index)['vote_value'],
 				                  ballot_box: params['ballot_box'].to_i,
 				                  serial_number: params['serial_number'].to_i,
 				                  race_id: index+1)
-=begin
+			end
+
 	else
-		publish "/publishComplaint", content: "Failed to verify votes for allot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes']}"
+		publish "/publishComplaint", content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes']}"
 		raise
 	end
-=end
-  end
-  
 end
+  
+
 
 get '/getBBVotes/:race_id' do |n|
     
@@ -48,22 +47,21 @@ post '/publishZKP' do
 		_party_id = params['party_id'].to_i
 		_zkp = params['zkp']
 
-=begin
+
 	get "/getPublicKey", party_id: _party_id
     publicKey = JSON.parse last_response.body
-	verify = `python ../ThresholdCryptography/main.py "verifyCertificate" #{publicKey["first"]} #{publicKey["second"]} "#{_zkp}" "#{_signature}"`
-=end
+	verify = `python3 ../ThresholdCryptography/main.py verifyCertificate #{publicKey["first"]} #{publicKey["second"]} #{_zkp} #{_signature}`
+
   
-#	if verify == "true"
+	if verify == "true"
 	
 		voteZkp = ZKP.find_by!(vote_id: _vote_id, race_id: _race_id, party_id: _party_id)
 		raise "ZKP already exists for vote_id #{_vote_id}, race_id #{_race_id}, party_id #{_party_id}, zkp: #{_zkp}"
-=begin
+
 	else
 		publish "/publishComplaint", content: "Failed to verify zkp for Party: #{_party_id}, signature: #{_signature}, message: #{_zkp}"
 		raise
 	end
-=end
 
 	rescue ActiveRecord::RecordNotFound
 		newZkp = ZKP.create(vote_id: _vote_id, party_id: _party_id, race_id: _race_id, zkp: _zkp)
