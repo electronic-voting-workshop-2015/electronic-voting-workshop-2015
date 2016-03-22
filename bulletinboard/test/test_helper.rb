@@ -3,6 +3,8 @@ require 'minitest/autorun'
 require 'rack/test'
 require 'app/app'
 
+Configuration.verify_signature = false
+
 module TestHelper
     def randomString( length: 10 )
         alaphabet = 'abcdefghijklmnopqrtst0123456789!@#$%^&*'.split( '' )

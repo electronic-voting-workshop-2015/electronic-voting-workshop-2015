@@ -1,4 +1,5 @@
 post '/publishMessage' do
+    demand_valid_signature!( request )
     publication = Message.create! party_id:       params[ "party_id" ],
                                 recepient_id:   params[ "recepient_id" ],
                                 message:        params[ "message" ],
