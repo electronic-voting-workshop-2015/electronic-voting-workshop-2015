@@ -7,7 +7,6 @@ end
 
 def demand_valid_signature!( request )
   return if ! Configuration.verify_signature
-  return if ENV['BB_INSECURE']
   puts "VERIFY SIGNATURE ON THESE PARAMTERS: #{params}"
   params = request.params
   publicKey = PublicKey.find params[ "party_id" ]
