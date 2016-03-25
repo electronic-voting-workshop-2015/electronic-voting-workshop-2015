@@ -1,4 +1,5 @@
 import hashlib
+import os
 import sys
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
@@ -18,7 +19,7 @@ BB_URL = "http://localhost:4567"  # the address of the Bulletin Board for testin
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 RESULT_FILE = "result.txt"  # the file where the final results are stored
-PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
+MY_PRIVATE_KEY_PATH = ""  # the path for local file where the party's private signing key is stored (relative to working dir)s
 PRIVATE_KEYS_PATH = ""  # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
 PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
@@ -724,10 +725,10 @@ def print_results(decrypted_votes):
 
 def phase1():
     """steps 1-8 in threshold workflow - voting can only begin after this phase ends successfully
-    https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
+    https://github.com/electronic-voting-wsorkshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
-    party_id = int(sys.argv[2])  # TODO: get party_id from file instead of command line (Noa)
-    sign_key = get_sign_key()  # TODO: write function that reads from private configuration file (Noa)
+    party_id = get_party_id_from_file()
+    sign_key = get_private_key_from_file()
     sign_curve = get_sign_curve()
     party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=True)
 
@@ -756,6 +757,24 @@ def phase1():
     print("phase 1 completed successfully - voting can now start!")
     sys.exit()
 
+
+def get_party_id_from_file():
+    for filename in os.listdir(os.getcwd() + MY_PRIVATE_KEY_PATH):
+        if filename.startswith('privateKey_'):
+            file = open(filename, 'r')
+            file.readline()
+            id = file.readline()
+            return int(id)
+
+
+def get_private_key_from_file():
+    for filename in os.listdir(os.getcwd() + MY_PRIVATE_KEY_PATH):
+        if filename.startswith('privateKey_'):
+            file = open(filename, 'r')
+            for i in range(3):
+                file.readline()
+            key = file.readline()
+            return int(key)
 
 def phase2():
     """step 10 in threshold workflow - run only after voting stopped
@@ -808,13 +827,10 @@ def generate_keys(parties_number):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
         data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
-        publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
-        filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
+       # publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
+        filename = PRIVATE_KEYS_PATH + 'privateKey_' + str(party_id) + '.txt'
         f = open(filename, 'w')
-        f.write("party id:")
-        f.write(str(party_id))
-        f.write("private key:")
-        f.write(str(private_key))
+        f.writelines(["party id: \n", str(party_id) + "\n", "private key:\n", str(private_key) + "\n"])
         f.close()
 
 
