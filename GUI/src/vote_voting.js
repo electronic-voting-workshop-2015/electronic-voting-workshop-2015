@@ -104,7 +104,8 @@ app.controller('voteCtrl', function ($scope) {
 			});
 		}
 
-        // sendVotingJSONData(finalDataJSON, {audit: needToAudit});
+		needToAudit = needToAudit.toString();
+        sendVotingJSONData(finalDataJSON, {audit: needToAudit});
 
     };
 	
@@ -156,7 +157,7 @@ app.controller('voteCtrl', function ($scope) {
     function sendVotingJSONData(votingJSON, auditJSON){
         //call vote function
         $.ajax({
-            url: '/localhost/vote',
+            url: 'http://localhost:4567/Vote',
             type: 'POST',
             contentType: 'application/json',
             traditional: true,
@@ -165,9 +166,7 @@ app.controller('voteCtrl', function ($scope) {
                 sendAuditJSONData(auditJSON);
             },
             error: function (ajaxrequest, ajaxOptions, thrownError) {
-                if (onFailure != null) {
-                    alert(thrownError);
-                }
+                alert(thrownError);
             }
         });
     }
@@ -175,7 +174,7 @@ app.controller('voteCtrl', function ($scope) {
     function sendAuditJSONData(auditJSON){
         //call audit function
         $.ajax({
-            url: '/localhost/audit',
+            url: 'http://localhost:4567/Audit',
             type: 'POST',
             contentType: 'application/json',
             traditional: true,
@@ -184,9 +183,7 @@ app.controller('voteCtrl', function ($scope) {
                 window.location = 'vote_finish.html';
             },
             error: function (ajaxrequest, ajaxOptions, thrownError) {
-                if (onFailure != null) {
-                    alert(thrownError);
-                }
+                 alert(thrownError);
             }
         });
     }
