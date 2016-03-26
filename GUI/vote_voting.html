@@ -72,7 +72,7 @@
 						<div x-lvl-draggable="true" ng-repeat="candidate in candidatesToDragFrom" style="display: inline-block;">
 							<span candidate-id="{{candidate.id}}" style="display: inline-block;">
 								<div style="cursor: move;border-radius: 25px; border: 2px solid #008CBA; padding: 20px;margin-bottom:10px;margin-left:10px;display: inline-block;">
-									<img src="src/{{candidate.image}}" style="width:8vw;height:8vw;" draggable="false"> <br>
+									<img ng-src="src/{{candidate.image}}" style="width:8vw;height:8vw;" draggable="false"> <br>
 									<p>{{candidate.name}}</p>
 								</div>
 							</span>
@@ -86,7 +86,7 @@
 							</span>
 							<span candidate-id="{{candidate.id}}" candidate-index="{{$index}}" ng-if="candidate.id!=-1">
 								<div style="cursor:default;border-radius: 25px; border: 2px solid #008CBA; padding: 20px; margin-bottom:10px;">
-									<img src="src/{{candidate.image}}" style="width:8vw;height:8vw;" draggable="false"> <br>
+									<img ng-src="src/{{candidate.image}}" style="width:8vw;height:8vw;" draggable="false"> <br>
 									<p draggable="false">{{candidate.name}}</p>
 									<span style="cursor: pointer;color:red;display:inline-block;font-size:1.2vw;" draggable="false" ng-click="removeCandidate(candidate.id, $index)">הסר</span>
 								</div>
