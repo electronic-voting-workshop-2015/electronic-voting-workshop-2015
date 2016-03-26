@@ -510,6 +510,8 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     :param certificate: text in 64 form (as sent by parties / voting booths)
     :return: bool.
     """
+    sys.stderr.write("\n" + encrypted_message + "\n")
+    sys.stderr.write("\n" + certificate + "\n")
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
@@ -701,6 +703,8 @@ def compute_voting_public_key():
     runs on the Bulletin Board"""
     commitments = get_commitments(local=True)
     public_key = product(coefficients[0] for coefficients in commitments.values())
+    dictionary = {"public_key": public_key}
+    publish_dict(dictionary, LOCAL_BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
     return public_key
 
 
@@ -880,9 +884,14 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
             vote_dict = {"vote_value": base64_encrypted_vote}
             vote_list.append(vote_dict)
             vote_string_list.append(repr(vote_dict))
-        votes_string = ", ".join(vote_string_list)
+            #vote_string_list.append(base64_encrypted_vote)
+        votes_string = "\n".join(vote_string_list)
+        votes_string = votes_string.replace("'", '"')
+        votes_string = votes_string.replace(": ", '=>')
+        #votes_string = "[" + votes_string + "]"
         print(votes_string)
-        bytes_signature = party.sign(votes_string.encode('utf-8'))
+        #bytes_signature = party.sign(votes_string.encode('utf-8'))
+        bytes_signature = party.sign(base64_to_bytes(vote_list[0]["vote_value"]))
         base64_signature = bytes_to_base64(bytes_signature)
         dictionary = {"ballot_box": 1, "SerialNumber": vote_id, "votes": vote_list, "signature": base64_signature}
         publish_dict(dictionary, LOCAL_BB_URL + SEND_VOTE_TABLE)
@@ -898,7 +907,6 @@ def test():
         for j in range(3):
             file.readline()
         sign_keys.append(int(file.readline()))
-    print(sign_keys)
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
@@ -911,7 +919,7 @@ def test():
 
     print("phase 2")
     voting_public_key = compute_voting_public_key()
-    generate_votes(10, 10, parties[0], voting_public_key)
+    generate_votes(3, 10, parties[0], voting_public_key)
     votes = get_votes()
 
     for party in shuffled(parties):
