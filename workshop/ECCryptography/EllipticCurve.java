@@ -1,4 +1,4 @@
-package ECCryptography;
+package workshop.ECCryptography;
 
 import java.math.BigInteger;
 import java.util.Arrays;

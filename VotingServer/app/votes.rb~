@@ -6,7 +6,7 @@ post '/sendVote' do
 	_party_id = params['ballot_box'].to_i
 	_signature = params['signature']
 	publicKey = PublicKey.find _party_id
-	verify = `python3 ../ThresholdCryptography/main.py verifyCertificate #{publicKey["first"]} #{publicKey["second"]} #{params['votes'].fetch(0)['vote_value']} #{_signature}`
+	verify = `python3 ../ThresholdCryptography/main.py verifyCertificate #{publicKey["first"]} #{publicKey["second"]} #{params['votes']} #{_signature}`
 
 	if verify == "true"
 		  for index in 0 ... params['votes'].size

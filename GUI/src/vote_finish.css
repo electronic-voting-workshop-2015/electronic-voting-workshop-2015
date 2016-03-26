@@ -1,0 +1,31 @@
+* {
+      margin: 0;
+      padding: 0;
+	  text-align: center;
+	  font-family:'Segoe UI';
+    }
+
+html{
+    height: 100%;
+}
+
+body {
+	min-height:85%;
+    border-bottom: 50px solid #008CBA;
+    border-top: 50px solid #008CBA;
+}
+
+.title{
+    margin-top: 60px;
+    margin-bottom: 0px;
+    color: #0c2c83;
+    text-align: center;
+    font-size: 3.2vw;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+img{
+	width:25vw;
+	height:25vw;
+}

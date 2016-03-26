@@ -6,11 +6,11 @@ import urllib.request
 # makes mod_inv computation much faster
 gmpy2_installed = True
 try:
-    import gmpy2
+    from gmpy2 import invert, mpz, powmod
 except ImportError:
     gmpy2_installed = False
 
-BB_API_ERROR = "certificate_error"  # TODO: BB should return this string on certificate error
+BB_API_ERROR = "invalid signature"  # TODO: BB should return this string on certificate error
 
 def bits(n):
     """Generates binary digits of n, starting from least significant bit.
@@ -84,7 +84,7 @@ def mod_inv_slow(a, p):
 def mod_inv_fast(a, p):
     """computes modular inverse of a in field F_p
     using gmpy2 library"""
-    return int(gmpy2.invert(a, p))
+    return invert(a, p)
 
 if gmpy2_installed:
     mod_inv = mod_inv_fast
@@ -99,6 +99,8 @@ def list_to_bytes(l, int_length = 0):
     for i in l:
         if isinstance(i, int):
             res += i.to_bytes(int_length, 'little')
+        elif gmpy2_installed and isinstance(i, mpz().__class__):
+            res += int(i).to_bytes(int_length, 'little')
         else:  # object is ECGroupMember or ZKP
             res += bytes(i)
     return bytes(res)
@@ -142,21 +144,6 @@ def base64_to_list(b, member_length=0, curve=None, is_zkp=False):
     return bytes_to_list(base64_to_bytes(b), member_length, curve, is_zkp)
 
 
-def publish_list(list_data, int_length, sender_id, certificate, table_id, recipient_id, url):
-    """publishes list l to url using POST request
-    if list is a list of group_members, int_length should be 0
-    certificate is a bytes object"""
-    base64_data = list_to_base64(list_data, int_length)
-    base64_certificate = bytes_to_base64(certificate)
-    json_data = json.dumps([sender_id, base64_data, base64_certificate, table_id, recipient_id]).encode('utf-8')
-    json_encoded_data = urllib.request.urlparse(json_data)
-    req = urllib.request.Request(url, json_data, {'Content-Type': 'application/json'})
-    with urllib.request.urlopen(req) as response:
-        read_value = response.read()  # read_value is a bytes object
-    if read_value.decode('utf-8') == BB_API_ERROR:
-        return None
-
-
 def publish_dict(dict, url):
     """
     :param dict: the dictionary to publish.
@@ -168,14 +155,16 @@ def publish_dict(dict, url):
     jsondata = json.dumps(dict)
     jsondataasbytes = jsondata.encode('utf-8')   # needs to be bytes
     req.add_header('Content-Length', len(jsondataasbytes))
-    response = urllib.request.urlopen(req, jsondataasbytes)
+    with urllib.request.urlopen(req, jsondataasbytes) as response:
+        read_value = response.read()  # read_value is a bytes object
+    if read_value.decode('utf-8') == BB_API_ERROR:
+        raise Exception("Invalid Certificate")
 
 
 def get_bb_data(url):
     response = urllib.request.urlopen(url)
     data = json.loads(response.read().decode('utf-8'))
     return data
-
 
 
 def mod_sqrt(a, p):

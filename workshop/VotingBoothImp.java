@@ -65,6 +65,8 @@ public class VotingBoothImp implements VotingBooth {
 	private int votingBoothNumber;
 	private static int numOfVotingBooths = 0;
 	
+	private byte[] toBeSigned;
+	
 	public VotingBoothImp(){
 		numOfVotingBooths++;
 		votingBoothNumber = numOfVotingBooths;
@@ -93,13 +95,17 @@ public class VotingBoothImp implements VotingBooth {
 		} catch (JSONException e) {
 			System.err.println("An error occured during the parse of JSONArray.");
 		}
-
+		boolean flag = true;
 		// encrypt the vote
 		for (Race race : curVote) {
 			for (String name : race.getVotesArray()) {
 				encryptResult = ((ECClientCryptographyModule) (Parameters.cryptoClient))
 						.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
 				try {
+					if (flag){
+						toBeSigned = encryptResult[0];
+						flag = false;
+					}
 					sbCiphertext.append(new String(encryptResult[0], "ISO-8859-1"));
 					sbRandomness.append(new String(Parameters.candidatesMap.get(name), "ISO-8859-1"));
 					sbRandomness.append(new String(encryptResult[1], "ISO-8859-1"));
@@ -113,7 +119,7 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		String encryptions = sbCiphertext.toString();
 		try {
-			sbCiphertext.append(addSignatureAndTimeStamp(encryptions.getBytes("ISO-8859-1"))); // add
+			sbCiphertext.append(addSignatureAndTimeStamp()); // add
 						// machine signature and timestamp to ciphertext
 		}
 		catch (UnsupportedEncodingException e){
@@ -262,9 +268,9 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return a string which is a concatenation of the signature and timestamp.
 	 * @throws UnsupportedEncodingException 
 	 */
-	private String addSignatureAndTimeStamp(byte[] message) throws UnsupportedEncodingException {
+	private String addSignatureAndTimeStamp() throws UnsupportedEncodingException {
 		StringBuilder signAndTimeStamp = new StringBuilder();
-		byte[] signature = Parameters.cryptoClient.sign(privateKey, message);
+		byte[] signature = Parameters.cryptoClient.sign(privateKey, toBeSigned);
 		signAndTimeStamp.append(new String(signature,  "ISO-8859-1")); // add signature
 		signAndTimeStamp.append(new String(partyId, "ISO-8859-1")); // add partyId
 		
