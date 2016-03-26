@@ -738,7 +738,9 @@ def print_results(decrypted_votes):
     # from http://stackoverflow.com/a/2600813
     result_dict = defaultdict(lambda: defaultdict(int))
     for race_id, decrypted_vote in decrypted_votes:
-        result_dict[race_id][str(VOTING_CURVE.generator)] += 1
+        result_dict[race_id][decrypted_vote] += 1
+    
+    result_file.write(dumps(result_dict))
 
     print(str(decrypted_votes[0][1]) == str(decrypted_votes[1][1]))
     print(dumps(result_dict))
