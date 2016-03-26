@@ -161,6 +161,12 @@ def publish_dict(dict, url):
         raise Exception("Invalid Certificate")
 
 
+def get_bb_data(url):
+    response = urllib.request.urlopen(url)
+    data = json.loads(response.read().decode('utf-8'))
+    return data
+
+
 def mod_sqrt(a, p):
     """ Find a quadratic residue (mod p) of 'a'. p
         must be an odd prime.

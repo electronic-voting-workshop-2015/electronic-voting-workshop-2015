@@ -14,9 +14,9 @@ try:
 except ImportError:
     gmpy2_installed = False
 
-from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
-    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, bytes_to_base64, \
-    list_to_base64, base64_to_list, base64_to_bytes
+from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_significant, \
+    most_significant, list_to_bytes, bytes_to_list, publish_dict, bytes_to_base64, \
+    list_to_base64, base64_to_list, base64_to_bytes, get_bb_data
 
 # TODO: organize constants (Ilay)
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
@@ -844,7 +844,7 @@ def generate_keys(parties_number):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
         data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
-       # publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
+        publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
         filename = PRIVATE_KEYS_PATH + 'privateKey_' + str(party_id) + '.txt'
         f = open(filename, 'w')
         f.writelines(["party id: \n", str(party_id) + "\n", "private key:\n", str(private_key) + "\n"])
@@ -881,6 +881,7 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
             vote_list.append(vote_dict)
             vote_string_list.append(repr(vote_dict))
         votes_string = ", ".join(vote_string_list)
+        print(votes_string)
         bytes_signature = party.sign(votes_string.encode('utf-8'))
         base64_signature = bytes_to_base64(bytes_signature)
         dictionary = {"ballot_box": 1, "SerialNumber": vote_id, "votes": vote_list, "signature": base64_signature}
@@ -890,7 +891,14 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
 def test():
     print("phase 1")
     sign_curve = VOTING_CURVE
-    sign_keys = [sign_curve.get_random_exponent() for _ in range(N)]
+    generate_keys(N)
+    sign_keys = []
+    for i in range(1, N+1):
+        file = open('privateKey_%d.txt' % i)
+        for j in range(3):
+            file.readline()
+        sign_keys.append(int(file.readline()))
+    print(sign_keys)
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
