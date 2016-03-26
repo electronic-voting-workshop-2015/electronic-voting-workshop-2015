@@ -15,5 +15,5 @@ end
 
 desc "run the application"
 task :run do
-    sh "ruby app/app.rb"
+    sh "ruby app/app.rb -o 0.0.0.0"
 end
