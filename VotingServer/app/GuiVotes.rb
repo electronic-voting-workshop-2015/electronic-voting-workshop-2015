@@ -1,20 +1,9 @@
-post '/sendVoteFromGui' Dir.chdir("#{RAILS_ROOT}") do
+post '/sendVoteFromGui'  do
 	
-	result = system("/" -jar )
+	result = system("java -jar sadna.jar")
+#	result.to_json
 
 end
   
-
-
-get '/getBBVotes/:race_id' do |n|
-    
-  if n.to_i != -1
-    votes_hash = Votes.where(race_id: n)
-  else
-  	votes_hash = Votes.all
-  end
-  
-  	votes_hash.to_json(:except => :updated_at)
-end
 
 
