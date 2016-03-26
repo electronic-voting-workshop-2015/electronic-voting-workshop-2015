@@ -141,7 +141,10 @@ public class Parameters {
 		for (int i = 0; i < jsonRepr.length(); i++) {//go over races
 			JSONObject curElement = jsonRepr.getJSONObject(i);
 			String name = curElement.getString("position");
-			int slotsNum = curElement.getInt("slots");
+			int slotsNum=1;
+			if (curElement.has("slots")){
+			  slotsNum = curElement.getInt("slots");
+			}
 			boolean order = false;
 			if (curElement.getInt("type") == 2) {
 				order = true;
