@@ -253,7 +253,7 @@ class ThresholdParty:
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(commitments, int_length=0)
         dictionary = {"party_id": self.party_id, "commitment": base64_data, "signature": base64_cert}
-        dictionary2 = {"content": dictionary}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id}
         publish_dict(dictionary2, BB_URL + PUBLISH_COMMITMENT_TABLE)
 
     def publish_secret_commitment(self, value):
@@ -263,7 +263,7 @@ class ThresholdParty:
         base64_value = list_to_base64([value], int_length=0)
         dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value,
                       'signature': base64_cert}
-        dictionary2 = {"content": dictionary}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id}
         publish_dict(dictionary2, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
     def retrieve_commitments(self):
