@@ -1,0 +1,28 @@
+﻿<!DOCTYPE html>
+<meta charset="utf-8" />
+<html lang="he">
+    <head>
+        <script src="src/angular.min.js"></script>
+        <script src="src/vote_home.js"></script>
+        <link rel="stylesheet" type="text/css" href="src/vote_home.css"></link>
+    </head>
+
+    <body>
+        <p class="title">
+            <img alt="a" src="src/Picture1.jpg" style="vertical-align:middle; width: 7.5%;height: 7.5%;" />
+            מערכת הצבעות אלקטרוניות
+            <img alt="a" src="src/Picture1.jpg" style="vertical-align:middle; width: 7.5%;height: 7.5%;" />
+        </p>
+
+        <p class="content">
+            השינוי מתחיל בנגיעה
+            <br><br>
+            <img alt="a" src="src/Picture2.jpg" style="text-align:center; width: 15%;height: 15%;" />
+        </p>
+
+        <div ng-app="homeApp" ng-controller="homeCtrl" style="text-align:center;">
+            <button class="button" id="enterVote" ng-click="EnterVote()"> <span> כניסה להצבעה </span> </button>
+        </div>
+    </body>
+</html>
+

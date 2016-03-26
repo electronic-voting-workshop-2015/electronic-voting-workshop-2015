@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<meta charset="utf-8" />
+<html lang="he" dir="rtl">
+	<head>
+		<script src="src/jquery-2.2.2.js"></script>
+		<script src="src/jquery-2.2.2.min.js"></script>
+		<link rel='stylesheet' href='src/jAlert-v3.css'>
+		<script src='src/jAlert-v3.js'></script>
+		<script src='src/jAlert-functions.js'></script>
+		<link rel='stylesheet' href='src/manager_nominees.css'>
+		<script src="src/manager_nominees.js"></script>
+	</head>
+	<body>
+		<h1 class="title"> הכנס את המועמדים לבחירות </h1>
+		<form id = "nominees"> </form>
+		<button class="button1" id = "addNom" onclick="createNominee()">הוסף מועמד נוסף</button>
+		<div style="display: inline-block;" id = "removeButtonDiv"> </div> <br>
+		<button onclick="toManager()"> אישור ומעבר להגדרת נתוני מערכת הבחירות </button>		
+		<script> 
+			existRemoveButton=false;
+			nomCount = 0;
+			createNominee();	
+		</script>
+	</body>
+</html>

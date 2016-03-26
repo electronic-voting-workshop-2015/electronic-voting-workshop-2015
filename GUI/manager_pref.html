@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<meta charset="utf-8"/>
+<html lang="he" dir="rtl">
+	<head>
+		<script src="src/jquery-2.2.2.js"></script>
+		<script src="src/jquery-2.2.2.min.js"></script>
+        <script src="src/manager_pref.js"></script>
+		<link rel='stylesheet' href='src/jAlert-v3.css'>
+		<script src='src/jAlert-v3.js'></script>
+		<script src='src/jAlert-functions.js'></script>
+        <link rel="stylesheet" type="text/css" href="src/manager_pref.css"></link>
+	</head>
+	<body>
+		<h1 id="title" class="title"> הגדרת נתוני מערכת הבחירות </h1>
+		<div id="manager">
+			הכנס את מספר מרוצי הבחירות הרצויים: 
+			<input type="number" min="1" value="1" id="race_num" onkeydown="return false">  <br><br>
+			הכנס את סדר החבורה: 
+			<input type="text" id="group_order" >  <br><br>
+			הכנס את גודל כל איבר בחבורה בבתים:
+			<input type="number" min="1" id="group_element_size" >  <br><br>
+			הכנס את הפרמטרים של העקום האליפטי:<br><br>
+			a: <input type="text" id="a" >  <br>
+			b: <input type="text" id="b" >  <br>
+			p: <input type="text" id="p" >  <br><br>
+			הכנס את היוצר של החבורה:
+			<input type="text" id="generator" >  <br><br>
+			הכנס את מס' תאי ההצבעה:
+			<input type="number" min="1" id="NumOfMachines" >  <br><br>
+			בחר את רמת דיוק חותמת הזמן:
+			<input type="radio" id="TimeStampLevel1" name="TimeStamp" value="1" > דקות 
+			<input type="radio" id="TimeStampLevel2" name="TimeStamp" value="2" > שניות <br><br>
+			<button id = "raceNumBut" onclick="createRaces()">אישור ומעבר להגדרת המרוצים</button>
+		</div>
+		<div id="races">
+		</div>
+	</body>
+</html>
