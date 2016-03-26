@@ -72,7 +72,8 @@ function createRaces() {
 				parameterText += (2);
 			}						
 			parameterText += ('}]');
-			localStorage.param = JSON.stringify(parameterText);
+			localStorage.param = parameterText;
+			//localStorage.param = JSON.stringify(parameterText);
 			
 			/*
 			$.ajax({
