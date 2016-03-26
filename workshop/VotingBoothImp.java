@@ -103,7 +103,7 @@ public class VotingBoothImp implements VotingBooth {
 						.encryptGroupMember(Parameters.publicKey, Parameters.candidatesMap.get(name));
 				try {
 					if (flag){
-						toBeSigned = new String(encryptResult[0], "ISO-8859-1");
+						toBeSigned = encryptResult[0];
 						flag = false;
 					}
 					sbCiphertext.append(new String(encryptResult[0], "ISO-8859-1"));
@@ -119,7 +119,7 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		String encryptions = sbCiphertext.toString();
 		try {
-			sbCiphertext.append(addSignatureAndTimeStamp(encryptions.getBytes("ISO-8859-1"))); // add
+			sbCiphertext.append(addSignatureAndTimeStamp()); // add
 						// machine signature and timestamp to ciphertext
 		}
 		catch (UnsupportedEncodingException e){
@@ -268,7 +268,7 @@ public class VotingBoothImp implements VotingBooth {
 	 * @return a string which is a concatenation of the signature and timestamp.
 	 * @throws UnsupportedEncodingException 
 	 */
-	private String addSignatureAndTimeStamp(byte[] message) throws UnsupportedEncodingException {
+	private String addSignatureAndTimeStamp() throws UnsupportedEncodingException {
 		StringBuilder signAndTimeStamp = new StringBuilder();
 		byte[] signature = Parameters.cryptoClient.sign(privateKey, toBeSigned);
 		signAndTimeStamp.append(new String(signature,  "ISO-8859-1")); // add signature
