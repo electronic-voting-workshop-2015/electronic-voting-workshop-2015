@@ -6,7 +6,7 @@ require 'models/VotingPublicKey'
 
 def publish_and_retrieve( model, publish_url, retrieve_url )
     post publish_url do
-		#verify signature
+		demand_valid_signature!( request )
         publication = model.create!( content: params[ "content" ].to_json )
     end
 

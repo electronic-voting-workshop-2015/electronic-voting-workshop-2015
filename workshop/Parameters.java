@@ -3,7 +3,14 @@ package workshop;
 import ECCryptography.ECClientCryptographyModule;
 import java.util.*;
 import org.json.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * The fixed parameters file, to be edited by all teams The initial system
@@ -174,8 +181,91 @@ public class Parameters {
 				publicKey);		
 	}
 	
+	/**
+	 * get admin's selections (the JSON file) and the public key from the server -
+	 * - and initialize all fields (call parseJSONInit method above)
+	 */
 	public static void init(){
+		// before initializing the parameters - the voting booth should double click the server file
+		// so it will be able to access it locally
 		
+		// now we can access the server file locally and ask for the public key and the JSON file -
+		// - using HTTP get requests
+
+		// create connection
+		URL adminParsURL = null, pkeyURL = null;
+		URLConnection getAdminPars = null, getPkey = null;
+		BufferedReader reader = null;
+		String input = null;
+		JSONObject jsonObject = null;
+		try {
+			adminParsURL = new URL("http://localhost:4567/retrieveAdminParameters");
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		try {
+			getAdminPars = adminParsURL.openConnection();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			reader = new BufferedReader(new InputStreamReader(getAdminPars.getInputStream()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			input = reader.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			jsonObject = new JSONObject(input);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		String[] names = JSONObject.getNames(jsonObject);
+		JSONArray jsonArray = null;
+		try {
+			jsonArray = jsonObject.toJSONArray(new JSONArray(names));
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		try {
+			reader.close();
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		// got the admin's json file (initial paramters)
+		// now get the private key; same process..
+		try {
+			pkeyURL = new URL("http://localhost:4567/retrieveVotingPublicKey");
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		try {
+			getPkey = pkeyURL.openConnection();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			reader = new BufferedReader(new InputStreamReader(getPkey.getInputStream()));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			input = reader.readLine();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		// initialize
+		parseJSONInit(jsonArray,input);
+		// all parameters are initialized
 	}
 
 }

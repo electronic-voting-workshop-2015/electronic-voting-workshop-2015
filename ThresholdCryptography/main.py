@@ -17,7 +17,7 @@ def main():
     elif sys.argv[1] == "phase3":
         phase3()
     elif sys.argv[1] == "generateKeys":
-        parties_number = sys.argv[2]
+        parties_number = int(sys.argv[2])
         generate_keys(parties_number)
     elif sys.argv[1] == "verifyCertificate":
         public_key_first = sys.argv[2]
@@ -25,9 +25,9 @@ def main():
         encrypted_message = sys.argv[4]
         certificate = sys.argv[5]
         if verify_certificate(public_key_first, public_key_second, encrypted_message, certificate):
-            print("true")
+            print("true",end="")
         else:
-            print("false")
+            print("false",end="")
     else:
         print("Error: argument should be one of: phase1, phase2, phase3, test, verifyCertificate")
 

@@ -1,25 +1,34 @@
 import hashlib
+import os
 import sys
 from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 from time import sleep
 from collections import defaultdict
-from operator import itemgetter
+from json import dumps
+import math
 
-from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
-    most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, get_value_from_json, bytes_to_base64, \
-    list_to_base64, base64_to_list, base64_to_bytes
+gmpy2_installed = False  # TODO: profile optimization
+try:
+    from gmpy2 import mpz
+except ImportError:
+    gmpy2_installed = False
 
-# TODO: organize constants
+from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_significant, \
+    most_significant, list_to_bytes, bytes_to_list, publish_dict, bytes_to_base64, \
+    list_to_base64, base64_to_list, base64_to_bytes, get_bb_data
+
+# TODO: organize constants (Ilay)
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
 BB_URL = "http://localhost:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
-PRIVATE_KEY_FILE = "private.txt"  # the local file where each party's private signing key is stored
-PRIVATE_KEYS_PATH = "/"  # The paths were the private keys will be saved on the server when generated.
+RESULT_FILE = "result.txt"  # the file where the final results are stored
+MY_PRIVATE_KEY_PATH = ""  # the path for local file where the party's private signing key is stored (relative to working dir)s
+PRIVATE_KEYS_PATH = ""  # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
 PUBLISH_SECRET_COMMITMENT_TABLE = "/publishSecretCommitment"
-GET_SECRET_COMMITMENT_TABLE = "/getSecretCommitment"
+GET_SECRET_COMMITMENT_TABLE = "/retrieveSecretCommitment"
 PUBLISH_MESSAGE_TABLE = "/publishMessage"
 PUBLISH_VOTING_PUBLIC_KEY_TABLE = "/publishVotingPublicKey"
 PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES = "/publishPublicKey"
@@ -40,10 +49,17 @@ class EllipticCurve:
     """
 
     def __init__(self, a, b, p, order, int_length):
-        self.a = a
-        self.b = b
-        self.p = p
-        self.order = order
+        if gmpy2_installed:
+            self.a = mpz(a)
+            self.b = mpz(b)
+            self.p = mpz(p)
+            self.order = mpz(order)
+        else:
+            self.a = a
+            self.b = b
+            self.p = p
+            self.order = order
+
         self.int_length = int_length
         self.generator = None  # assigned after initializing
         self.zero_member = ECGroupMember(self, 0, 0)
@@ -71,8 +87,12 @@ class EllipticCurve:
 class ECGroupMember:
     def __init__(self, curve, x, y):
         self.curve = curve
-        self.x = x
-        self.y = y
+        if gmpy2_installed:
+            self.x = mpz(x)
+            self.y = mpz(y)
+        else:
+            self.x = x
+            self.y = y
 
     def modinv(self):
         """modular inverse of member: g^-1"""
@@ -81,32 +101,33 @@ class ECGroupMember:
     def __div__(self, g):
         return self * g.modinv()
 
-    def __mul__(self, g):
-        """returns point addition of two points"""
-        if not (isinstance(self, ECGroupMember) and isinstance(g, ECGroupMember)):
-            raise Exception('The objects are not ECGroupMember')
-        if not self.curve == g.curve:
-            raise Exception('The group members are not from the same curve')
-        if self == self.curve.get_zero_member():
-            return g
-        if g == self.curve.get_zero_member():
-            return self
-        if self.x == g.x and self.y == -g.y:
-            return self.curve.get_zero_member()
-
+    def double(self):
         a = self.curve.a
         p = self.curve.p
 
-        if self == g:
-            m = (3 * self.x ** 2 + a) * mod_inv((2 * self.y) % p, p)
-            m %= p
-        else:
-            m = (self.y - g.y) * mod_inv((self.x - g.x) % p, p)
-            m %= p
+        m = ((3 * self.x * self.x + a) * mod_inv(2 * self.y, p)) % p
+        xr = (m * m - 2 * self.x) % p
+        yr = (m * (self.x - xr) - self.y) % p
+        return ECGroupMember(self.curve, xr, yr)
 
-        xr = (pow(m, 2, p) - self.x - g.x) % p
-        yr = -g.y % p
-        yr = (yr + (m * (g.x - xr))) % p
+    def __mul__(self, other):
+        """returns point addition of two points"""
+        if not self.curve == other.curve:
+            raise Exception('The group members are not from the same curve')
+        if self == self.curve.get_zero_member():
+            return other
+        if other == self.curve.get_zero_member():
+            return self
+        if self.x == other.x and self.y == -other.y:
+            return self.curve.get_zero_member()
+        if self == other:
+            return self.double()
+
+        p = self.curve.p
+
+        m = (self.y - other.y) * mod_inv(self.x - other.x, p) % p
+        xr = (m * m - self.x - other.x) % p
+        yr = (m * (self.x - xr) - self.y) % p
         return ECGroupMember(self.curve, xr, yr)
 
     def __pow__(self, n, modulo=None):
@@ -119,7 +140,7 @@ class ECGroupMember:
         for bit in bits(n):
             if bit == 1:
                 res = res * addend
-            addend = addend * addend
+            addend = addend.double()
 
         return res
 
@@ -127,8 +148,8 @@ class ECGroupMember:
         """convert x any y values to a compact object for transferring to disk or network
         object is a record with 2 field: (self.x, self.y). each field is a little endian integer the same size as p"""
         length = self.curve.p.bit_length() // 8
-        xb = self.x.to_bytes(length, 'little')
-        yb = self.y.to_bytes(length, 'little')
+        xb = int(self.x).to_bytes(length, 'little')
+        yb = int(self.y).to_bytes(length, 'little')
         return xb + yb
 
     def to_base64(self):
@@ -164,12 +185,15 @@ class ECGroupMember:
         return y ** 2 % p == (x ** 3 + a * x + b) % p
 
     def __str__(self):
-        return "(" + self.x.__str__() + ", " + self.y.__str__() + ")"
+        return "[" + self.x.__str__() + ", " + self.y.__str__() + "]"
 
     __repr__ = __str__
 
     def __eq__(self, other):
         return self.curve == other.curve and self.x == other.x and self.y == other.y
+
+    def __hash__(self):
+        return hash((self.x, self.y))
 
     @staticmethod
     def from_int(num, num_len, curve):
@@ -237,9 +261,10 @@ class ThresholdParty:
         cert = self.sign(bytes(value))
         base64_cert = bytes_to_base64(cert)
         base64_value = list_to_base64([value], int_length=0)
-        dictionary = {'party_id': self.party_id, 'value': base64_value,
-                      'signature': base64_cert}  # TODO: add to BB API
-        publish_dict(dictionary, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
+        dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value,
+                      'signature': base64_cert}
+        dictionary2 = {"content": dictionary}
+        publish_dict(dictionary2, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
     def retrieve_commitments(self):
         """retrieves all commitment to coefficients as a dictionary mapping j to j's commitment"""
@@ -353,8 +378,7 @@ class ThresholdParty:
         self.secret_value = (self.polynomial.value_at(self.party_id) + sum(valid_messages)) % self.voting_curve.order
         self.save_secret()
         g = self.voting_curve.generator
-        # TODO: uncomment when API is ready
-        # self.publish_secret_commitment(g ** self.secret_value)
+        self.publish_secret_commitment(g ** self.secret_value)
         return True
 
     def save_secret(self):
@@ -488,14 +512,12 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     """
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
-    publicKey = ECGroupMember(VOTING_CURVE, public_key_first, public_key_second)
+    publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length
+    int_length = sign_curve.int_length // 8 + 1
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
-    print(r)
-    print(s)
     if r < 1 or r > sign_curve.order:
         return False
     if s < 1 or s > sign_curve.order:
@@ -503,10 +525,10 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     m = hashlib.sha256()
     m.update(encrypted_message)
     e = m.digest()
-    ln = sign_curve.order.bit_length()
     n = sign_curve.order
+    ln = int(math.log(n))
     z = e[0:ln]
-    z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
+    z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
     w = mod_inv(s, n)
     u1 = (z * w) % n
     u2 = (w * r) % n
@@ -584,8 +606,9 @@ g_256 = ECGroupMember(curve_256, _Gx, _Gy)
 curve_256.generator = g_256
 
 VOTING_CURVE = curve_256
+SIGN_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
-T = 5  # number of parties needed for decryption
+T = 4  # number of parties needed for decryption minus 1
 N = 7  # total number of parties
 SLEEP_TIME = 1
 
@@ -596,10 +619,10 @@ def get_sign_key():
 
 
 def get_sign_curve():
-    pass
+    return SIGN_CURVE
 
 
-def get_public_key_confirmation():
+def get_sent_commitments_confirmation():
     """returns True iff the BB finished computing the public key"""
     pass
 
@@ -640,17 +663,10 @@ def get_secret_commitments(local=False):
     else:
         bb_url = BB_URL
     json_data = get_bb_data(bb_url + GET_SECRET_COMMITMENT_TABLE)
-    return {dictionary['party_id']: base64_to_list(dictionary['commitment'], curve=VOTING_CURVE)
+    return {dictionary['party_id']: base64_to_list(dictionary['secret_commitment'], curve=VOTING_CURVE)[0]
             for dictionary in json_data}
 
 
-def get_voting_curve(local=False):
-    if local:
-        bb_url = LOCAL_BB_URL
-    else:
-        bb_url = BB_URL
-    # TODO: add to JSON API
-    pass
 
 
 def get_zkps(local=False):
@@ -688,7 +704,7 @@ def compute_voting_public_key():
     return public_key
 
 
-def decrypt_all_votes(votes, zkps, curve):
+def decrypt_all_votes(votes, zkps, curve, secret_commitments):
     g = curve.generator
     decrypted_votes = []  # a list of tuples: (race_id, vote)
 
@@ -698,7 +714,7 @@ def decrypt_all_votes(votes, zkps, curve):
         for proof, party_id in zkp_set:
             if len(A) == T + 1:  # we got t + 1 valid parties, we can now decrypt the message
                 break
-            if validate_zkp(ZKP_HASH_FUNCTION, g, proof):
+            if validate_zkp(ZKP_HASH_FUNCTION, g, proof) and secret_commitments[party_id] == proof.h:
                 A.add((proof, party_id))
         if len(A) < T + 1:
             print("Fatal Error: could not decrypt vote %d: not enough parties provided the required data" % vote_id)
@@ -714,22 +730,29 @@ def decrypt_all_votes(votes, zkps, curve):
 
 
 def print_results(decrypted_votes):
-    print(decrypted_votes)  # TODO: prettier printing
+    result_file = open(RESULT_FILE, 'w')
+    # from http://stackoverflow.com/a/2600813
+    result_dict = defaultdict(lambda: defaultdict(int))
+    for race_id, decrypted_vote in decrypted_votes:
+        result_dict[race_id][str(VOTING_CURVE.generator)] += 1
+
+    print(str(decrypted_votes[0][1]) == str(decrypted_votes[1][1]))
+    print(dumps(result_dict))
 
 
 def phase1():
     """steps 1-8 in threshold workflow - voting can only begin after this phase ends successfully
-    https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
+    https://github.com/electronic-voting-wsorkshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
-    party_id = int(sys.argv[2])
-    sign_key = get_sign_key()  # TODO: write function that reads from private configuration file
-    sign_curve = get_sign_curve()  # TODO: write functions that read from public configuration files
+    party_id = get_party_id_from_file()
+    sign_key = get_private_key_from_file()
+    sign_curve = get_sign_curve()
     party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=True)
 
     print("publishing commitment")
     party.publish_commitment()
     while True:
-        if get_public_key_confirmation():
+        if get_sent_commitments_confirmation():
             break
         sleep(SLEEP_TIME)
         print('.')  # gives an indication to user that work is being done
@@ -752,12 +775,30 @@ def phase1():
     sys.exit()
 
 
+def get_party_id_from_file():
+    for filename in os.listdir(os.getcwd() + MY_PRIVATE_KEY_PATH):
+        if filename.startswith('privateKey_'):
+            file = open(filename, 'r')
+            file.readline()
+            id = file.readline()
+            return int(id)
+
+
+def get_private_key_from_file():
+    for filename in os.listdir(os.getcwd() + MY_PRIVATE_KEY_PATH):
+        if filename.startswith('privateKey_'):
+            file = open(filename, 'r')
+            for i in range(3):
+                file.readline()
+            key = file.readline()
+            return int(key)
+
 def phase2():
     """step 10 in threshold workflow - run only after voting stopped
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
-    party_id = int(sys.argv[2])
-    sign_key = get_sign_key()  # TODO: write functions that read from public configuration files
+    party_id = get_party_id_from_file()
+    sign_key = get_private_key_from_file()
     sign_curve = get_sign_curve()
     party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=False)
 
@@ -781,13 +822,12 @@ def phase3():
     zkps = get_zkps(local=True)
 
     print("retrieving secret commitments from the database")
-    # TODO: uncomment when API is ready
-    # secret_commitments = get_secret_commitments(local=True)
+    secret_commitments = get_secret_commitments(local=True)
 
     print("verifying validity of zero knowledge proofs and decrypting")
     #curve = get_voting_curve(local=True)
-    curve = VOTING_CURVE  # TODO: use constant, or call to API?
-    decrypted_votes = decrypt_all_votes(votes, zkps, curve)  # TODO: add verification of secret commitments
+    curve = VOTING_CURVE
+    decrypted_votes = decrypt_all_votes(votes, zkps, curve, secret_commitments)
 
     print("the results are:")
     print_results(decrypted_votes)
@@ -803,11 +843,11 @@ def generate_keys(parties_number):
         while (private_key in private_keys):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
-        data = dict(party_id=party_id, first=public_key.x, second=public_key.y)
+        data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
         publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
-        filename = PRIVATE_KEYS_PATH + str(party_id) + '.txt'
+        filename = PRIVATE_KEYS_PATH + 'privateKey_' + str(party_id) + '.txt'
         f = open(filename, 'w')
-        f.write(str(private_key))
+        f.writelines(["party id: \n", str(party_id) + "\n", "private key:\n", str(private_key) + "\n"])
         f.close()
 
 
@@ -834,13 +874,14 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
         vote_list = []
         vote_string_list = []  # used for building the string for signing
         for race_id in range(1, number_of_races + 1):
-            vote = VOTING_CURVE.generator ** 1000  # TODO: change vote value dynamically to simulate actual election
+            vote = VOTING_CURVE.generator ** vote_id
             encrypted_vote = encrypt_member(vote, voting_public_key)
             base64_encrypted_vote = list_to_base64(encrypted_vote, int_length=0)
             vote_dict = {"vote_value": base64_encrypted_vote}
             vote_list.append(vote_dict)
             vote_string_list.append(repr(vote_dict))
         votes_string = ", ".join(vote_string_list)
+        print(votes_string)
         bytes_signature = party.sign(votes_string.encode('utf-8'))
         base64_signature = bytes_to_base64(bytes_signature)
         dictionary = {"ballot_box": 1, "SerialNumber": vote_id, "votes": vote_list, "signature": base64_signature}
@@ -850,7 +891,14 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
 def test():
     print("phase 1")
     sign_curve = VOTING_CURVE
-    sign_keys = [sign_curve.get_random_exponent() for _ in range(N)]
+    generate_keys(N)
+    sign_keys = []
+    for i in range(1, N+1):
+        file = open('privateKey_%d.txt' % i)
+        for j in range(3):
+            file.readline()
+        sign_keys.append(int(file.readline()))
+    print(sign_keys)
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
@@ -863,7 +911,7 @@ def test():
 
     print("phase 2")
     voting_public_key = compute_voting_public_key()
-    generate_votes(3, 3, parties[0], voting_public_key)
+    generate_votes(10, 10, parties[0], voting_public_key)
     votes = get_votes()
 
     for party in shuffled(parties):
@@ -872,12 +920,10 @@ def test():
     print("phase 3")
     zkps = get_zkps(local=True)
 
-    # TODO: uncomment when API is ready
-    # secret_commitments = get_secret_commitments(local=True)
+    secret_commitments = get_secret_commitments(local=True)
 
-    #curve = get_voting_curve(local=True)
-    curve = VOTING_CURVE  # TODO: use constant, or call to API?
-    decrypted_votes = decrypt_all_votes(votes, zkps, curve)  # TODO: add verification of secret commitments
+    curve = VOTING_CURVE
+    decrypted_votes = decrypt_all_votes(votes, zkps, curve, secret_commitments)
 
     print("the results are:")
     print_results(decrypted_votes)
