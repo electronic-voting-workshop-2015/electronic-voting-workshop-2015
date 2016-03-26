@@ -1,0 +1,3 @@
+class Votes < ActiveRecord::Base
+	self.primary_key=vote_id
+end

@@ -1,0 +1,34 @@
+require 'test/test_helper'
+require 'models/public_key'
+
+class PublishRetrieveAPITest < MiniTest::Unit::TestCase
+  include Rack::Test::Methods
+  include TestHelper
+
+  def app
+    Sinatra::Application
+  end
+
+  def test_get_public_key
+    #PublicKey.create! party_id: 10, first: 11, second: 12
+    #PublicKey.create! party_id: 11, first: 13, second: 14
+
+	post "/publishPublicKey", party_id: 10, first: 39270794729698181878575666268682205353244655206919602857030725499305329225635, second: 80370989045646108533524592309707347791724197010962408473278574008569467628739
+	post "/publishPublicKey", party_id: 11, first: 13, second: 14
+    
+    get "/getPublicKey", party_id: 10
+    assert last_response.ok?
+    parsed = JSON.parse last_response.body
+    assert_equal 10, parsed[ "party_id" ]
+    assert_equal 11, parsed[ "first" ]
+    assert_equal 12, parsed[ "second" ]
+
+    get "/getPublicKey", party_id: 11
+    assert last_response.ok?
+    parsed = JSON.parse last_response.body
+    assert_equal 11, parsed[ "party_id" ]
+    assert_equal 13, parsed[ "first" ]
+    assert_equal 14, parsed[ "second" ]
+  end
+
+end
