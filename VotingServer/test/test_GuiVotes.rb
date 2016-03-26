@@ -9,7 +9,7 @@ class VotesAPITest < MiniTest::Unit::TestCase
 
   def test_votes
 
-	post '/sendVoteFromGui'
+	post '/Vote'
 
 
   end

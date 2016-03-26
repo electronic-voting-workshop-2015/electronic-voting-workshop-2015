@@ -157,16 +157,16 @@ app.controller('voteCtrl', function ($scope) {
     function sendVotingJSONData(votingJSON, auditJSON){
         //call vote function
         $.ajax({
-            url: 'http://localhost:4567/Vote',
+            url: "http://localhost:4567/Vote",
             type: 'POST',
-            contentType: 'application/json',
+            contentType: 'jsonp',
             traditional: true,
             data: JSON.stringify(votingJSON),
             success: function () {
                 sendAuditJSONData(auditJSON);
             },
-            error: function (ajaxrequest, ajaxOptions, thrownError) {
-                alert(thrownError);
+            error: function () {
+                 sendAuditJSONData(auditJSON);
             }
         });
     }
@@ -174,16 +174,16 @@ app.controller('voteCtrl', function ($scope) {
     function sendAuditJSONData(auditJSON){
         //call audit function
         $.ajax({
-            url: 'http://localhost:4567/Audit',
+            url: "http://localhost:4567/Audit",
             type: 'POST',
-            contentType: 'application/json',
+            contentType: 'jsonp',
             traditional: true,
             data: JSON.stringify(auditJSON),
             success: function () {
                 window.location = 'vote_finish.html';
             },
-            error: function (ajaxrequest, ajaxOptions, thrownError) {
-                 alert(thrownError);
+            error: function () {
+				window.location = 'vote_finish.html';
             }
         });
     }

@@ -1,11 +1,14 @@
-post '/vote'  do
-	
+
+
+options '/Vote'  do
+
+#	puts "hello"
 	result = system("java -jar sadna.jar vote #{request}")
 #	result.to_json
 
 end
 
-post '/audit'  do
+options '/Audit'  do
 	
 	result = system("java -jar sadna.jar audit #{request}")
 #	result.to_json
