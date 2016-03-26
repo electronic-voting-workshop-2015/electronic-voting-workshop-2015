@@ -6,8 +6,13 @@ from random import SystemRandom
 from time import sleep
 from collections import defaultdict
 from json import dumps
-from operator import itemgetter
 import math
+
+gmpy2_installed = False  # TODO: profile optimization
+try:
+    from gmpy2 import mpz
+except ImportError:
+    gmpy2_installed = False
 
 from .Utils import bits, product, mod_inv, mod_sqrt, publish_list, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list, publish_dict, get_bb_data, bytes_to_base64, \
@@ -44,10 +49,17 @@ class EllipticCurve:
     """
 
     def __init__(self, a, b, p, order, int_length):
-        self.a = a
-        self.b = b
-        self.p = p
-        self.order = order
+        if gmpy2_installed:
+            self.a = mpz(a)
+            self.b = mpz(b)
+            self.p = mpz(p)
+            self.order = mpz(order)
+        else:
+            self.a = a
+            self.b = b
+            self.p = p
+            self.order = order
+
         self.int_length = int_length
         self.generator = None  # assigned after initializing
         self.zero_member = ECGroupMember(self, 0, 0)
@@ -75,8 +87,12 @@ class EllipticCurve:
 class ECGroupMember:
     def __init__(self, curve, x, y):
         self.curve = curve
-        self.x = x
-        self.y = y
+        if gmpy2_installed:
+            self.x = mpz(x)
+            self.y = mpz(y)
+        else:
+            self.x = x
+            self.y = y
 
     def modinv(self):
         """modular inverse of member: g^-1"""
@@ -85,32 +101,33 @@ class ECGroupMember:
     def __div__(self, g):
         return self * g.modinv()
 
-    def __mul__(self, g):
-        """returns point addition of two points"""
-        if not (isinstance(self, ECGroupMember) and isinstance(g, ECGroupMember)):
-            raise Exception('The objects are not ECGroupMember')
-        if not self.curve == g.curve:
-            raise Exception('The group members are not from the same curve')
-        if self == self.curve.get_zero_member():
-            return g
-        if g == self.curve.get_zero_member():
-            return self
-        if self.x == g.x and self.y == -g.y:
-            return self.curve.get_zero_member()
-
+    def double(self):
         a = self.curve.a
         p = self.curve.p
 
-        if self == g:
-            m = (3 * self.x ** 2 + a) * mod_inv((2 * self.y) % p, p)
-            m %= p
-        else:
-            m = (self.y - g.y) * mod_inv((self.x - g.x) % p, p)
-            m %= p
+        m = ((3 * self.x * self.x + a) * mod_inv(2 * self.y, p)) % p
+        xr = (m * m - 2 * self.x) % p
+        yr = (m * (self.x - xr) - self.y) % p
+        return ECGroupMember(self.curve, xr, yr)
 
-        xr = (pow(m, 2, p) - self.x - g.x) % p
-        yr = -g.y % p
-        yr = (yr + (m * (g.x - xr))) % p
+    def __mul__(self, other):
+        """returns point addition of two points"""
+        if not self.curve == other.curve:
+            raise Exception('The group members are not from the same curve')
+        if self == self.curve.get_zero_member():
+            return other
+        if other == self.curve.get_zero_member():
+            return self
+        if self.x == other.x and self.y == -other.y:
+            return self.curve.get_zero_member()
+        if self == other:
+            return self.double()
+
+        p = self.curve.p
+
+        m = (self.y - other.y) * mod_inv(self.x - other.x, p) % p
+        xr = (m * m - self.x - other.x) % p
+        yr = (m * (self.x - xr) - self.y) % p
         return ECGroupMember(self.curve, xr, yr)
 
     def __pow__(self, n, modulo=None):
@@ -123,7 +140,7 @@ class ECGroupMember:
         for bit in bits(n):
             if bit == 1:
                 res = res * addend
-            addend = addend * addend
+            addend = addend.double()
 
         return res
 
@@ -131,8 +148,8 @@ class ECGroupMember:
         """convert x any y values to a compact object for transferring to disk or network
         object is a record with 2 field: (self.x, self.y). each field is a little endian integer the same size as p"""
         length = self.curve.p.bit_length() // 8
-        xb = self.x.to_bytes(length, 'little')
-        yb = self.y.to_bytes(length, 'little')
+        xb = int(self.x).to_bytes(length, 'little')
+        yb = int(self.y).to_bytes(length, 'little')
         return xb + yb
 
     def to_base64(self):
@@ -780,8 +797,8 @@ def phase2():
     """step 10 in threshold workflow - run only after voting stopped
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
-    party_id = int(sys.argv[2])
-    sign_key = get_sign_key()
+    party_id = get_party_id_from_file()
+    sign_key = get_private_key_from_file()
     sign_curve = get_sign_curve()
     party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=False)
 
@@ -886,7 +903,7 @@ def test():
 
     print("phase 2")
     voting_public_key = compute_voting_public_key()
-    generate_votes(3, 3, parties[0], voting_public_key)
+    generate_votes(10, 10, parties[0], voting_public_key)
     votes = get_votes()
 
     for party in shuffled(parties):
@@ -897,7 +914,6 @@ def test():
 
     secret_commitments = get_secret_commitments(local=True)
 
-    #curve = get_voting_curve(local=True)
     curve = VOTING_CURVE
     decrypted_votes = decrypt_all_votes(votes, zkps, curve, secret_commitments)
 

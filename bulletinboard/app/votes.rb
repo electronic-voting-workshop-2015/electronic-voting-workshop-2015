@@ -5,10 +5,8 @@ post '/sendVote' do
 
 	_party_id = params['ballot_box'].to_i
 	_signature = params['signature']
-	get "/getPublicKey", party_id: _party_id
-    publicKey = JSON.parse last_response.body
+	publicKey = PublicKey.find _party_id
 	verify = `python3 ../ThresholdCryptography/main.py verifyCertificate #{publicKey["first"]} #{publicKey["second"]} #{params['votes']} #{_signature}`
-
 
 	if verify == "true"
 		  for index in 0 ... params['votes'].size
@@ -19,9 +17,10 @@ post '/sendVote' do
 			end
 
 	else
-		publish "/publishComplaint", content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes']}"
+		complaint = Complaint.create( content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes']}" )
 		raise
 	end
+
 end
   
 
@@ -48,8 +47,7 @@ post '/publishZKP' do
 		_zkp = params['zkp']
 
 
-	get "/getPublicKey", party_id: _party_id
-    publicKey = JSON.parse last_response.body
+	publicKey = PublicKey.find _party_id
 	verify = `python3 ../ThresholdCryptography/main.py verifyCertificate #{publicKey["first"]} #{publicKey["second"]} #{_zkp} #{_signature}`
 
   
@@ -59,7 +57,7 @@ post '/publishZKP' do
 		raise "ZKP already exists for vote_id #{_vote_id}, race_id #{_race_id}, party_id #{_party_id}, zkp: #{_zkp}"
 
 	else
-		publish "/publishComplaint", content: "Failed to verify zkp for Party: #{_party_id}, signature: #{_signature}, message: #{_zkp}"
+		complaint = Complaint.create( content: "Failed to verify zkp for Party: #{_party_id}, signature: #{_signature}, message: #{_zkp}")
 		raise
 	end
 
