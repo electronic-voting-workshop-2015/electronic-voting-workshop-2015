@@ -1,4 +1,4 @@
-package ECCryptography;
+package workshop.ECCryptography;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -27,8 +27,6 @@ public class ECPoint {
         // TODO verify if point lies on curve.
         int size = array.length / 2;
         BigInteger x = new BigInteger(Arrays.copyOfRange(array, 0, size));
-        byte[] a = {1};
-        byte[] b = {0, 1};
         BigInteger y = new BigInteger(Arrays.copyOfRange(array, size, array.length));
         return new ECPoint(curve, x, y);
     }
