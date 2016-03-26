@@ -73,7 +73,24 @@ function createRaces() {
 			}						
 			parameterText += ('}]');
 			localStorage.param = JSON.stringify(parameterText);
-			successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
+			
+			/*
+			$.ajax({
+				url: '/localhost/audit',
+				type: 'POST',
+				contentType: 'application/json',
+				traditional: true,
+				data: JSON.stringify(parameterText),
+				success: function () {
+					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
+				},
+				error: function (ajaxrequest, ajaxOptions, thrownError) {
+					 alert(thrownError);
+				}
+			});
+			*/
+			
+			successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!"); // TO DELETE
 		}
 		
 	};
