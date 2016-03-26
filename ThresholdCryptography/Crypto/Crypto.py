@@ -827,7 +827,7 @@ def generate_keys(parties_number):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
         data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
-       # publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
+        publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
         filename = PRIVATE_KEYS_PATH + 'privateKey_' + str(party_id) + '.txt'
         f = open(filename, 'w')
         f.writelines(["party id: \n", str(party_id) + "\n", "private key:\n", str(private_key) + "\n"])
