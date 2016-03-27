@@ -453,7 +453,7 @@ class ThresholdParty:
             if s == 0:
                 continue
             l = [r, s]
-            int_length = self.sign_curve.int_length
+            int_length = self.sign_curve.int_length // 8 + 1
             certificate = list_to_bytes(l, int_length)
         return certificate
 
