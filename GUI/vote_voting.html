@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<meta charset="utf-8"/>
+<html lang="he">
+    <head>
+		<script src="src/jquery-2.2.2.js"></script>
+		<script src="src/jquery-2.2.2.min.js"></script>
+		<script src="src/jquery-migrate-1.4.0.js"></script>
+		<script src="src/jquery-ui.js"></script>
+		<script src="src/angular.min.js"></script>
+		<script src="src/sortable.js"></script>
+		<script src="src/sortable.min.js"></script>
+		<script src="src/underscore-min.js"></script>
+		<script src="src/lvl-uuid.js"></script>
+		<script src="src/lvl-drag-drop.js"></script>
+
+		<link rel='stylesheet' href='src/jAlert-v3.css'>
+		<script src='src/jAlert-v3.js'></script>
+		<script src='src/jAlert-functions.js'></script>
+
+		<script src="src/vote_voting.js"></script>
+		<link rel="stylesheet" type="text/css" href="src/vote_voting.css">
+		
+     </head>
+
+    <body>
+        <div ng-app="voteApp" ng-controller="voteCtrl" style="direction:RTL;">
+		
+            <div ng-if="position.type==0 && finishMode==0">
+                <p class="title"> אנא בחר מועמד לתפקיד {{position.position}} </p>
+                <div>
+                    <form>
+                        <label ng-repeat="x in candidatesArray">
+                            <input type="radio" name="pageSet" ng-model="data[page]" ng-value="x.name" />
+                            <span ng-if="x.image!=undefined">
+                                <img ng-src="src/{{x.image}}">
+                                <br/>
+                                <label> {{ x.name }} </label>
+                            </span>
+                        </label>
+                    </form>
+                </div>
+            </div>
+
+			
+            <div ng-if="position.type==1 && finishMode==0">
+                <p class="title"> אנא בחר {{position.num}} מועמדים לתפקיד {{position.position}} </p>
+                <div>
+                <form>
+                    <label ng-repeat="x in candidatesArray">
+                        <input type="checkbox" name="pageSet" ng-model="data[page][$index]" ng-value="x.name" ng-change="checkChanged(data[page][$index])" ng-disabled="position.checked==position.num && !data[page][$index]"/>
+                            <span ng-if="x.image!=undefined">
+                                <img ng-src="src/{{x.image}}">
+                                <br/>
+                                <label> {{ x.name }} </label>
+                            </span>
+                            <span ng-if="x.image==undefined">
+                                <img ng-src="src/undefined.jpg">
+                                <br/>
+                                <label> {{ x.name }} </label>
+                            </span>
+                    </label>
+                </form>
+                </div>
+            </div>
+
+            <div ng-if="position.type==2 && finishMode==0">
+                <p class="title"> אנא בחר {{position.num}} מועמדים לתפקיד {{position.position}} </p>
+				<p class="subtitle">גרור את המתמודדים מהרשימה בימין לרשימה בשמאל לפי הסדר המבוקש</p>
+				<div ng-controller="ddController">
+					<div style="float:right; margin-right:150px;font-size:1.5vw;width:50%">
+						<p style="font-size:2vw;font-weight:bold;margin-bottom:0.8vw">מועמדים</p>
+						<div x-lvl-draggable="true" ng-repeat="candidate in candidatesToDragFrom" style="display: inline-block;">
+							<span candidate-id="{{candidate.id}}" style="display: inline-block;">
+								<div style="cursor: move;border-radius: 25px; border: 2px solid #008CBA; padding: 20px;margin-bottom:10px;margin-left:10px;display: inline-block;">
+									<img ng-src="src/{{candidate.image}}" style="width:8vw;height:8vw;" draggable="false"> <br>
+									<p>{{candidate.name}}</p>
+								</div>
+							</span>
+						</div>
+					</div>
+					<div style="float:left; margin-left:300px;font-size:1.5vw;">
+						<div ng-repeat="candidate in candidatesDroppedByOrder">
+							<p style="font-size:2vw;font-weight:bold;margin-bottom:0.8vw">מקום {{$index+1}}</p>
+							<span candidate-id="-1" candidate-index="{{$index}}" ng-if="candidate.id==-1">
+								<div x-lvl-drop-target="true" x-on-drop="dropped(dragEl, dropEl)" style="border-radius: 25px; border: 2px solid #008CBA; padding: 20px; width:10vw;height:10vw;margin-bottom:10px;text-align:center;"></div>
+							</span>
+							<span candidate-id="{{candidate.id}}" candidate-index="{{$index}}" ng-if="candidate.id!=-1">
+								<div style="cursor:default;border-radius: 25px; border: 2px solid #008CBA; padding: 20px; margin-bottom:10px;">
+									<img ng-src="src/{{candidate.image}}" style="width:8vw;height:8vw;" draggable="false"> <br>
+									<p draggable="false">{{candidate.name}}</p>
+									<span style="cursor: pointer;color:red;display:inline-block;font-size:1.2vw;" draggable="false" ng-click="removeCandidate(candidate.id, $index)">הסר</span>
+								</div>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+	        <div ng-if="finishMode==0">
+                    <div style="text-align: center;clear:both;">
+                        <span ng-if="page > 0" id="prev">
+		                   <button ng-click="Prev()"> דף קודם </button>
+                        </span>
+                        <span ng-if="page <= 0" id="prev">
+		                   <button style="background: white;color: white;box-shadow: none;pointer-events: none;">דף קודם</button>
+                        </span>
+		                <button ng-click="Finish()"> סיום </button>
+			            <span ng-if="page < positionsCount-1" id="prev">
+                           <button id="next" ng-click="Next()"> דף הבא </button>
+                        </span>
+                        <span ng-if="page >= positionsCount-1" id="prev">
+                           <button id="next" style="background: white;color: white;box-shadow: none;pointer-events: none;">דף הבא</button>
+                        </span>
+                    </div>
+	        </div>
+           
+	        <div ng-if="finishMode==1">
+		        <p class="title">האם ברצונך לבדוק את הצבעתך באמצעות האפליקציה?</p>
+                <div style="text-align: center;">
+		            <button class="button1" ng-click="FinalFinish(true)"> כן</button>
+		            <button class="button1" ng-click="FinalFinish(false)"> לא</button>
+                </div>
+                <div style="text-align: center;">
+		            <button class="button1" ng-click="BackFromFinish()"> חזרה</button>
+                </div>
+		        <br>
+                <div class="subtitle1"> שים לב: אם תבחר/י באופציה "כן",</div>
+				<div class="subtitle"> לא תוכל/י לממש את הצבעתך ויהיה עליך להצביע בשנית </div>
+				 
+	        </div>
+        </div>
+    </body>
+</html>

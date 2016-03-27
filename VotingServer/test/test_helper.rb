@@ -3,7 +3,7 @@ require 'minitest/autorun'
 require 'rack/test'
 require 'app/app'
 
-Configuration.verify_signature = false
+#Configuration.verify_signature = false
 
 module TestHelper
     def randomString( length: 10 )

@@ -1,0 +1,149 @@
+* {
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	font-family:'Segoe UI';
+    }
+
+html{
+    height: 100%;
+}
+
+body {
+	min-height:87%;
+    border-bottom: 50px solid #008CBA;
+    border-top: 50px solid #008CBA;
+}
+
+.title{
+    margin-top: 25px;
+    margin-bottom: 3vw;
+    color: #0c2c83;
+    text-align: center;
+    font-size: 3.2vw;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+
+.title1{
+    margin-top: 25px;
+    margin-bottom: 25px;
+    color: #0c2c83;
+    text-align: center;
+    font-size: 3.2vw;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+.subtitle1{
+    margin-top: 0;
+    margin-bottom: 0;
+    color: #0c2c83;
+    text-align: center;
+    font-size: 2.2vw;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+.subtitle{
+    margin-top: 0;
+    margin-bottom: 75px;
+    color: #0c2c83;
+    text-align: center;
+    font-size: 2.2vw;
+    font-family: 'Segoe UI';
+    font-weight: bold;
+}
+
+button {
+	display: inline-block;
+	border-radius: 4px;
+	background-color: #008CBA;
+	border: none;
+	color: #FFFFFF;
+	text-align: center;
+	font-size: large;
+    font-family: 'Segoe UI';
+	padding: 0.5vw;
+	cursor: pointer;
+    margin-bottom: 35px;
+    margin-top: 165px;
+    margin-left: 10px;
+    margin-right: 10px;
+    bottom: 5%;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    width: auto;
+}
+
+
+.button1 {
+	display: inline-block;
+	border-radius: 4px;
+	background-color: #008CBA;
+	border: none;
+	color: #FFFFFF;
+	text-align: center;
+	font-size: 200%;
+    font-family: 'Segoe UI';
+	padding: 0.5vw;
+	cursor: pointer;
+    margin-bottom: 35px;
+    margin-top: 75px;
+    margin-left: 10px;
+    margin-right: 10px;
+    bottom: 5%;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    width: 8vw;
+	height: 4vw;
+}
+
+
+label {
+    display:inline-block;
+    margin: 0 15px 0 15px;
+    text-align: center;
+    font-family:'Segoe UI';
+    font-size:2vw;
+    transition: 0.1s;
+}
+
+label > input { /* HIDE RADIO */
+  display:none;
+}
+
+label > span > img {
+    transition: 0.1s;
+    cursor:pointer;
+    border:5px solid white;
+}
+
+label > input:checked + span > img { 
+    transition: 0.1s;
+    border:5px solid #008CBA;
+
+}
+
+label > input:checked + span > label {
+    transition: 0.1s;
+    font-weight: bold;
+    color: #008CBA;
+}
+
+.lvl-over { /* applied to a drop target when a draggable object is over it */
+    border: 2px dashed black !important;
+    background-color: #ddd;
+    opacity: 0.5;
+}
+
+[draggable] {
+    -moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+img{
+	width:15vw;
+	height:15vw;
+}

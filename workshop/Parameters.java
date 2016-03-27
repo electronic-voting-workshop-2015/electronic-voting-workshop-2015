@@ -1,16 +1,18 @@
 package workshop;
 
 import ECCryptography.ECClientCryptographyModule;
+import ECCryptography.ECGroup;
+import ECCryptography.ECPoint;
+import ECCryptography.EllipticCurve;
+
 import java.util.*;
 import org.json.*;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.math.BigInteger;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 
 /**
  * The fixed parameters file, to be edited by all teams The initial system
@@ -139,7 +141,10 @@ public class Parameters {
 		for (int i = 0; i < jsonRepr.length(); i++) {//go over races
 			JSONObject curElement = jsonRepr.getJSONObject(i);
 			String name = curElement.getString("position");
-			int slotsNum = curElement.getInt("slots");
+			int slotsNum=1;
+			if (curElement.has("slots")){
+			  slotsNum = curElement.getInt("slots");
+			}
 			boolean order = false;
 			if (curElement.getInt("type") == 2) {
 				order = true;
@@ -161,111 +166,188 @@ public class Parameters {
 	 * @param pkey
 	 */
 	private static void parseJSONInit(JSONArray initFormat, String pkey){
-		ArrayList<RaceProperties> racesProperties=parseRaceProps(initFormat.getJSONObject(0).getJSONArray("RaceProperties"));
-		JSONArray group=initFormat.getJSONObject(1).getJSONArray("Group");
-		String order=group.getJSONObject(0).getString("order");
-		String elementSizeInBytes=group.getJSONObject(1).getString("ElementSizeInBytes");
-		JSONArray ec=group.getJSONObject(2).getJSONArray("EC");
-		String a=ec.getJSONObject(0).getString("a");
-		String b=ec.getJSONObject(1).getString("b");
-		String p=ec.getJSONObject(2).getString("p");
-		String totalgen=group.getJSONObject(3).getString("Generator");		
+		ArrayList<RaceProperties> racesProperties = null;
+		try {
+			racesProperties = parseRaceProps(initFormat.getJSONObject(0).getJSONArray("RaceProperties"));
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		JSONArray group = null;
+		try {
+			group = initFormat.getJSONObject(1).getJSONArray("Group");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String order = null;
+		try {
+			order = group.getJSONObject(0).getString("Order");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String elementSizeInBytes = null;
+		try {
+			elementSizeInBytes = group.getJSONObject(1).getString("ElementSizeInBytes");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		JSONArray ec = null;
+		try {
+			ec = group.getJSONObject(2).getJSONArray("EC");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String a = null;
+		try {
+			a = ec.getJSONObject(0).getString("a");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String b = null;
+		try {
+			b = ec.getJSONObject(1).getString("b");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String p = null;
+		try {
+			p = ec.getJSONObject(2).getString("p");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		String totalgen = null;
+		try {
+			totalgen = group.getJSONObject(3).getString("Generator");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		String[] gen=totalgen.split(",");		
 		String generator_X=gen[0];
 		String generator_Y=gen[1];				
-		int numOfMachines=initFormat.getJSONObject(2).getInt("NumOfMachines");		
-		int timeStampLevel=initFormat.getJSONObject(3).getInt("TimeStampLevel");
+		int numOfMachines = 0;
+		try {
+			numOfMachines = initFormat.getJSONObject(2).getInt("NumOfMachines");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+		int timeStampLevel = 0;
+		try {
+			timeStampLevel = initFormat.getJSONObject(3).getInt("TimeStampLevel");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		String publicKey=pkey;
 		setParameters(order, elementSizeInBytes, a, b, p,
 				generator_X, generator_Y, numOfMachines, racesProperties, timeStampLevel,
 				publicKey);		
 	}
 	
+
 	/**
 	 * get admin's selections (the JSON file) and the public key from the server -
 	 * - and initialize all fields (call parseJSONInit method above)
 	 */
-	public static void init(){
-		// before initializing the parameters - the voting booth should double click the server file
-		// so it will be able to access it locally
+	// later change it to MAIN
+	public static void init()
+	{
+		// read from adminJson and publicKey and call to eliran's method
+		String line = null;
 		
-		// now we can access the server file locally and ask for the public key and the JSON file -
-		// - using HTTP get requests
-
-		// create connection
-		URL adminParsURL = null, pkeyURL = null;
-		URLConnection getAdminPars = null, getPkey = null;
-		BufferedReader reader = null;
-		String input = null;
-		JSONObject jsonObject = null;
+		// read admin parameters from file
+		BufferedReader br = null;
 		try {
-			adminParsURL = new URL("http://localhost:4567/retrieveAdminParameters");
-		} catch (MalformedURLException e) {
+			br = new BufferedReader(new FileReader("adminJson"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		StringBuilder sb = new StringBuilder();
 		try {
-			getAdminPars = adminParsURL.openConnection();
+			line = br.readLine();
 		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		try {
-			reader = new BufferedReader(new InputStreamReader(getAdminPars.getInputStream()));
-		} catch (IOException e) {
-			e.printStackTrace();
+		while (line != null) {
+			sb.append(line);
+			try {
+				line = br.readLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
+		String adminString = sb.toString();
 		try {
-			input = reader.readLine();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
-			jsonObject = new JSONObject(input);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		String[] names = JSONObject.getNames(jsonObject);
-		JSONArray jsonArray = null;
-		try {
-			jsonArray = jsonObject.toJSONArray(new JSONArray(names));
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		try {
-			reader.close();
+			br.close();
 		} catch (IOException e1) {
+			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		// got the admin's json file (initial paramters)
-		// now get the private key; same process..
+		JSONArray adminArray = null;
 		try {
-			pkeyURL = new URL("http://localhost:4567/retrieveVotingPublicKey");
-		} catch (MalformedURLException e) {
+			adminArray = new JSONArray(adminString);
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+
+		// get public key from file
+		sb = new StringBuilder();
 		try {
-			getPkey = pkeyURL.openConnection();
+			br = new BufferedReader(new FileReader("publicKey"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		try {
-			reader = new BufferedReader(new InputStreamReader(getPkey.getInputStream()));
+			line = br.readLine();
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		while (line != null) {
+			sb.append(line);
+			try {
+				line = br.readLine();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		String pkeyString = sb.toString();
+		// pkeyString is of the form: [{content: "public_key"}]
+		try {
+			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		JSONArray pkeyArray = null;
 		try {
-			input = reader.readLine();
-		} catch (IOException e) {
+			pkeyArray = new JSONArray(pkeyString);
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		String pkey = null;
 		try {
-			reader.close();
-		} catch (IOException e) {
+			pkey = pkeyArray.getJSONObject(0).getString("content");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		// initialize
-		parseJSONInit(jsonArray,input);
+		parseJSONInit(adminArray, pkey);
 		// all parameters are initialized
 	}
-
 }

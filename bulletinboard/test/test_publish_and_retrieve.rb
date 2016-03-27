@@ -12,7 +12,7 @@ class PublishRetrieveAPITest < MiniTest::Unit::TestCase
     party_id = randomString
     signature = randomString
 
-    arbitraryJSONs = [ Commitment, Complaint, SecretCommitment ]
+    arbitraryJSONs = [ Commitment, Complaint, SecretCommitment, ParametersFile ]
     
     arbitraryJSONs.each do |model|
         post "/publish#{model}", party_id: party_id, singature: signature, content: { numbers: ["5", "6"], names: ["Yosi", "Haim"] }

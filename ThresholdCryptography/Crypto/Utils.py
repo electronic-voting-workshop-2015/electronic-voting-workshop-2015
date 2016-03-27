@@ -99,7 +99,7 @@ def list_to_bytes(l, int_length = 0):
     for i in l:
         if isinstance(i, int):
             res += i.to_bytes(int_length, 'little')
-        if gmpy2_installed and isinstance(i, mpz().__class__):
+        elif gmpy2_installed and isinstance(i, mpz().__class__):
             res += int(i).to_bytes(int_length, 'little')
         else:  # object is ECGroupMember or ZKP
             res += bytes(i)

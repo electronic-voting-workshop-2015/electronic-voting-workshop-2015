@@ -20,7 +20,7 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
 
 # TODO: organize constants (Ilay)
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
-BB_URL = "http://localhost:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
+BB_URL = "http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
 RESULT_FILE = "result.txt"  # the file where the final results are stored
@@ -253,7 +253,7 @@ class ThresholdParty:
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(commitments, int_length=0)
         dictionary = {"party_id": self.party_id, "commitment": base64_data, "signature": base64_cert}
-        dictionary2 = {"content": dictionary}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id}
         publish_dict(dictionary2, BB_URL + PUBLISH_COMMITMENT_TABLE)
 
     def publish_secret_commitment(self, value):
@@ -263,7 +263,7 @@ class ThresholdParty:
         base64_value = list_to_base64([value], int_length=0)
         dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value,
                       'signature': base64_cert}
-        dictionary2 = {"content": dictionary}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id}
         publish_dict(dictionary2, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
     def retrieve_commitments(self):
@@ -738,7 +738,9 @@ def print_results(decrypted_votes):
     # from http://stackoverflow.com/a/2600813
     result_dict = defaultdict(lambda: defaultdict(int))
     for race_id, decrypted_vote in decrypted_votes:
-        result_dict[race_id][str(VOTING_CURVE.generator)] += 1
+        result_dict[race_id][decrypted_vote] += 1
+    
+    result_file.write(dumps(result_dict))
 
     print(str(decrypted_votes[0][1]) == str(decrypted_votes[1][1]))
     print(dumps(result_dict))
