@@ -64,15 +64,10 @@ public class VotingBoothImp implements VotingBooth {
 	private QRProperties bottomQR = new QRProperties(Parameters.ourGroup.getElementSize(), BOTTOM_QR_SIZE,
 			BOTTOM_QR_SIZE);// Audit QR properties
 			
-	private int votingBoothNumber;
-	private static int numOfVotingBooths = 0;
-	
 	private byte[] toBeSigned;
 	
 	public VotingBoothImp(){
-		numOfVotingBooths++;
-		votingBoothNumber = numOfVotingBooths;
-		String pathName = "privateKey_" + votingBoothNumber + ".txt";
+		String pathName = "privateKey_1.txt";
 		partyId = getInfoFromFile(pathName, false); 
 		privateKey = getInfoFromFile(pathName, true); 
 	}
