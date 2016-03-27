@@ -440,7 +440,7 @@ class ThresholdParty:
         ln = self.sign_curve.order.bit_length() // 8
         n = self.sign_curve.order
         z = e[0:ln]
-        z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
+        z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
         certificate = 0
         while certificate == 0:
             rng = SystemRandom()
@@ -453,7 +453,7 @@ class ThresholdParty:
             if s == 0:
                 continue
             l = [r, s]
-            int_length = self.sign_curve.int_length
+            int_length = self.sign_curve.int_length // 8
             certificate = list_to_bytes(l, int_length)
         return certificate
 
@@ -510,13 +510,11 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     :param certificate: text in 64 form (as sent by parties / voting booths)
     :return: bool.
     """
-    sys.stderr.write("\n" + encrypted_message + "\n")
-    sys.stderr.write("\n" + certificate + "\n")
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length // 8 + 1
+    int_length = sign_curve.int_length // 8
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
@@ -669,8 +667,6 @@ def get_secret_commitments(local=False):
             for dictionary in json_data}
 
 
-
-
 def get_zkps(local=False):
     """returns all ZKPs as a dictionary mapping vote_id to a set of tuples,
     containing all published ZKP objects and party_id's for that vote"""
@@ -703,7 +699,8 @@ def compute_voting_public_key():
     runs on the Bulletin Board"""
     commitments = get_commitments(local=True)
     public_key = product(coefficients[0] for coefficients in commitments.values())
-    dictionary = {"public_key": public_key}
+    json_data = list_to_base64([public_key], int_length=0)
+    dictionary = {"public_key": json_data}
     publish_dict(dictionary, LOCAL_BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
     return public_key
 
@@ -831,7 +828,6 @@ def phase3():
     secret_commitments = get_secret_commitments(local=True)
 
     print("verifying validity of zero knowledge proofs and decrypting")
-    #curve = get_voting_curve(local=True)
     curve = VOTING_CURVE
     decrypted_votes = decrypt_all_votes(votes, zkps, curve, secret_commitments)
 
@@ -886,13 +882,6 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
             vote_dict = {"vote_value": base64_encrypted_vote}
             vote_list.append(vote_dict)
             vote_string_list.append(repr(vote_dict))
-            #vote_string_list.append(base64_encrypted_vote)
-        votes_string = "\n".join(vote_string_list)
-        votes_string = votes_string.replace("'", '"')
-        votes_string = votes_string.replace(": ", '=>')
-        #votes_string = "[" + votes_string + "]"
-        print(votes_string)
-        #bytes_signature = party.sign(votes_string.encode('utf-8'))
         bytes_signature = party.sign(base64_to_bytes(vote_list[0]["vote_value"]))
         base64_signature = bytes_to_base64(bytes_signature)
         dictionary = {"ballot_box": 1, "SerialNumber": vote_id, "votes": vote_list, "signature": base64_signature}
@@ -912,6 +901,15 @@ def test():
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
+    party1 = ThresholdParty(VOTING_CURVE, T, N, 1, ZKP_HASH_FUNCTION, VOTING_CURVE.get_random_exponent(), VOTING_CURVE, is_phase1=True)
+    message = b'123'
+    m64 = bytes_to_base64(message)
+    cert = party1.sign(message)
+    c64 = bytes_to_base64(cert)
+    public_sign_key = VOTING_CURVE.generator ** party1.sign_key
+    truth = verify_certificate(str(public_sign_key.x), str(public_sign_key.y), m64, c64)
+    print(truth)
+
     for party in shuffled(parties):
         party.publish_commitment()
     for party in shuffled(parties):
@@ -921,6 +919,8 @@ def test():
 
     print("phase 2")
     voting_public_key = compute_voting_public_key()
+
+
     generate_votes(3, 10, parties[0], voting_public_key)
     votes = get_votes()
 
