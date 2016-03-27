@@ -231,8 +231,14 @@ public class VotingBoothImp implements VotingBooth {
 			if (isPrivateKey){
 		    		line = br.readLine();
 		    		line = br.readLine();
+		    		return new BigInteger(line, 16).toByteArray();
 		    	}
-		    	return new BigInteger(line, 16).toByteArray();
+		    	int value = Integer.parseInt(line);
+		    	return new byte[] {
+				(byte) ((value >> 24) & 0xFF),
+				(byte) ((value >> 16) & 0xFF),
+				(byte) ((value >> 8) & 0xFF),
+				(byte) (value & 0xFF)};
 		} catch (FileNotFoundException e){
 			System.err.println("File path '" + filePath + "' is invalid!");	
 		} catch (IOException e){
