@@ -437,10 +437,10 @@ class ThresholdParty:
         m = hashlib.sha256()
         m.update(message)
         e = m.digest()
-        ln = self.sign_curve.order.bit_length() // 8
         n = self.sign_curve.order
+        ln = int(math.log(n))
         z = e[0:ln]
-        z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
+        z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
         certificate = 0
         while certificate == 0:
             rng = SystemRandom()
