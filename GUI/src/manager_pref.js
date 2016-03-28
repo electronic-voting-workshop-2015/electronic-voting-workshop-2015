@@ -1,4 +1,8 @@
 function createRaces() {
+	if(document.getElementById("group_element_size").value<2){
+		errorAlert("שגיאה", "מספר הבתים באיברי החבורה צריך להיות לפחות 2");
+		return;
+	}
 	var can_number = parseInt(document.getElementById("race_num").value);
 	document.getElementById("manager").style.display = "none";
 	document.getElementById("races").innerHTML = "";
