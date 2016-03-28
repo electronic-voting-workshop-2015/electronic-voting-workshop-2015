@@ -12,7 +12,7 @@ public class ECPoint {
     private final BigInteger x;
     private final BigInteger y;
 
-    ECPoint(EllipticCurve curve, BigInteger x, BigInteger y) {
+    public ECPoint(EllipticCurve curve, BigInteger x, BigInteger y) {
         // TODO check that the curve is satisfied by the point.
         this.curve = curve;
         this.x = x;

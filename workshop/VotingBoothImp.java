@@ -1,5 +1,7 @@
 package workshop;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -62,15 +64,10 @@ public class VotingBoothImp implements VotingBooth {
 	private QRProperties bottomQR = new QRProperties(Parameters.ourGroup.getElementSize(), BOTTOM_QR_SIZE,
 			BOTTOM_QR_SIZE);// Audit QR properties
 			
-	private int votingBoothNumber;
-	private static int numOfVotingBooths = 0;
-	
 	private byte[] toBeSigned;
 	
 	public VotingBoothImp(){
-		numOfVotingBooths++;
-		votingBoothNumber = numOfVotingBooths;
-		String pathName = "privateKey_" + votingBoothNumber + ".txt";
+		String pathName = "privateKey_1.txt";
 		partyId = getInfoFromFile(pathName, false); 
 		privateKey = getInfoFromFile(pathName, true); 
 	}
@@ -127,7 +124,11 @@ public class VotingBoothImp implements VotingBooth {
 		}
 		ciphertext = sbCiphertext.toString();
 		auditRandomness = sbRandomness.toString();
-
+		try {
+			writeRandomnessToFile("randomness.txt", auditRandomness.getBytes("ISO-8859-1")); // write randomness to file for later use
+		} catch (UnsupportedEncodingException e){
+			e.printStackTrace();
+		}
 		// Create the top QR
 		QRGenerator qrGenerator = new QRGenerator(topQR, bottomQR);
 		File topQr = null;
@@ -152,9 +153,18 @@ public class VotingBoothImp implements VotingBooth {
 	 */
 	public void audit(boolean isAudit) {
 		if (!isAudit){
+			File file = new File("randomness.txt");
+			file.delete(); // delete the randomness file
 			return;
 		}
 		// Create the top QR
+		try {
+			auditRandomness = new String(readRandomnessFromFile("randomness.txt"), "ISO-8859-1"); // read the randomness from file
+		} catch (UnsupportedEncodingException e){
+			e.printStackTrace();
+		}
+		File file = new File("randomness.txt");
+		file.delete(); // delete the randomness file
 		QRGenerator qrGenerator = new QRGenerator(topQR, bottomQR);
 		File auditQr;
 		try {
@@ -167,14 +177,51 @@ public class VotingBoothImp implements VotingBooth {
 		
 		printAudit(auditQr); // print the ballot
 	}
+	
+	/**
+	 * Reads the randomness bytes from the file and returns them
+	 */
+	private byte[] readRandomnessFromFile(String fileName){
+		try {
+
+			FileInputStream inputStream = new FileInputStream(fileName);
+
+			// Use this for reading the data.
+			byte[] buffer = new byte[inputStream.available()];
+			int nRead = inputStream.read(buffer);
+			inputStream.close();
+			return buffer;
+		} catch (FileNotFoundException e) {
+			System.out.println("Unable to open file '" + fileName + "'");
+			e.printStackTrace();
+		} catch (IOException e) {
+			System.out.println("Error reading file '" + fileName + "'");
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	/**
+	 * Writes the randomness bytes to a file for audit
+	 */
+	private void writeRandomnessToFile(String fileName, byte[] toWrite){
+		try {
+	            FileOutputStream outputStream = new FileOutputStream(fileName);
+	            outputStream.write(toWrite);
+	            outputStream.close();       
+	        }
+	        catch(IOException e) {
+	            System.out.println("Error writing file '" + fileName + "'");
+	            e.printStackTrace();
+	        }
+	}
+
 
 	/**
 	 * 
 	 * @param filePath. the file path of the information.
 	 * @return byte[] of the information from the file.
 	 */
-	
-	
 	private byte[] getInfoFromFile(String filePath, boolean isPrivateKey) {
 		BufferedReader br = null;
 		try {
@@ -184,8 +231,14 @@ public class VotingBoothImp implements VotingBooth {
 			if (isPrivateKey){
 		    		line = br.readLine();
 		    		line = br.readLine();
+		    		return new BigInteger(line, 16).toByteArray();
 		    	}
-		    	return new BigInteger(line, 16).toByteArray();
+		    	int value = Integer.parseInt(line);
+		    	return new byte[] {
+				(byte) ((value >> 24) & 0xFF),
+				(byte) ((value >> 16) & 0xFF),
+				(byte) ((value >> 8) & 0xFF),
+				(byte) (value & 0xFF)};
 		} catch (FileNotFoundException e){
 			System.err.println("File path '" + filePath + "' is invalid!");	
 		} catch (IOException e){

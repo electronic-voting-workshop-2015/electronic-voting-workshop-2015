@@ -9,9 +9,11 @@ import java.util.*;
 import org.json.*;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
 /**
@@ -257,19 +259,25 @@ public class Parameters {
 	 * get admin's selections (the JSON file) and the public key from the server -
 	 * - and initialize all fields (call parseJSONInit method above)
 	 */
-	// later change it to MAIN
 	public static void init()
 	{
 		// read from adminJson and publicKey and call to eliran's method
 		String line = null;
 		
 		// read admin parameters from file
+		FileInputStream fin = null;
+		try {
+			fin = new FileInputStream("adminJson");
+		} catch (FileNotFoundException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader("adminJson"));
-		} catch (FileNotFoundException e) {
+			br = new BufferedReader(new InputStreamReader(fin, "UTF-8"));
+		} catch (UnsupportedEncodingException e2) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			e2.printStackTrace();
 		}
 		StringBuilder sb = new StringBuilder();
 		try {
@@ -289,6 +297,12 @@ public class Parameters {
 		}
 		String adminString = sb.toString();
 		try {
+			fin.close();
+		} catch (IOException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		try {
 			br.close();
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
@@ -305,7 +319,13 @@ public class Parameters {
 		// get public key from file
 		sb = new StringBuilder();
 		try {
-			br = new BufferedReader(new FileReader("publicKey"));
+			fin = new FileInputStream("publicKey");
+		} catch (FileNotFoundException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		try {
+			br = new BufferedReader(new InputStreamReader(fin, "UTF-8"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
