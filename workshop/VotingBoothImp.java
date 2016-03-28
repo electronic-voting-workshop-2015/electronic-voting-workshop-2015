@@ -34,6 +34,11 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 
+import workshop.ECCryptography.ECClientCryptographyModule;
+import workshop.ECCryptography.ECGroup;
+import workshop.ECCryptography.ECPoint;
+import workshop.ECCryptography.EllipticCurve;
+
 import org.json.*;
 
 import com.google.zxing.WriterException;
