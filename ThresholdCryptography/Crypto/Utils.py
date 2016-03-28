@@ -84,7 +84,7 @@ def mod_inv_slow(a, p):
 def mod_inv_fast(a, p):
     """computes modular inverse of a in field F_p
     using gmpy2 library"""
-    return invert(a, p)
+    return int(invert(a, p))
 
 if gmpy2_installed:
     mod_inv = mod_inv_fast

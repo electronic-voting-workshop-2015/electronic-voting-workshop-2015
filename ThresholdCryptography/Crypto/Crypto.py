@@ -8,11 +8,11 @@ from collections import defaultdict
 from json import dumps
 import math
 
-gmpy2_installed = False  # TODO: profile optimization
+gmpy2_is_installed = False  # TODO: profile optimization
 try:
     from gmpy2 import mpz
 except ImportError:
-    gmpy2_installed = False
+    gmpy2_is_installed = False
 
 from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list, publish_dict, bytes_to_base64, \
@@ -22,8 +22,9 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
 BB_URL = "http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
+#LOCAL_BB_URL = BB_URL  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
-RESULT_FILE = "result.txt"  # the file where the final results are stored
+RESULT_FILE = "result.json"  # the file where the final results are stored
 MY_PRIVATE_KEY_PATH = ""  # the path for local file where the party's private signing key is stored (relative to working dir)s
 PRIVATE_KEYS_PATH = ""  # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
@@ -49,7 +50,7 @@ class EllipticCurve:
     """
 
     def __init__(self, a, b, p, order, int_length):
-        if gmpy2_installed:
+        if gmpy2_is_installed:
             self.a = mpz(a)
             self.b = mpz(b)
             self.p = mpz(p)
@@ -87,7 +88,7 @@ class EllipticCurve:
 class ECGroupMember:
     def __init__(self, curve, x, y):
         self.curve = curve
-        if gmpy2_installed:
+        if gmpy2_is_installed:
             self.x = mpz(x)
             self.y = mpz(y)
         else:
@@ -556,6 +557,7 @@ def decrypt_vote(curve, party_ids, commitments, d):
         d is part of the cipher text - (c,d)
         performed after validating the ZKPs"""
     q = curve.order
+
     assert len(party_ids) == len(commitments) == T + 1
     lambdas = {}
     for j in party_ids:
@@ -735,11 +737,11 @@ def print_results(decrypted_votes):
     # from http://stackoverflow.com/a/2600813
     result_dict = defaultdict(lambda: defaultdict(int))
     for race_id, decrypted_vote in decrypted_votes:
-        result_dict[race_id][decrypted_vote] += 1
+        result_dict[race_id][str(decrypted_vote)] += 1
     
     result_file.write(dumps(result_dict))
+    result_file.close()
 
-    print(str(decrypted_votes[0][1]) == str(decrypted_votes[1][1]))
     print(dumps(result_dict))
 
 
@@ -901,15 +903,6 @@ def test():
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
-    party1 = ThresholdParty(VOTING_CURVE, T, N, 1, ZKP_HASH_FUNCTION, VOTING_CURVE.get_random_exponent(), VOTING_CURVE, is_phase1=True)
-    message = b'123'
-    m64 = bytes_to_base64(message)
-    cert = party1.sign(message)
-    c64 = bytes_to_base64(cert)
-    public_sign_key = VOTING_CURVE.generator ** party1.sign_key
-    truth = verify_certificate(str(public_sign_key.x), str(public_sign_key.y), m64, c64)
-    print(truth)
-
     for party in shuffled(parties):
         party.publish_commitment()
     for party in shuffled(parties):
@@ -920,8 +913,8 @@ def test():
     print("phase 2")
     voting_public_key = compute_voting_public_key()
 
-
-    generate_votes(3, 10, parties[0], voting_public_key)
+    generate_votes(2, 2, parties[0], voting_public_key)
+    generate_votes(3, 3, parties[0], voting_public_key)
     votes = get_votes()
 
     for party in shuffled(parties):
