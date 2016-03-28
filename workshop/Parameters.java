@@ -1,9 +1,9 @@
 package workshop;
 
-import ECCryptography.ECClientCryptographyModule;
-import ECCryptography.ECGroup;
-import ECCryptography.ECPoint;
-import ECCryptography.EllipticCurve;
+import workshop.ECCryptography.ECClientCryptographyModule;
+import workshop.ECCryptography.ECGroup;
+import workshop.ECCryptography.ECPoint;
+import workshop.ECCryptography.EllipticCurve;
 
 import java.util.*;
 import org.json.*;
@@ -360,7 +360,7 @@ public class Parameters {
 		}
 		String pkey = null;
 		try {
-			pkey = pkeyArray.getJSONObject(0).getString("content");
+			pkey = String.valueOf(pkeyArray.getJSONObject(0).getInt("content"));
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
