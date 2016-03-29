@@ -11,7 +11,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Base64.Encoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -171,19 +170,30 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         // temp = new BigInteger(<String of the printed r>);
         temp = temp.mod(new BigInteger(group.getOrder()));
         r = temp.toByteArray();
-        System.out.println("Infrastructure - ElGamal encryption: r = " + temp);
-
-        if (logEncryptionMethods) System.out.print("c1 = ");
-        byte[] c1 = group.getElement(r);
-        if (logEncryptionMethods) System.out.print("c2 = ");
-        byte[] c2 = group.groupMult(m, group.groupPow(publicKey, r));
-        byte[] result = new byte[c1.length + c2.length];
-        System.arraycopy(c1, 0, result, 0, c1.length);
-        System.arraycopy(c2, 0, result, c1.length, c2.length);
+        byte[] result = encryptForRandomness(group, publicKey, m, r);
         byte[][] resultAndR = new byte[2][];
         resultAndR[0] = result;
         resultAndR[1] = r;
         return resultAndR;
+    }
+
+    /**
+     * Encrypts the message using Elgamal, for a known randomness.
+     * @param publicKey - The public encryption key published by the BB.
+     * @param m - The message to encrypt.
+     * @param r - The chosen randomness.
+     */
+    public byte[] elgamalReencryptForMixnet(byte[] publicKey, byte[] m, BigInteger r) {
+        return encryptForRandomness(encryptGroup, publicKey, m, r.toByteArray());
+    }
+
+    private byte[] encryptForRandomness(ECGroup group, byte[] publicKey, byte[] m, byte[] r) {
+        byte[] c1 = group.getElement(r);
+        byte[] c2 = group.groupMult(m, group.groupPow(publicKey, r));
+        byte[] result = new byte[c1.length + c2.length];
+        System.arraycopy(c1, 0, result, 0, c1.length);
+        System.arraycopy(c2, 0, result, c1.length, c2.length);
+        return result;
     }
 
     /**
@@ -214,7 +224,6 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
                     random.nextBytes(kBytes);
                     k = new BigInteger(kBytes).mod(n);
                 }
-                System.out.println("Infrastructure - Sign: k = " + k);
                 byte[] kG = signGroup.getElement(kBytes);
                 BigInteger r = signGroup.getX(kG);
                 if (r.equals(BigInteger.ZERO)) {
@@ -226,7 +235,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
                     continue;
                 }
                 if (logEncryptionMethods) {
-                    System.out.println("Sign: r = " + r + "\ns = " + s);
+                    System.out.println("Sign: k = " + k + "r = " + r + "\ns = " + s);
                 }
                 byte[] rBytes = toUnsignedLittleEndian(r, signGroup.getElementSize() / 2);
                 byte[] sBytes = toUnsignedLittleEndian(s, signGroup.getElementSize() / 2);
