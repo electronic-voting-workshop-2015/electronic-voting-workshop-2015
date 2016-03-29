@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<meta charset="utf-8" />
+<html lang="he">
+    <head>
+        <script src="src/angular.min.js"></script>
+		<script src="src/manager_home.js"></script>
+        <link rel="stylesheet" type="text/css" href="src/manager_home.css"></link>
+    </head>
+
+    <body>
+        <div style="margin:3.5vw;">
+            <img src="src/Picture1.jpg">
+			<div style="vertical-align:middle; display: inline-block;margin-right:2.5vw;margin-left:2.5vw;">
+				<p class=title>מערכת הצבעות אלקטרוניות</p>
+				<br>
+				<p class=subtitle>ממשק מנהל</p>
+			</div>
+            <img src="src/Picture1.jpg">
+        </div>
+
+        <div>
+            <img src="src/Picture3.jpg" style="width: 20vw;height: 20vw; margin-bottom:3.5vw" />
+        </div>
+
+        <div ng-app="homeApp" ng-controller="homeCtrl">
+            <button class="button" id="enterVote" ng-click="EnterVote()"> 
+				<span> כניסה לממשק</span>
+			</button>
+        </div>
+    </body>
+</html>
+

@@ -14,7 +14,7 @@ public class EllipticCurve {
     //the prime number, all operations are modulo p
     private final BigInteger p;
 
-    private final ECPoint zeroMember = new ECPoint(this, BigInteger.ZERO, BigInteger.ZERO);
+    public final ECPoint zeroMember = new ECPoint(this, BigInteger.ZERO, BigInteger.ZERO);
 
     public EllipticCurve(BigInteger a, BigInteger b, BigInteger p) {
         this.a = a;

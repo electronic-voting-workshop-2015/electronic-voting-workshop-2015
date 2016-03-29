@@ -30,8 +30,9 @@ public class QRGenerator {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public File createQRImage(String qrCodeText, boolean isAudit) throws WriterException, IOException {
 		int length = qrCodeText.length();
+		System.out.println("length " + length);
 		QRProperties qr = isAudit ? bottomQR : topQR;
-		ErrorCorrectionLevel l = qr.getEcc();
+		ErrorCorrectionLevel l = QRProperties.calculateECC(length);
 		Hashtable hintMap = new Hashtable();
 		File qrFile = new File("qrCode.png");
 		hintMap.put(EncodeHintType.ERROR_CORRECTION, l);

@@ -1,0 +1,8 @@
+mysql -u root bb_development -e "truncate commitments;"
+mysql -u root bb_development -e "truncate messages;"
+mysql -u root bb_development -e "truncate complaints;"
+mysql -u root bb_development -e "truncate arbitrary_jsons;"
+mysql -u root bb_development -e "truncate votes;"
+mysql -u root bb_development -e "truncate ZKP;"
+mysql -u root bb_development -e "truncate public_keys;"
+mysql -u root bb_development -e "truncate voting_public_keys;"
