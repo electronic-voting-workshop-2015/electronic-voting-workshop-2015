@@ -169,7 +169,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
         // If you find a bug, comment out this line and change it to:
         // temp = new BigInteger(<String of the printed r>);
         temp = temp.mod(new BigInteger(group.getOrder()));
-        r = temp.toByteArray();
+        System.arraycopy(temp.toByteArray(), 0, r, r.length - temp.toByteArray().length, temp.toByteArray().length);
         byte[] result = encryptForRandomness(group, publicKey, m, r);
         byte[][] resultAndR = new byte[2][];
         resultAndR[0] = result;
