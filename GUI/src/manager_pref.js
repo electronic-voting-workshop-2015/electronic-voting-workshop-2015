@@ -77,11 +77,26 @@ function createRaces() {
 			}						
 			parameterText += ('}]');
 			localStorage.param = parameterText;
-			//localStorage.param = JSON.stringify(parameterText);
+		/*	
+			 $.ajax({
+            url: "http://localhost:4567/Vote",
+            type: 'POST',
+            contentType: 'jsonp',
+            traditional: true,
+            data: JSON.stringify(votingJSON),
+            success: function () {
+                sendAuditJSONData(auditJSON);
+            },
+            error: function () {
+                 sendAuditJSONData(auditJSON);
+            }
+        });
+		*/	
+		
 			
-			/*
+			
 			$.ajax({
-				url: '/localhost/audit',
+				url: "http://localhost:4567/publishParametersFile",
 				type: 'POST',
 				contentType: 'application/json',
 				traditional: true,
@@ -93,9 +108,6 @@ function createRaces() {
 					 alert(thrownError);
 				}
 			});
-			*/
-			
-			successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!"); // TO DELETE
 		}
 		
 	};
