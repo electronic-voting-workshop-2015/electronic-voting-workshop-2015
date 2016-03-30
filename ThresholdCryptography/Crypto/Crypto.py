@@ -20,7 +20,7 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
 
 # TODO: organize constants (Ilay)
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
-BB_URL = "http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
+BB_URL = "http://10.0.0.2:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 #LOCAL_BB_URL = BB_URL  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
@@ -253,8 +253,8 @@ class ThresholdParty:
         cert = self.sign(list_to_bytes(commitments))
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(commitments, int_length=0)
-        dictionary = {"party_id": self.party_id, "commitment": base64_data, "signature": base64_cert}
-        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_data}
+        dictionary = {"party_id": self.party_id, "commitment": base64_data}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_data, "signature": base64_cert}
         publish_dict(dictionary2, BB_URL + PUBLISH_COMMITMENT_TABLE)
 
     def publish_secret_commitment(self, value):
@@ -262,9 +262,8 @@ class ThresholdParty:
         cert = self.sign(bytes(value))
         base64_cert = bytes_to_base64(cert)
         base64_value = list_to_base64([value], int_length=0)
-        dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value,
-                      'signature': base64_cert}
-        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_value}
+        dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_value, "signature": base64_cert}
         publish_dict(dictionary2, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
     def retrieve_commitments(self):
@@ -511,6 +510,7 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     :param certificate: text in 64 form (as sent by parties / voting booths)
     :return: bool.
     """
+    sys.stderr.write("\n" + certificate + "\n")
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
