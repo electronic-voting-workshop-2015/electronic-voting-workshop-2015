@@ -254,7 +254,7 @@ class ThresholdParty:
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(commitments, int_length=0)
         dictionary = {"party_id": self.party_id, "commitment": base64_data, "signature": base64_cert}
-        dictionary2 = {"content": dictionary, "party_id": self.party_id}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_data}
         publish_dict(dictionary2, BB_URL + PUBLISH_COMMITMENT_TABLE)
 
     def publish_secret_commitment(self, value):
@@ -264,7 +264,7 @@ class ThresholdParty:
         base64_value = list_to_base64([value], int_length=0)
         dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value,
                       'signature': base64_cert}
-        dictionary2 = {"content": dictionary, "party_id": self.party_id}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_value}
         publish_dict(dictionary2, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
     def retrieve_commitments(self):
@@ -321,7 +321,7 @@ class ThresholdParty:
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(cipher_text, int_length=0)
         # TODO: fix type in ruby: recepient -> recipient
-        dictionary = {"party_id": self.party_id, "recepient_id": j, "message": base64_data, "signature": base64_cert}
+        dictionary = {"party_id": self.party_id, "recepient_id": j, "message": base64_data, "signature": base64_cert, "data": base64_data}
         publish_dict(dictionary, BB_URL + PUBLISH_MESSAGE_TABLE)
 
     def send_values(self):
