@@ -25,8 +25,6 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
     // printouts to feld.noa@gmail.com.
     private static boolean logEncryptionMethods = false;
 
-    // TODO generateMapping
-
     public ECClientCryptographyModule(ECGroup encryptGroup, ECGroup signGroup) {
         this.encryptGroup = encryptGroup;
         this.signGroup = signGroup;
@@ -312,7 +310,7 @@ public class ECClientCryptographyModule implements ClientCryptographyModule {
     @Override
     public Map<Integer, byte[]> getCandidateToMemebrMapping(int candidateNum) {
         Map<Integer, byte[]> result = new HashMap<>();
-        for (int i = 0; i < candidateNum; i++) {
+        for (int i = 1; i <= candidateNum; i++) {
             result.put(i, encryptGroup.getElement(BigInteger.valueOf(i).toByteArray()));
         }
         return result;
