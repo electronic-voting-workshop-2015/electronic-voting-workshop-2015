@@ -1,4 +1,8 @@
 function createRaces() {
+	if(document.getElementById("group_element_size").value<2){
+		errorAlert("שגיאה", "מספר הבתים באיברי החבורה צריך להיות לפחות 2");
+		return;
+	}
 	var can_number = parseInt(document.getElementById("race_num").value);
 	document.getElementById("manager").style.display = "none";
 	document.getElementById("races").innerHTML = "";
@@ -73,11 +77,26 @@ function createRaces() {
 			}						
 			parameterText += ('}]');
 			localStorage.param = parameterText;
-			//localStorage.param = JSON.stringify(parameterText);
+		/*	
+			 $.ajax({
+            url: "http://localhost:4567/Vote",
+            type: 'POST',
+            contentType: 'jsonp',
+            traditional: true,
+            data: JSON.stringify(votingJSON),
+            success: function () {
+                sendAuditJSONData(auditJSON);
+            },
+            error: function () {
+                 sendAuditJSONData(auditJSON);
+            }
+        });
+		*/	
+		
 			
-			/*
+			
 			$.ajax({
-				url: '/localhost/audit',
+				url: "http://localhost:4567/publishParametersFile",
 				type: 'POST',
 				contentType: 'application/json',
 				traditional: true,
@@ -89,9 +108,6 @@ function createRaces() {
 					 alert(thrownError);
 				}
 			});
-			*/
-			
-			successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!"); // TO DELETE
 		}
 		
 	};

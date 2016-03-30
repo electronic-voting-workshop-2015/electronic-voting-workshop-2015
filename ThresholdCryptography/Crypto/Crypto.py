@@ -8,11 +8,11 @@ from collections import defaultdict
 from json import dumps
 import math
 
-gmpy2_installed = False  # TODO: profile optimization
+gmpy2_is_installed = False  # TODO: profile optimization
 try:
     from gmpy2 import mpz
 except ImportError:
-    gmpy2_installed = False
+    gmpy2_is_installed = False
 
 from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_significant, \
     most_significant, list_to_bytes, bytes_to_list, publish_dict, bytes_to_base64, \
@@ -22,8 +22,9 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
 BB_URL = "http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
+#LOCAL_BB_URL = BB_URL  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
-RESULT_FILE = "result.txt"  # the file where the final results are stored
+RESULT_FILE = "result.json"  # the file where the final results are stored
 MY_PRIVATE_KEY_PATH = ""  # the path for local file where the party's private signing key is stored (relative to working dir)s
 PRIVATE_KEYS_PATH = ""  # The paths were the private keys will be saved on the server when generated.
 PUBLISH_COMMITMENT_TABLE = "/publishCommitment"
@@ -50,7 +51,7 @@ class EllipticCurve:
     """
 
     def __init__(self, a, b, p, order, int_length):
-        if gmpy2_installed:
+        if gmpy2_is_installed:
             self.a = mpz(a)
             self.b = mpz(b)
             self.p = mpz(p)
@@ -88,7 +89,7 @@ class EllipticCurve:
 class ECGroupMember:
     def __init__(self, curve, x, y):
         self.curve = curve
-        if gmpy2_installed:
+        if gmpy2_is_installed:
             self.x = mpz(x)
             self.y = mpz(y)
         else:
@@ -438,8 +439,8 @@ class ThresholdParty:
         m = hashlib.sha256()
         m.update(message)
         e = m.digest()
+        ln = self.sign_curve.order.bit_length() // 8
         n = self.sign_curve.order
-        ln = int(math.log(n))
         z = e[0:ln]
         z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
         certificate = 0
@@ -454,7 +455,7 @@ class ThresholdParty:
             if s == 0:
                 continue
             l = [r, s]
-            int_length = self.sign_curve.int_length // 8 + 1
+            int_length = self.sign_curve.int_length // 8
             certificate = list_to_bytes(l, int_length)
         return certificate
 
@@ -511,13 +512,11 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     :param certificate: text in 64 form (as sent by parties / voting booths)
     :return: bool.
     """
-    sys.stderr.write("\n" + encrypted_message + "\n")
-    sys.stderr.write("\n" + certificate + "\n")
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length // 8 + 1
+    int_length = sign_curve.int_length // 8
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
@@ -559,6 +558,7 @@ def decrypt_vote(curve, party_ids, commitments, d):
         d is part of the cipher text - (c,d)
         performed after validating the ZKPs"""
     q = curve.order
+
     assert len(party_ids) == len(commitments) == T + 1
     lambdas = {}
     for j in party_ids:
@@ -698,8 +698,6 @@ def get_secret_commitments(local=False):
             for dictionary in json_data}
 
 
-
-
 def get_zkps(local=False):
     """returns all ZKPs as a dictionary mapping vote_id to a set of tuples,
     containing all published ZKP objects and party_id's for that vote"""
@@ -732,7 +730,8 @@ def compute_voting_public_key():
     runs on the Bulletin Board"""
     commitments = get_commitments(local=True)
     public_key = product(coefficients[0] for coefficients in commitments.values())
-    dictionary = {"public_key": public_key}
+    json_data = list_to_base64([public_key], int_length=0)
+    dictionary = {"public_key": json_data}
     publish_dict(dictionary, LOCAL_BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
     return public_key
 
@@ -767,11 +766,11 @@ def print_results(decrypted_votes):
     # from http://stackoverflow.com/a/2600813
     result_dict = defaultdict(lambda: defaultdict(int))
     for race_id, decrypted_vote in decrypted_votes:
-        result_dict[race_id][decrypted_vote] += 1
+        result_dict[race_id][str(decrypted_vote)] += 1
     
     result_file.write(dumps(result_dict))
+    result_file.close()
 
-    print(str(decrypted_votes[0][1]) == str(decrypted_votes[1][1]))
     print(dumps(result_dict))
     
 
@@ -861,7 +860,6 @@ def phase3():
     secret_commitments = get_secret_commitments(local=True)
 
     print("verifying validity of zero knowledge proofs and decrypting")
-    #curve = get_voting_curve(local=True)
     curve = VOTING_CURVE
     decrypted_votes = decrypt_all_votes(votes, zkps, curve, secret_commitments)
 
@@ -916,13 +914,6 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
             vote_dict = {"vote_value": base64_encrypted_vote}
             vote_list.append(vote_dict)
             vote_string_list.append(repr(vote_dict))
-            #vote_string_list.append(base64_encrypted_vote)
-        votes_string = "\n".join(vote_string_list)
-        votes_string = votes_string.replace("'", '"')
-        votes_string = votes_string.replace(": ", '=>')
-        #votes_string = "[" + votes_string + "]"
-        print(votes_string)
-        #bytes_signature = party.sign(votes_string.encode('utf-8'))
         bytes_signature = party.sign(base64_to_bytes(vote_list[0]["vote_value"]))
         base64_signature = bytes_to_base64(bytes_signature)
         dictionary = {"ballot_box": 1, "SerialNumber": vote_id, "votes": vote_list, "signature": base64_signature}
@@ -951,7 +942,9 @@ def test():
 
     print("phase 2")
     voting_public_key = compute_voting_public_key()
-    generate_votes(3, 10, parties[0], voting_public_key)
+
+    generate_votes(2, 2, parties[0], voting_public_key)
+    generate_votes(3, 3, parties[0], voting_public_key)
     votes = get_votes()
 
     for party in shuffled(parties):
