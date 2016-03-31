@@ -48,7 +48,6 @@ class EllipticCurve:
     self.order is the order of the generator g
     self.int_length is the size in bits of each coordinate
     """
-
     def __init__(self, a, b, p, order, int_length):
         if gmpy2_is_installed:
             self.a = mpz(a)
