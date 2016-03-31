@@ -644,10 +644,6 @@ def get_curve_from_server():
             return curve
 
 
-
-
-
-
 def get_voting_curve():
     return get_curve_from_server()
 
@@ -827,8 +823,9 @@ def get_private_key_from_file():
             key = file.readline()
             return int(key)
 
+
 def phase2():
-    """step 10 in threshold workflow - run only after voting stopped
+    """step 11 in threshold workflow - run only after voting stopped
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
     party_id = get_party_id_from_file()
@@ -847,7 +844,7 @@ def phase2():
 
 
 def phase3():
-    """step 11 in threshold workflow - run on the BB after phase 2 ended
+    """step 12 in threshold workflow - run on the BB after phase 2 ended
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("retrieving voting data from the Database")
     votes = get_votes(local=True)
@@ -894,7 +891,7 @@ def shuffled(l):
 
 
 def encrypt_member(m, public_key):
-    """encryptes the group member using ElGamal
+    """encrypts the group member using ElGamal
     used for testing"""
     g = public_key.curve.generator
     r = public_key.curve.get_random_exponent()
@@ -920,7 +917,7 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
 
 
 def test():
-    print("phase 1")
+    print("reading parameters")
     sign_curve = VOTING_CURVE
     generate_keys(N)
     sign_keys = []
@@ -929,32 +926,37 @@ def test():
         for j in range(3):
             file.readline()
         sign_keys.append(int(file.readline()))
+
+    print("initializing parties (step 1)")
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
+    print("publishing commitments (step 2)")
     for party in shuffled(parties):
         party.publish_commitment()
+    print("sending secret values (step 3)")
     for party in shuffled(parties):
         party.send_values()
+    print("validating secret values, and publishing commitments h_j (step 4)")
     for party in shuffled(parties):
         party.validate_all_messages()
 
-    print("phase 2")
+    print("computing voting public key")
     voting_public_key = compute_voting_public_key()
 
+    print("generating test votes")
     generate_votes(2, 2, parties[0], voting_public_key)
     generate_votes(3, 3, parties[0], voting_public_key)
     votes = get_votes()
 
+    print("publishing Zero Knowledge Proofs for all votes")
     for party in shuffled(parties):
         party.generate_all_zkps(votes)
-
-    print("phase 3")
     zkps = get_zkps(local=True)
-
     secret_commitments = get_secret_commitments(local=True)
 
     curve = VOTING_CURVE
+    print("decrypting all votes using Lagrange interpolation")
     decrypted_votes = decrypt_all_votes(votes, zkps, curve, secret_commitments)
 
     print("the results are:")
