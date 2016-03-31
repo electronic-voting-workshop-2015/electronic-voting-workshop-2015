@@ -55,16 +55,19 @@ public class Parameters {
 	 * @param candidates
 	 */
 	private static HashMap<String, byte[]> mapCandidates(HashSet<String> candidates) {
+		Arrays.toString(candidates.toArray());
 		HashMap<String, byte[]> result = new HashMap<String, byte[]>();
 		HashMap<String, Integer> tempMap = new HashMap<String, Integer>();
-		int n = 0;
+		int n = 1;
 		for (String name : candidates) {
-			tempMap.put(name, n++);
+			tempMap.put(name, n);
+			n++;
 		}
 		Map<Integer, byte[]> mapToGroupElem = cryptoClient.getCandidateToMemebrMapping(candidates.size());
 		for (String name : candidates) {
 			result.put(name, mapToGroupElem.get(tempMap.get(name)));
 		}
+		
 		return result;
 	}
 
@@ -108,6 +111,11 @@ public class Parameters {
 		ECPoint g = new ECPoint(curve, gx, gy);
 		int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
 		BigInteger order = new BigInteger(_order);
+		if (_order.matches("[-+]?\\d*\\.?\\d+")) {	// Base 10.
+			order = new BigInteger(_order);			
+		} else {	// Base 16.
+			order = new BigInteger(_order, 16);
+		}
 		ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(32), sizeInBytes, order.toByteArray());
 		cryptoClient = new ECClientCryptographyModule((ECGroup) ourGroup, (ECGroup) ourGroup);
 		candidatesNames = new HashSet<>();
