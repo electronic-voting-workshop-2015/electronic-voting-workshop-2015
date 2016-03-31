@@ -108,7 +108,7 @@ public class Parameters {
 		ECPoint g = new ECPoint(curve, gx, gy);
 		int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
 		BigInteger order = new BigInteger(_order);
-		ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(sizeInBytes), sizeInBytes, order.toByteArray());
+		ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(32), sizeInBytes, order.toByteArray());
 		cryptoClient = new ECClientCryptographyModule((ECGroup) ourGroup, (ECGroup) ourGroup);
 		candidatesNames = new HashSet<>();
 		for (RaceProperties race : racesProperties) {
