@@ -41,6 +41,7 @@ GET_VOTING_PUBLIC_KEY_TABLE = "/retrieveVotingPublicKey"
 GET_PUBLIC_KEY_TABLE = "/getPublicKey"
 GET_COMMITMENT_TABLE = "/retrieveCommitment"
 GET_MESSAGES_TABLE = "/retrieveMessage"
+GET_PARAMETERS = "/publishParametersFile"
 
 
 class EllipticCurve:
@@ -620,7 +621,35 @@ def get_sign_key():
 
 
 def get_sign_curve():
-    return SIGN_CURVE
+    return get_curve_from_server()
+
+
+def get_curve_from_server():
+    data = get_bb_data(BB_URL + GET_PARAMETERS)
+    for dictionary in data:
+        if "Group" in dictionary:
+            group = dictionary["Group"]
+            order = int(group[0]["Order"])
+            int_length = int(group[1]["ElementSizeInBytes"]) // 2 * 8 # Group size is 2 ints.
+            curve_ints = group[2]["EC"]
+            a =  int(curve_ints[0]["a"])
+            b =  int(curve_ints[1]["b"])
+            p = int(curve_ints[2]["p"])
+            generator = group[3]["Generator"] # String with both numbers
+            gx = int(generator.split()[0])
+            gy = int(generator.split()[1])
+            curve =  EllipticCurve(a, b, p, order, int_length);
+            g = ECGroupMember(curve, gx, gy)
+            curve.generator = g
+            return curve
+
+
+
+
+
+
+def get_voting_curve():
+    return get_curve_from_server()
 
 
 def get_sent_commitments_confirmation():
@@ -742,7 +771,7 @@ def print_results(decrypted_votes):
     result_file.close()
 
     print(dumps(result_dict))
-
+    
 
 def phase1():
     """steps 1-8 in threshold workflow - voting can only begin after this phase ends successfully
@@ -751,7 +780,8 @@ def phase1():
     party_id = get_party_id_from_file()
     sign_key = get_private_key_from_file()
     sign_curve = get_sign_curve()
-    party = ThresholdParty(VOTING_CURVE, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=True)
+    voting_curve = get_voting_curve()
+    party = ThresholdParty(voting_curve, T, N, party_id, ZKP_HASH_FUNCTION, sign_key, sign_curve, is_phase1=True)
 
     print("publishing commitment")
     party.publish_commitment()
