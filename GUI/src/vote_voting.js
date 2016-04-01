@@ -51,6 +51,7 @@ app.controller('voteCtrl', function ($scope) {
             }
         }
         if (errors.length == 0) { // no errors, we move to finish mode
+        FinalFinish();
             $scope.finishMode = 1;
         }
         else { // there are errors, alerting error message
@@ -72,8 +73,8 @@ app.controller('voteCtrl', function ($scope) {
         $scope.finishMode = 0;
     };
 
-    $scope.FinalFinish = function (needToAudit) {
-		var finalDataJSON = [];
+    function FinalFinish() {
+	var finalDataJSON = [];
 
         if(!localStorage.machineId)
             localStorage.machineId = generateUUID();
@@ -104,9 +105,8 @@ app.controller('voteCtrl', function ($scope) {
 			});
 		}
 
-		needToAudit = needToAudit.toString();
-        sendVotingJSONData(finalDataJSON, {audit: needToAudit});
-
+		//needToAudit = needToAudit.toString();
+        sendVotingJSONData(finalDataJSON);
     };
 	
 	$scope.$watch('candidatesDroppedByOrder', function () {
@@ -154,7 +154,7 @@ app.controller('voteCtrl', function ($scope) {
         return uuid;
     };
 
-    function sendVotingJSONData(votingJSON, auditJSON){
+    function sendVotingJSONData(votingJSON){
         //call vote function
         $.ajax({
             url: "http://localhost:4567/Vote",
@@ -163,10 +163,10 @@ app.controller('voteCtrl', function ($scope) {
             traditional: true,
             data: JSON.stringify(votingJSON),
             success: function () {
-                sendAuditJSONData(auditJSON);
+                return;
             },
             error: function () {
-                 sendAuditJSONData(auditJSON);
+                 return;
             }
         });
     }
