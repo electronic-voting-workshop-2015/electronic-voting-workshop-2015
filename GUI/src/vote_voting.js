@@ -52,7 +52,6 @@ app.controller('voteCtrl', function ($scope) {
         }
         if (errors.length == 0) { // no errors, we move to finish mode
         FinalFinish();
-            $scope.finishMode = 1;
         }
         else { // there are errors, alerting error message
             var errorStr = "";
@@ -163,10 +162,10 @@ app.controller('voteCtrl', function ($scope) {
             traditional: true,
             data: JSON.stringify(votingJSON),
             success: function () {
-                return;
+                $scope.finishMode = 1;
             },
             error: function () {
-                 return;
+                 $scope.finishMode = 1;
             }
         });
     }
@@ -183,11 +182,18 @@ app.controller('voteCtrl', function ($scope) {
                 window.location = 'vote_finish.html';
             },
             error: function () {
-				window.location = 'vote_finish.html';
+		window.location = 'vote_finish.html';
             }
         });
     }
 });
+
+function FinalFinish2(booli) {
+	booli = booli.toString();
+	needToAudit= [];
+	needToAudit.push({"audit":booli});
+	sendAuditJSONData(needToAudit);
+}
 
 
 // drag and drop controller
