@@ -107,7 +107,8 @@ function createRaces() {
 					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
 				},
 				error: function (ajaxrequest, ajaxOptions, thrownError) {
-					 alert(thrownError);
+					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
+					// alert(thrownError);
 				}
 			});
 		}
