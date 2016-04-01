@@ -610,8 +610,8 @@ curve_256.generator = g_256
 VOTING_CURVE = curve_256
 SIGN_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
-T = 4  # number of parties needed for decryption minus 1
-N = 7  # total number of parties
+T = 3  # number of parties needed for decryption minus 1
+N = 5  # total number of parties
 SLEEP_TIME = 1
 
 
