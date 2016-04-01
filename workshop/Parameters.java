@@ -38,7 +38,7 @@ public class Parameters {
 	public static HashMap<Integer, byte[]> mapMachineToSignature;
 	// Set of the names of all the candidates in these elections - for the
 	// mapping.
-	public static HashSet<String> candidatesNames;
+	public static ArrayList<String> candidatesNames;
 	// List of objects of type RaceProperties, which contains the properties on
 	// each race of the elections.
 	// (important mainly for those who read the QR)
@@ -54,7 +54,7 @@ public class Parameters {
 	 * 
 	 * @param candidates
 	 */
-	private static HashMap<String, byte[]> mapCandidates(HashSet<String> candidates) {
+	private static HashMap<String, byte[]> mapCandidates(ArrayList<String> candidates) {
 		Arrays.toString(candidates.toArray());
 		HashMap<String, byte[]> result = new HashMap<String, byte[]>();
 		HashMap<String, Integer> tempMap = new HashMap<String, Integer>();
@@ -118,7 +118,7 @@ public class Parameters {
 		}
 		ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(32), sizeInBytes, order.toByteArray());
 		cryptoClient = new ECClientCryptographyModule((ECGroup) ourGroup, (ECGroup) ourGroup);
-		candidatesNames = new HashSet<>();
+		candidatesNames = new ArrayList<>();
 		for (RaceProperties race : racesProperties) {
 			for (String name : race.getPossibleCandidates()) {
 				candidatesNames.add(name);
