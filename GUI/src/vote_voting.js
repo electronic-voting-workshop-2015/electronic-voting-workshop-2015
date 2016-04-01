@@ -27,6 +27,13 @@ app.controller('voteCtrl', function ($scope) {
         $scope.position = voteConfiguration[$scope.page];
         $scope.candidatesArray = $scope.position.candidates;
     };
+    
+    $scope.FinalFinish2 = function (booli){
+	booli = booli.toString();
+	needToAudit= [];
+	needToAudit.push({"audit":booli});
+	sendAuditJSONData(needToAudit);
+}
 
     $scope.Finish = function () { // called when 'finish' button is pressed
         var errors = [];
@@ -187,13 +194,6 @@ app.controller('voteCtrl', function ($scope) {
         });
     }
 });
-
-function FinalFinish2(booli) {
-	booli = booli.toString();
-	needToAudit= [];
-	needToAudit.push({"audit":booli});
-	sendAuditJSONData(needToAudit);
-}
 
 
 // drag and drop controller
