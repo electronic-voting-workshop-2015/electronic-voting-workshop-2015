@@ -19,7 +19,7 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
     list_to_base64, base64_to_list, base64_to_bytes, get_bb_data
 
 # TODO: organize constants (Ilay)
-BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
+BB_URL_PROD = "http://46.101.148.106:4567"  # the address of the production Bulletin Board
 BB_URL = BB_URL_PROD #"http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 #LOCAL_BB_URL = BB_URL  # the address of the Bulletin Board when running on the Bulletin Board
