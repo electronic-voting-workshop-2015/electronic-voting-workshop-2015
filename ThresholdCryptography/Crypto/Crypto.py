@@ -622,7 +622,7 @@ def get_sign_key():
 
 
 def get_sign_curve():
-    return get_curve_from_server()
+    return VOTING_CURVE
 
 
 def get_curve_from_server():
@@ -650,7 +650,7 @@ def get_curve_from_server():
 
 
 def get_voting_curve():
-    return get_curve_from_server()
+    return VOTING_CURVE
 
 
 def get_sent_commitments_confirmation():
