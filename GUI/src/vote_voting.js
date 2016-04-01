@@ -163,7 +163,8 @@ app.controller('voteCtrl', function ($scope) {
     function sendVotingJSONData(votingJSON){
         //call vote function
         $.ajax({
-            url: "http://localhost:4567/Vote",
+        url: "http://46.101.148.106:4567/Vote",
+            //url: "http://localhost:4567/Vote",
             type: 'POST',
             contentType: 'jsonp',
             traditional: true,
@@ -180,7 +181,8 @@ app.controller('voteCtrl', function ($scope) {
     function sendAuditJSONData(auditJSON){
         //call audit function
         $.ajax({
-            url: "http://localhost:4567/Audit",
+        	 url: "http://46.101.148.106:4567/Audit",
+           // url: "http://localhost:4567/Audit",
             type: 'POST',
             contentType: 'jsonp',
             traditional: true,
