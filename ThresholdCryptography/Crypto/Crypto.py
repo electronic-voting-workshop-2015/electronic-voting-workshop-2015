@@ -20,7 +20,7 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
 
 # TODO: organize constants (Ilay)
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
-BB_URL = "http://10.0.0.2:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
+BB_URL = BB_URL_PROD  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 #LOCAL_BB_URL = BB_URL  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
@@ -781,19 +781,21 @@ def phase1():
 
     print("publishing commitment")
     party.publish_commitment()
-    while True:
-        if get_sent_commitments_confirmation():
-            break
-        sleep(SLEEP_TIME)
-        print('.')  # gives an indication to user that work is being done
+    input("Press enter after every party successfully published commitment")
+    #while True:
+    #    if get_sent_commitments_confirmation():
+    #        break
+    #    sleep(SLEEP_TIME)
+    #    print('.')  # gives an indication to user that work is being done
 
     print("sending secret values to other parties")
     party.send_values()
-    while True:
-        if get_sent_messages_confirmation():
-            break
-        sleep(SLEEP_TIME)
-        print('.')
+    input("Press enter after every party successfully sent values")
+    #while True:
+    #    if get_sent_messages_confirmation():
+    #        break
+    #    sleep(SLEEP_TIME)
+    #    print('.')
 
     print("validating messages from other parties")
     if not party.validate_all_messages():
