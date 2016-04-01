@@ -110,9 +110,8 @@ app.controller('voteCtrl', function ($scope) {
 				chosenCandidates: voteArray,
 			});
 		}
-
-		//needToAudit = needToAudit.toString();
         sendVotingJSONData(finalDataJSON);
+		$scope.finishMode = 1;
     };
 	
 	$scope.$watch('candidatesDroppedByOrder', function () {
@@ -163,17 +162,16 @@ app.controller('voteCtrl', function ($scope) {
     function sendVotingJSONData(votingJSON){
         //call vote function
         $.ajax({
-        url: "http://46.101.148.106:4567/Vote",
-            //url: "http://localhost:4567/Vote",
+			url: "http://46.101.148.106:4567/Vote",
             type: 'POST',
             contentType: 'jsonp',
             traditional: true,
             data: JSON.stringify(votingJSON),
             success: function () {
-                $scope.finishMode = 1;
+                return;
             },
             error: function () {
-                 $scope.finishMode = 1;
+                 return;
             }
         });
     }
@@ -182,7 +180,6 @@ app.controller('voteCtrl', function ($scope) {
         //call audit function
         $.ajax({
         	 url: "http://46.101.148.106:4567/Audit",
-           // url: "http://localhost:4567/Audit",
             type: 'POST',
             contentType: 'jsonp',
             traditional: true,
