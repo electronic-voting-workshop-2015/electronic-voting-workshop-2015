@@ -20,7 +20,7 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
 
 # TODO: organize constants (Ilay)
 BB_URL_PROD = "http://46.101.148.106"  # the address of the production Bulletin Board
-BB_URL = "http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
+BB_URL = BB_URL_PROD #"http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 #LOCAL_BB_URL = BB_URL  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
@@ -637,8 +637,8 @@ def get_curve_from_server():
             b =  int(curve_ints[1]["b"])
             p = int(curve_ints[2]["p"])
             generator = group[3]["Generator"] # String with both numbers
-            gx = int(generator.split()[0])
-            gy = int(generator.split()[1])
+            gx = int(generator.split(', ')[0])
+            gy = int(generator.split(', ')[1])
             curve =  EllipticCurve(a, b, p, order, int_length);
             g = ECGroupMember(curve, gx, gy)
             curve.generator = g
