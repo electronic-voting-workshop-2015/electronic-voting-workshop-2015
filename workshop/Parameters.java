@@ -55,49 +55,80 @@ public class Parameters {
 	 * @param candidates
 	 */
 	private static HashMap<String, byte[]> mapCandidates(HashSet<String> candidates) {
+		Arrays.toString(candidates.toArray());
 		HashMap<String, byte[]> result = new HashMap<String, byte[]>();
 		HashMap<String, Integer> tempMap = new HashMap<String, Integer>();
-		int n = 0;
+		int n = 1;
 		for (String name : candidates) {
-			tempMap.put(name, n++);
+			tempMap.put(name, n);
+			n++;
 		}
 		Map<Integer, byte[]> mapToGroupElem = cryptoClient.getCandidateToMemebrMapping(candidates.size());
 		for (String name : candidates) {
 			result.put(name, mapToGroupElem.get(tempMap.get(name)));
 		}
+		
 		return result;
 	}
 
 	private static void setParameters(String _order, String _ElementSizeInBytes, String _a, String _b, String _p,
-			String _generator_X, String _generator_Y, int _numOfMachines, ArrayList<RaceProperties> _racesProperties, int _timeStampLevel,
-			String _publicKey) {
+			String _generator_X, String _generator_Y, int _numOfMachines, ArrayList<RaceProperties> _racesProperties,
+			int _timeStampLevel, String _publicKey) {
 		numOfMachines = _numOfMachines;
 		timeStampLevel = _timeStampLevel;
 		racesProperties = _racesProperties;
-		BigInteger a = new BigInteger(_a);
-		BigInteger b = new BigInteger(_b);
-		BigInteger p = new BigInteger(_p);
+		BigInteger a;
+		BigInteger b;
+		BigInteger p;
+		if (_a.matches("[-+]?\\d*\\.?\\d+")) { // Base 10.
+			a = new BigInteger(_a);
+		} else { // Base 16.
+			a = new BigInteger(_a, 16);
+		}
+		if (_b.matches("[-+]?\\d*\\.?\\d+")) { // Base 10.
+			b = new BigInteger(_b);
+		} else { // Base 16.
+			b = new BigInteger(_b, 16);
+		}
+		if (_p.matches("[-+]?\\d*\\.?\\d+")) { // Base 10.
+			p = new BigInteger(_p);
+		} else { // Base 16.
+			p = new BigInteger(_p, 16);
+		}
 		EllipticCurve curve = new EllipticCurve(a, b, p);
-		BigInteger gx = new BigInteger(_generator_X);
-	        BigInteger gy = new BigInteger(_generator_Y);
-	        ECPoint g = new ECPoint(curve, gx, gy);
-	        int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
-	        BigInteger order = new BigInteger(_order);
-	        ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(sizeInBytes), sizeInBytes, order.toByteArray());
-	        cryptoClient = new ECClientCryptographyModule((ECGroup)ourGroup, (ECGroup)ourGroup);
-	        candidatesNames = new HashSet<>();
-	        for (RaceProperties race : racesProperties){
-	        	for (String name : race.getPossibleCandidates()){
-	        		candidatesNames.add(name);
-	        	}
-	        }
-	        candidatesMap = mapCandidates(candidatesNames);
-	        mapMachineToSignature = setMachinesSignatures();
-	        
-	        publicKey = new BigInteger(_publicKey).toByteArray();
+		BigInteger gx;
+		if (_generator_X.matches("[-+]?\\d*\\.?\\d+")) {	// Base 10.
+			gx = new BigInteger(_generator_X);			
+		} else {	// Base 16.
+			gx = new BigInteger(_generator_X, 16);
+		}
+		BigInteger gy;
+		if (_generator_Y.matches("[-+]?\\d*\\.?\\d+")) {	// Base 10.
+			gy = new BigInteger(_generator_Y);			
+		} else {	// Base 16.
+			gy = new BigInteger(_generator_Y, 16);
+		}
+		ECPoint g = new ECPoint(curve, gx, gy);
+		int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
+		BigInteger order = new BigInteger(_order);
+		if (_order.matches("[-+]?\\d*\\.?\\d+")) {	// Base 10.
+			order = new BigInteger(_order);			
+		} else {	// Base 16.
+			order = new BigInteger(_order, 16);
+		}
+		ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(32), sizeInBytes, order.toByteArray());
+		cryptoClient = new ECClientCryptographyModule((ECGroup) ourGroup, (ECGroup) ourGroup);
+		candidatesNames = new HashSet<>();
+		for (RaceProperties race : racesProperties) {
+			for (String name : race.getPossibleCandidates()) {
+				candidatesNames.add(name);
+			}
+		}
+		candidatesMap = mapCandidates(candidatesNames);
+		mapMachineToSignature = setMachinesSignatures();
+
+		publicKey = new BigInteger(_publicKey).toByteArray();
 	}
-
-
 
 	private static HashMap<Integer, byte[]> setMachinesSignatures() {
 		HashMap<Integer, byte[]> map = new HashMap<>();
@@ -140,12 +171,12 @@ public class Parameters {
 	 */
 	private static ArrayList<RaceProperties> parseRaceProps(JSONArray jsonRepr) throws JSONException {
 		ArrayList<RaceProperties> res = new ArrayList<RaceProperties>();
-		for (int i = 0; i < jsonRepr.length(); i++) {//go over races
+		for (int i = 0; i < jsonRepr.length(); i++) {// go over races
 			JSONObject curElement = jsonRepr.getJSONObject(i);
 			String name = curElement.getString("position");
-			int slotsNum=1;
-			if (curElement.has("slots")){
-			  slotsNum = curElement.getInt("slots");
+			int slotsNum = 1;
+			if (curElement.has("slots")) {
+				slotsNum = curElement.getInt("slots");
 			}
 			boolean order = false;
 			if (curElement.getInt("type") == 2) {
@@ -155,11 +186,12 @@ public class Parameters {
 			Set<String> namesPool = new HashSet<String>();
 			for (int j = 0; j < names.length(); j++) {
 				namesPool.add(names.getJSONObject(j).getString("name"));
-			}	 
+			}
 			res.add(new RaceProperties(namesPool, name, slotsNum, order));
 		}
 		return res;
 	}
+
 	/**
 	 * Parsing the initialization JSON into the main array which defines the
 	 * election system
@@ -167,7 +199,7 @@ public class Parameters {
 	 * @param initFormat
 	 * @param pkey
 	 */
-	private static void parseJSONInit(JSONArray initFormat, String pkey){
+	private static void parseJSONInit(JSONArray initFormat, String pkey) {
 		ArrayList<RaceProperties> racesProperties = null;
 		try {
 			racesProperties = parseRaceProps(initFormat.getJSONObject(0).getJSONArray("RaceProperties"));
@@ -230,17 +262,17 @@ public class Parameters {
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}		
-		String[] gen=totalgen.split(",");		
-		String generator_X=gen[0];
-		String generator_Y=gen[1];				
+		}
+		String[] gen = totalgen.split(",");
+		String generator_X = gen[0];
+		String generator_Y = gen[1];
 		int numOfMachines = 0;
 		try {
 			numOfMachines = initFormat.getJSONObject(2).getInt("NumOfMachines");
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}		
+		}
 		int timeStampLevel = 0;
 		try {
 			timeStampLevel = initFormat.getJSONObject(3).getInt("TimeStampLevel");
@@ -248,22 +280,19 @@ public class Parameters {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		String publicKey=pkey;
-		setParameters(order, elementSizeInBytes, a, b, p,
-				generator_X, generator_Y, numOfMachines, racesProperties, timeStampLevel,
-				publicKey);		
+		String publicKey = pkey;
+		setParameters(order, elementSizeInBytes, a, b, p, generator_X, generator_Y, numOfMachines, racesProperties,
+				timeStampLevel, publicKey);
 	}
-	
 
 	/**
-	 * get admin's selections (the JSON file) and the public key from the server -
-	 * - and initialize all fields (call parseJSONInit method above)
+	 * get admin's selections (the JSON file) and the public key from the server
+	 * - - and initialize all fields (call parseJSONInit method above)
 	 */
-	public static void init()
-	{
+	public static void init() {
 		// read from adminJson and publicKey and call to eliran's method
 		String line = null;
-		
+
 		// read admin parameters from file
 		FileInputStream fin = null;
 		try {
@@ -365,7 +394,7 @@ public class Parameters {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		// initialize
 		parseJSONInit(adminArray, pkey);
 		// all parameters are initialized

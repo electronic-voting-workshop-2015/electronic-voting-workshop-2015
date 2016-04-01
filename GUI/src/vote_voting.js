@@ -27,6 +27,13 @@ app.controller('voteCtrl', function ($scope) {
         $scope.position = voteConfiguration[$scope.page];
         $scope.candidatesArray = $scope.position.candidates;
     };
+    
+    $scope.FinalFinish2 = function (booli){
+	booli = booli.toString();
+	needToAudit= [];
+	needToAudit.push({"audit":booli});
+	sendAuditJSONData(needToAudit);
+}
 
     $scope.Finish = function () { // called when 'finish' button is pressed
         var errors = [];
@@ -51,7 +58,7 @@ app.controller('voteCtrl', function ($scope) {
             }
         }
         if (errors.length == 0) { // no errors, we move to finish mode
-            $scope.finishMode = 1;
+        FinalFinish();
         }
         else { // there are errors, alerting error message
             var errorStr = "";
@@ -72,8 +79,8 @@ app.controller('voteCtrl', function ($scope) {
         $scope.finishMode = 0;
     };
 
-    $scope.FinalFinish = function (needToAudit) {
-		var finalDataJSON = [];
+    function FinalFinish() {
+	var finalDataJSON = [];
 
         if(!localStorage.machineId)
             localStorage.machineId = generateUUID();
@@ -103,10 +110,8 @@ app.controller('voteCtrl', function ($scope) {
 				chosenCandidates: voteArray,
 			});
 		}
-
-		needToAudit = needToAudit.toString();
-        sendVotingJSONData(finalDataJSON, {audit: needToAudit});
-
+        sendVotingJSONData(finalDataJSON);
+		$scope.finishMode = 1;
     };
 	
 	$scope.$watch('candidatesDroppedByOrder', function () {
@@ -154,19 +159,19 @@ app.controller('voteCtrl', function ($scope) {
         return uuid;
     };
 
-    function sendVotingJSONData(votingJSON, auditJSON){
+    function sendVotingJSONData(votingJSON){
         //call vote function
         $.ajax({
-            url: "http://localhost:4567/Vote",
-            type: 'POST',
+			url: "http://localhost:4567/Vote",
+            type: 'OPTIONS',
             contentType: 'jsonp',
             traditional: true,
             data: JSON.stringify(votingJSON),
             success: function () {
-                sendAuditJSONData(auditJSON);
+                return;
             },
             error: function () {
-                 sendAuditJSONData(auditJSON);
+                 return;
             }
         });
     }
@@ -174,8 +179,8 @@ app.controller('voteCtrl', function ($scope) {
     function sendAuditJSONData(auditJSON){
         //call audit function
         $.ajax({
-            url: "http://localhost:4567/Audit",
-            type: 'POST',
+        	 url: "http://localhost:4567/Audit",
+            type: 'OPTIONS',
             contentType: 'jsonp',
             traditional: true,
             data: JSON.stringify(auditJSON),
@@ -183,7 +188,7 @@ app.controller('voteCtrl', function ($scope) {
                 window.location = 'vote_finish.html';
             },
             error: function () {
-				window.location = 'vote_finish.html';
+		window.location = 'vote_finish.html';
             }
         });
     }

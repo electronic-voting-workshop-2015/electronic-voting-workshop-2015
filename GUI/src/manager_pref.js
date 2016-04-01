@@ -96,16 +96,19 @@ function createRaces() {
 			
 			
 			$.ajax({
-				url: "http://localhost:4567/publishParametersFile",
+				url: "http://46.101.148.106:4567/publishParametersFile",
+				//url: "http://localhost:4567/publishParametersFile",
 				type: 'POST',
-				contentType: 'application/json',
+			//	contentType: 'application/json',
+				contentType: 'jsonp',
 				traditional: true,
-				data: JSON.stringify(parameterText),
+				data: parameterText,
 				success: function () {
 					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
 				},
 				error: function (ajaxrequest, ajaxOptions, thrownError) {
-					 alert(thrownError);
+					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
+					// alert(thrownError);
 				}
 			});
 		}

@@ -637,8 +637,8 @@ def get_curve_from_server():
             b =  int(curve_ints[1]["b"])
             p = int(curve_ints[2]["p"])
             generator = group[3]["Generator"] # String with both numbers
-            gx = int(generator.split(', ')[0])
-            gy = int(generator.split(', ')[1])
+            gx = int(generator.split()[0])
+            gy = int(generator.split()[1])
             curve =  EllipticCurve(a, b, p, order, int_length);
             g = ECGroupMember(curve, gx, gy)
             curve.generator = g

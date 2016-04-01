@@ -10,5 +10,5 @@ def demand_valid_signature!( request )
   puts "VERIFY SIGNATURE ON THESE PARAMTERS: #{params}"
   params = request.params
   publicKey = PublicKey.find params[ "party_id" ]
-  verify_certificate publicKey.first, publicKey.second, params[ "content" ], params[ "signature" ]
+  verify_certificate publicKey.first, publicKey.second, params[ "data" ], params[ "signature" ]
 end 
