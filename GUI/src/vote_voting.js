@@ -111,6 +111,7 @@ app.controller('voteCtrl', function ($scope) {
 			});
 		}
         sendVotingJSONData(finalDataJSON);
+		
 		$scope.finishMode = 1;
     };
 	
@@ -161,8 +162,9 @@ app.controller('voteCtrl', function ($scope) {
 
     function sendVotingJSONData(votingJSON){
         //call vote function
-        $.ajax({
+		 $.ajax({
 			url: "http://localhost:4567/Vote",
+			crossDomain: true,
             type: 'OPTIONS',
             contentType: 'jsonp',
             traditional: true,
@@ -171,7 +173,23 @@ app.controller('voteCtrl', function ($scope) {
                 return;
             },
             error: function () {
+				alert("failed!");
                  return;
+            }
+        });
+        $.ajax({
+			url: "http://localhost:4567/Vote",
+			crossDomain: true,
+            type: 'POST',
+            contentType: 'jsonp',
+            traditional: true,
+            data: JSON.stringify(votingJSON),
+            success: function () {
+                return;
+            },
+            error: function () {
+				alert("failed!");
+                return;
             }
         });
     }
@@ -179,7 +197,8 @@ app.controller('voteCtrl', function ($scope) {
     function sendAuditJSONData(auditJSON){
         //call audit function
         $.ajax({
-        	 url: "http://localhost:4567/Audit",
+        	url: "http://localhost:4567/Audit",
+            crossDomain: true,
             type: 'OPTIONS',
             contentType: 'jsonp',
             traditional: true,
@@ -188,7 +207,23 @@ app.controller('voteCtrl', function ($scope) {
                 window.location = 'vote_finish.html';
             },
             error: function () {
-		window.location = 'vote_finish.html';
+				alert("failed!");
+                return;
+            }
+        });
+		$.ajax({
+			url: "http://localhost:4567/Audit",
+			crossDomain: true,
+            type: 'POST',
+            contentType: 'jsonp',
+            traditional: true,
+            data: JSON.stringify(auditJSON),
+            success: function () {
+                window.location = 'vote_finish.html';
+            },
+            error: function () {
+				alert("failed!");
+                return;
             }
         });
     }
