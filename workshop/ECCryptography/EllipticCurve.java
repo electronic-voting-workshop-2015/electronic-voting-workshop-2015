@@ -79,6 +79,10 @@ public class EllipticCurve {
         return zeroMember;
     }
 
+    public String toString() {
+        return (" a: " + a.toString() + ", b: " + b.toString() + ", p: " + p.toString());
+    }
+
     /**
      * Adds the points p and q over the group formed by this curve.
      */

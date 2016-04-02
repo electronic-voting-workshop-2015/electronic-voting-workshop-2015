@@ -23,6 +23,13 @@ public class ECGroup extends Group {
         this.order = new BigInteger(order);
     }
 
+    public String toString() {
+        return ("Curve:\n" + curve.toString()
+                + "\nGenrator:\n" + generator.toString()
+                + "\nElement byte size = " + elementByteSize
+                + "\nOrder = " + order.toString());
+    }
+
     @Override
     public byte[] getElement(byte[] exponent) {
         if (logEncryptionMethods) {
