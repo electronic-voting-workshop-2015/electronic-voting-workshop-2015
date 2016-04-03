@@ -97,7 +97,7 @@ function createRaces() {
 			
 			$.post({
 				//url: "http://46.101.148.106:4567/publishParametersFile",
-                url: "http://localhost:4567/publishParametersFile",
+                		url: "http://46.101.148.106:4567/publishParametersFile",
 				data: {content: {ARBITRARY: 'JAVASCRIPT', OBJECT: 'HERE'}},
 				success: function () {
                     successAlert( "OK!!!" );
