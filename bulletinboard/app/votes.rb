@@ -13,7 +13,8 @@ post '/sendVote' do
 			create = Votes.create(vote_value: params['votes'].fetch(index)['vote_value'],
 				                  ballot_box: params['ballot_box'].to_i,
 				                  serial_number: params['serial_number'].to_i,
-				                  race_id: index+1)
+				                  race_id: index+1,
+								  qr: params['qr'])
 			end
 
 	else
