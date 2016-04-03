@@ -6,9 +6,14 @@ require 'models/VotingPublicKey'
 require 'models/proofs_file'
 require 'models/parameters_file'
 
-def publish_and_retrieve( model, publish_url, retrieve_url )
+def publish_and_retrieve( model, publish_url, retrieve_url, secure: true )
     post publish_url do
-		demand_valid_signature!( request )
+		if secure 
+            demand_valid_signature!( request )
+        end
+        if ! params.include?( "content" )
+            halt 590, "no :content key!"
+        end
         publication = model.create!( content: params[ "content" ].to_json )
     end
 
@@ -21,17 +26,7 @@ def publish_and_retrieve( model, publish_url, retrieve_url )
 end
 
 def publish_and_retrieve_without_signature( model, publish_url, retrieve_url )
-    post publish_url do
-        publication = model.create!( content: params[ "content" ].to_json )
-    end
-
-    get retrieve_url do
-        all = model.all.to_a.map do |publication| 
-            hash = JSON.parse publication.content
-            hash
-        end
-        all.to_json
-    end
+    publish_and_retrieve( model, publish_url, retrieve_url, secure: false )
 end
 
 publish_and_retrieve Commitment, '/publishCommitment', '/retrieveCommitment'
