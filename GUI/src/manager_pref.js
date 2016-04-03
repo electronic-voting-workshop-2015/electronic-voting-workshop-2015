@@ -95,16 +95,12 @@ function createRaces() {
 		
 			
 			
-			$.ajax({
-				url: "http://46.101.148.106:4567/publishParametersFile",
-				//url: "http://localhost:4567/publishParametersFile",
-				type: 'POST',
-			//	contentType: 'application/json',
-				contentType: 'jsonp',
-				traditional: true,
-				data: parameterText,
+			$.post({
+				//url: "http://46.101.148.106:4567/publishParametersFile",
+                url: "http://localhost:4567/publishParametersFile",
+				data: {content: {ARBITRARY: 'JAVASCRIPT', OBJECT: 'HERE'}},
 				success: function () {
-					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
+                    successAlert( "OK!!!" );
 				},
 				error: function (ajaxrequest, ajaxOptions, thrownError) {
 					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
