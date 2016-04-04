@@ -67,13 +67,22 @@ public class Parameters {
 		for (String name : candidates) {
 			result.put(name, mapToGroupElem.get(tempMap.get(name)));
 		}
-		
+		// for (String s: result.keySet()) {
+		// System.out.println(s + " ");
+		// for (byte b: result.get(s)) {
+		// System.out.print(b + " ");
+		// }
+		// System.out.println();
+		// System.out.println();
+		// System.out.println();
+		// }
+
 		return result;
 	}
 
 	private static void setParameters(String _order, String _ElementSizeInBytes, String _a, String _b, String _p,
 			String _generator_X, String _generator_Y, int _numOfMachines, ArrayList<RaceProperties> _racesProperties,
-			int _timeStampLevel, String _publicKey) {
+			int _timeStampLevel, byte[] _publicKey) {
 		numOfMachines = _numOfMachines;
 		timeStampLevel = _timeStampLevel;
 		racesProperties = _racesProperties;
@@ -97,23 +106,23 @@ public class Parameters {
 		}
 		EllipticCurve curve = new EllipticCurve(a, b, p);
 		BigInteger gx;
-		if (_generator_X.matches("[-+]?\\d*\\.?\\d+")) {	// Base 10.
-			gx = new BigInteger(_generator_X);			
-		} else {	// Base 16.
+		if (_generator_X.matches("[-+]?\\d*\\.?\\d+")) { // Base 10.
+			gx = new BigInteger(_generator_X);
+		} else { // Base 16.
 			gx = new BigInteger(_generator_X, 16);
 		}
 		BigInteger gy;
-		if (_generator_Y.matches("[-+]?\\d*\\.?\\d+")) {	// Base 10.
-			gy = new BigInteger(_generator_Y);			
-		} else {	// Base 16.
+		if (_generator_Y.matches("[-+]?\\d*\\.?\\d+")) { // Base 10.
+			gy = new BigInteger(_generator_Y);
+		} else { // Base 16.
 			gy = new BigInteger(_generator_Y, 16);
 		}
 		ECPoint g = new ECPoint(curve, gx, gy);
 		int sizeInBytes = Integer.parseInt(_ElementSizeInBytes);
 		BigInteger order = new BigInteger(_order);
-		if (_order.matches("[-+]?\\d*\\.?\\d+")) {	// Base 10.
-			order = new BigInteger(_order);			
-		} else {	// Base 16.
+		if (_order.matches("[-+]?\\d*\\.?\\d+")) { // Base 10.
+			order = new BigInteger(_order);
+		} else { // Base 16.
 			order = new BigInteger(_order, 16);
 		}
 		ourGroup = new ECGroup(curve.toByteArray(), g.toByteArray(32), sizeInBytes, order.toByteArray());
@@ -127,7 +136,7 @@ public class Parameters {
 		candidatesMap = mapCandidates(candidatesNames);
 		mapMachineToSignature = setMachinesSignatures();
 
-		publicKey = new BigInteger(_publicKey).toByteArray();
+		publicKey = _publicKey;
 	}
 
 	private static HashMap<Integer, byte[]> setMachinesSignatures() {
@@ -183,7 +192,7 @@ public class Parameters {
 				order = true;
 			}
 			JSONArray names = curElement.getJSONArray("candidates");
-			Set<String> namesPool = new HashSet<String>();
+			Set<String> namesPool = new LinkedHashSet<String>();
 			for (int j = 0; j < names.length(); j++) {
 				namesPool.add(names.getJSONObject(j).getString("name"));
 			}
@@ -199,7 +208,7 @@ public class Parameters {
 	 * @param initFormat
 	 * @param pkey
 	 */
-	private static void parseJSONInit(JSONArray initFormat, String pkey) {
+	private static void parseJSONInit(JSONArray initFormat, byte[] pkey) {
 		ArrayList<RaceProperties> racesProperties = null;
 		try {
 			racesProperties = parseRaceProps(initFormat.getJSONObject(0).getJSONArray("RaceProperties"));
@@ -280,14 +289,16 @@ public class Parameters {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		String publicKey = pkey;
 		setParameters(order, elementSizeInBytes, a, b, p, generator_X, generator_Y, numOfMachines, racesProperties,
-				timeStampLevel, publicKey);
+				timeStampLevel, pkey);
 	}
 
 	/**
 	 * get admin's selections (the JSON file) and the public key from the server
 	 * - - and initialize all fields (call parseJSONInit method above)
+	 * 
+	 * @throws JSONException
+	 * @throws UnsupportedEncodingException
 	 */
 	public static void init() {
 		// read from adminJson and publicKey and call to eliran's method
@@ -338,6 +349,8 @@ public class Parameters {
 			e1.printStackTrace();
 		}
 		JSONArray adminArray = null;
+		System.out.println(adminString);
+		System.out.println("first char: " + adminString.charAt(0));
 		try {
 			adminArray = new JSONArray(adminString);
 		} catch (JSONException e) {
@@ -346,57 +359,43 @@ public class Parameters {
 		}
 
 		// get public key from file
+		JSONArray pkeyArray = null;
 		sb = new StringBuilder();
 		try {
-			fin = new FileInputStream("publicKey");
+			fin = new FileInputStream("./publicKey");
 		} catch (FileNotFoundException e2) {
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		try {
-			br = new BufferedReader(new InputStreamReader(fin, "UTF-8"));
+			br = new BufferedReader(new InputStreamReader(fin, "ISO-8859-1"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		try {
-			line = br.readLine();
+			pkeyArray = new JSONArray(br.readLine());
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		while (line != null) {
-			sb.append(line);
-			try {
-				line = br.readLine();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		String pkeyString = sb.toString();
-		// pkeyString is of the form: [{content: "public_key"}]
 		try {
 			br.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		JSONArray pkeyArray = null;
+		byte[] pkeyByte = null;
 		try {
-			pkeyArray = new JSONArray(pkeyString);
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		String pkey = null;
-		try {
-			pkey = String.valueOf(pkeyArray.getJSONObject(0).getInt("content"));
-		} catch (JSONException e) {
+			pkeyByte = ((String) ((JSONObject) pkeyArray.get(0)).get("content")).getBytes("ISO-8859-1");
+		} catch (UnsupportedEncodingException | JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
 		// initialize
-		parseJSONInit(adminArray, pkey);
+		parseJSONInit(adminArray, pkeyByte);
 		// all parameters are initialized
 	}
 }
