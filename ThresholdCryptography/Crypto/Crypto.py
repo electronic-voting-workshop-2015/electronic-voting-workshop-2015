@@ -254,8 +254,8 @@ class ThresholdParty:
         cert = self.sign(list_to_bytes(commitments))
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(commitments, int_length=0)
-        dictionary = {"party_id": self.party_id, "commitment": base64_data, "signature": base64_cert}
-        dictionary2 = {"content": dictionary, "party_id": self.party_id}
+        dictionary = {"party_id": self.party_id, "commitment": base64_data}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_data, "signature": base64_cert}
         publish_dict(dictionary2, BB_URL + PUBLISH_COMMITMENT_TABLE)
 
     def publish_secret_commitment(self, value):
@@ -611,7 +611,7 @@ curve_256.generator = g_256
 VOTING_CURVE = curve_256
 SIGN_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
-T = 2  # number of parties needed for decryption minus 1
+T = 1  # number of parties needed for decryption minus 1
 N = 2  # total number of parties
 SLEEP_TIME = 1
 
@@ -878,7 +878,7 @@ def generate_keys(parties_number):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
         data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
-        publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
+        publish_dict(data, BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
         filename = PRIVATE_KEYS_PATH + 'privateKey_' + str(party_id) + '.txt'
         f = open(filename, 'w')
         f.writelines(["party id: \n", str(party_id) + "\n", "private key:\n", str(private_key) + "\n"])
