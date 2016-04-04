@@ -12,7 +12,7 @@ import org.json.*;
 
 // the class gets the admin's json file and public key from 46.101.148.106 and writes them to 2 files
 // ~Note: this class requires internet connection
-// ~Note: this class required okhttp jar file
+// ~Note: this class requires okhttp and okio jar file
 
 public class GetJsonAndPublicKey {
 	public static void main(String[] args) throws JSONException, IOException {
