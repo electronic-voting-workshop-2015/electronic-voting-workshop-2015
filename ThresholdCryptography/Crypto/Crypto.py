@@ -20,7 +20,7 @@ from .Utils import bits, product, mod_inv, mod_sqrt, concat_bits, least_signific
 
 # TODO: organize constants (Ilay)
 BB_URL_PROD = "http://46.101.148.106:4567"  # the address of the production Bulletin Board
-BB_URL = BB_URL_PROD #"http://10.0.0.9:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
+BB_URL = "http://localhost:4567"  # the address of the Bulletin Board for testing - change to the production value when deploying
 LOCAL_BB_URL = "http://localhost:4567"  # the address of the Bulletin Board when running on the Bulletin Board
 #LOCAL_BB_URL = BB_URL  # the address of the Bulletin Board when running on the Bulletin Board
 SECRET_FILE = "secret.txt"  # the local file where each party's secret value is stored
@@ -49,7 +49,6 @@ class EllipticCurve:
     self.order is the order of the generator g
     self.int_length is the size in bits of each coordinate
     """
-
     def __init__(self, a, b, p, order, int_length):
         if gmpy2_is_installed:
             self.a = mpz(a)
@@ -263,9 +262,8 @@ class ThresholdParty:
         cert = self.sign(bytes(value))
         base64_cert = bytes_to_base64(cert)
         base64_value = list_to_base64([value], int_length=0)
-        dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value,
-                      'signature': base64_cert}
-        dictionary2 = {"content": dictionary, "party_id": self.party_id}
+        dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value}
+        dictionary2 = {"content": dictionary, "party_id": self.party_id, "data": base64_value, "signature": base64_cert}
         publish_dict(dictionary2, BB_URL + PUBLISH_SECRET_COMMITMENT_TABLE)
 
     def retrieve_commitments(self):
@@ -322,7 +320,7 @@ class ThresholdParty:
         base64_cert = bytes_to_base64(cert)
         base64_data = list_to_base64(cipher_text, int_length=0)
         # TODO: fix type in ruby: recepient -> recipient
-        dictionary = {"party_id": self.party_id, "recepient_id": j, "message": base64_data, "signature": base64_cert}
+        dictionary = {"party_id": self.party_id, "recepient_id": j, "message": base64_data, "signature": base64_cert, "data": base64_data}
         publish_dict(dictionary, BB_URL + PUBLISH_MESSAGE_TABLE)
 
     def send_values(self):
@@ -512,6 +510,7 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     :param certificate: text in 64 form (as sent by parties / voting booths)
     :return: bool.
     """
+    sys.stderr.write("\n" + certificate + "\n")
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
@@ -611,8 +610,8 @@ curve_256.generator = g_256
 VOTING_CURVE = curve_256
 SIGN_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
-T = 1  # number of parties needed for decryption minus 1
-N = 2  # total number of parties
+T = 2  # number of parties needed for decryption minus 1
+N = 5  # total number of parties
 SLEEP_TIME = 1
 
 
@@ -622,6 +621,7 @@ def get_sign_key():
 
 
 def get_sign_curve():
+    #return get_curve_from_server()
     return VOTING_CURVE
 
 
@@ -645,11 +645,8 @@ def get_curve_from_server():
             return curve
 
 
-
-
-
-
 def get_voting_curve():
+    #return get_curve_from_server()
     return VOTING_CURVE
 
 
@@ -786,19 +783,21 @@ def phase1():
 
     print("publishing commitment")
     party.publish_commitment()
-    while True:
-        if get_sent_commitments_confirmation():
-            break
-        sleep(SLEEP_TIME)
-        print('.')  # gives an indication to user that work is being done
+    input("Press enter after every party successfully published commitment")
+    #while True:
+    #    if get_sent_commitments_confirmation():
+    #        break
+    #    sleep(SLEEP_TIME)
+    #    print('.')  # gives an indication to user that work is being done
 
     print("sending secret values to other parties")
     party.send_values()
-    while True:
-        if get_sent_messages_confirmation():
-            break
-        sleep(SLEEP_TIME)
-        print('.')
+    input("Press enter after every party successfully sent values")
+    #while True:
+    #    if get_sent_messages_confirmation():
+    #        break
+    #    sleep(SLEEP_TIME)
+    #    print('.')
 
     print("validating messages from other parties")
     if not party.validate_all_messages():
@@ -828,8 +827,9 @@ def get_private_key_from_file():
             key = file.readline()
             return int(key)
 
+
 def phase2():
-    """step 10 in threshold workflow - run only after voting stopped
+    """step 11 in threshold workflow - run only after voting stopped
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("initializing values of party")
     party_id = get_party_id_from_file()
@@ -848,7 +848,7 @@ def phase2():
 
 
 def phase3():
-    """step 11 in threshold workflow - run on the BB after phase 2 ended
+    """step 12 in threshold workflow - run on the BB after phase 2 ended
     https://github.com/electronic-voting-workshop-2015/electronic-voting-workshop-2015/wiki/Threshold-Cryptography"""
     print("retrieving voting data from the Database")
     votes = get_votes(local=True)
@@ -878,7 +878,7 @@ def generate_keys(parties_number):
             private_key = rng.randint(2, VOTING_CURVE.order)
         public_key = VOTING_CURVE.get_member(private_key)
         data = dict(party_id=party_id, first=str(public_key.x), second=str(public_key.y))
-        publish_dict(data, BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
+        publish_dict(data, LOCAL_BB_URL + PUBLISH_PUBLIC_KEY_TABLE_FOR_PARTIES)
         filename = PRIVATE_KEYS_PATH + 'privateKey_' + str(party_id) + '.txt'
         f = open(filename, 'w')
         f.writelines(["party id: \n", str(party_id) + "\n", "private key:\n", str(private_key) + "\n"])
@@ -895,7 +895,7 @@ def shuffled(l):
 
 
 def encrypt_member(m, public_key):
-    """encryptes the group member using ElGamal
+    """encrypts the group member using ElGamal
     used for testing"""
     g = public_key.curve.generator
     r = public_key.curve.get_random_exponent()
@@ -921,7 +921,7 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
 
 
 def test():
-    print("phase 1")
+    print("reading parameters")
     sign_curve = VOTING_CURVE
     generate_keys(N)
     sign_keys = []
@@ -930,32 +930,37 @@ def test():
         for j in range(3):
             file.readline()
         sign_keys.append(int(file.readline()))
+
+    print("initializing parties (step 1)")
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
+    print("publishing commitments (step 2)")
     for party in shuffled(parties):
         party.publish_commitment()
+    print("sending secret values (step 3)")
     for party in shuffled(parties):
         party.send_values()
+    print("validating secret values, and publishing commitments h_j (step 4)")
     for party in shuffled(parties):
         party.validate_all_messages()
 
-    print("phase 2")
+    print("computing voting public key")
     voting_public_key = compute_voting_public_key()
 
+    print("generating test votes")
     generate_votes(2, 2, parties[0], voting_public_key)
     generate_votes(3, 3, parties[0], voting_public_key)
     votes = get_votes()
 
+    print("publishing Zero Knowledge Proofs for all votes")
     for party in shuffled(parties):
         party.generate_all_zkps(votes)
-
-    print("phase 3")
     zkps = get_zkps(local=True)
-
     secret_commitments = get_secret_commitments(local=True)
 
     curve = VOTING_CURVE
+    print("decrypting all votes using Lagrange interpolation")
     decrypted_votes = decrypt_all_votes(votes, zkps, curve, secret_commitments)
 
     print("the results are:")
