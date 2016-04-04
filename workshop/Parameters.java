@@ -379,7 +379,6 @@ public class Parameters {
 			while (line.charAt(0) != '[' && line.length() > 0) {
 				line = line.substring(1);
 			}
-		}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
