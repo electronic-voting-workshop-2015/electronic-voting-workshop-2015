@@ -192,7 +192,7 @@ public class Parameters {
 				order = true;
 			}
 			JSONArray names = curElement.getJSONArray("candidates");
-			Set<String> namesPool = new LinkedHashSet<String>();
+			Set<String> namesPool = new HashSet<String>();
 			for (int j = 0; j < names.length(); j++) {
 				namesPool.add(names.getJSONObject(j).getString("name"));
 			}
@@ -349,8 +349,6 @@ public class Parameters {
 			e1.printStackTrace();
 		}
 		JSONArray adminArray = null;
-		System.out.println(adminString);
-		System.out.println("first char: " + adminString.charAt(0));
 		try {
 			adminArray = new JSONArray(adminString);
 		} catch (JSONException e) {
