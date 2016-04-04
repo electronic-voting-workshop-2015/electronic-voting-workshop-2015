@@ -728,7 +728,7 @@ def compute_voting_public_key():
     commitments = get_commitments(local=True)
     public_key = product(coefficients[0] for coefficients in commitments.values())
     json_data = list_to_base64([public_key], int_length=0)
-    dictionary = {"public_key": json_data}
+    dictionary = {"content": json_data}
     publish_dict(dictionary, LOCAL_BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
     return public_key
 
