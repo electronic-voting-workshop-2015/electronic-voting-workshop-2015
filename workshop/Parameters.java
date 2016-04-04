@@ -322,6 +322,9 @@ public class Parameters {
 		StringBuilder sb = new StringBuilder();
 		try {
 			line = br.readLine();
+			while (line.charAt(0) != '[' && line.length() > 0) {
+				line = line.substring(1);
+			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -370,8 +373,19 @@ public class Parameters {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		line = null;
 		try {
-			pkeyArray = new JSONArray(br.readLine());
+			line = br.readLine();
+			while (line.charAt(0) != '[' && line.length() > 0) {
+				line = line.substring(1);
+			}
+		}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			pkeyArray = new JSONArray(line);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
