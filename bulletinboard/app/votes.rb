@@ -18,7 +18,7 @@ post '/sendVote' do
 			end
 
 	else
-		complaint = Complaint.create( content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes']}" )
+		complaint = Complaint.create( content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes'].fetch(0)['vote_value']}" )
 		raise
 	end
 
