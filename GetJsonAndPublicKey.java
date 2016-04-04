@@ -12,7 +12,7 @@ import org.json.*;
 
 // the class gets the admin's json file and public key from 46.101.148.106 and writes them to 2 files
 // ~Note: this class requires internet connection
-// ~Note: this class requires okhttp and okio jar file
+// ~Note: this class required okhttp jar file
 
 public class GetJsonAndPublicKey {
 	public static void main(String[] args) throws JSONException, IOException {
@@ -46,7 +46,7 @@ public class GetJsonAndPublicKey {
 			// write admin's json file (adminString)
 			PrintWriter writer1 = null;
 			try {
-				writer1 = new PrintWriter("adminJson", "ISO-8859-1");
+				writer1 = new PrintWriter("adminJson", "UTF-8");
 			} catch (FileNotFoundException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
