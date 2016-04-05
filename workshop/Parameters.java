@@ -385,9 +385,6 @@ public class Parameters {
 		}
 		try {
 			pkeyArray = new JSONArray(line);
-		} catch (IOException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
