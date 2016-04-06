@@ -396,7 +396,7 @@ public class Parameters {
 		}
 		byte[] pkeyByte = null;
 		try {
-			pkeyByte = ((String) ((JSONObject) pkeyArray.get(0)).get("content")).getBytes("ISO-8859-1");
+			pkeyByte = ((((JSONObject) pkeyArray.get(0)).get("content")).toString()).getBytes("ISO-8859-1");
 		} catch (UnsupportedEncodingException | JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
