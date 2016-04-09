@@ -510,7 +510,7 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     :param certificate: text in 64 form (as sent by parties / voting booths)
     :return: bool.
     """
-    sys.stderr.write("\n" + certificate + "\n")
+    """sys.stderr.write("\n" + certificate + "\n")"""
     certificate = base64_to_bytes(certificate)
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
