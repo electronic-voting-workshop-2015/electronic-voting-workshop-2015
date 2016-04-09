@@ -80,6 +80,7 @@ public class EllipticCurve {
     }
 
     public String toString() {
+
         return (" a: " + a.toString() + ", b: " + b.toString() + ", p: " + p.toString());
     }
 

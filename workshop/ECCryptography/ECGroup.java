@@ -28,6 +28,7 @@ public class ECGroup extends Group {
                 + "\nGenrator:\n" + generator.toString()
                 + "\nElement byte size = " + elementByteSize
                 + "\nOrder = " + order.toString());
+
     }
 
     @Override
