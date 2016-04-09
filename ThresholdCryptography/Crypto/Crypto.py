@@ -453,7 +453,7 @@ class ThresholdParty:
             if s == 0:
                 continue
             l = [r, s]
-            int_length = self.sign_curve.int_length // 8
+            int_length = self.sign_curve.int_length // 8 + 1
             certificate = list_to_bytes(l, int_length)
         return certificate
 
@@ -515,7 +515,7 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length // 8
+    int_length = sign_curve.int_length // 8 + 1
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
