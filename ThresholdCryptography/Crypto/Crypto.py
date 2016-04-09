@@ -610,8 +610,8 @@ curve_256.generator = g_256
 VOTING_CURVE = curve_256
 SIGN_CURVE = curve_256
 ZKP_HASH_FUNCTION = zkp_hash_func
-T = 4  # number of parties needed for decryption minus 1
-N = 7  # total number of parties
+T = 2  # number of parties needed for decryption minus 1
+N = 5  # total number of parties
 SLEEP_TIME = 1
 
 
@@ -621,7 +621,8 @@ def get_sign_key():
 
 
 def get_sign_curve():
-    return get_curve_from_server()
+    #return get_curve_from_server()
+    return VOTING_CURVE
 
 
 def get_curve_from_server():
@@ -645,7 +646,8 @@ def get_curve_from_server():
 
 
 def get_voting_curve():
-    return get_curve_from_server()
+    #return get_curve_from_server()
+    return VOTING_CURVE
 
 
 def get_sent_commitments_confirmation():
@@ -726,8 +728,9 @@ def compute_voting_public_key():
     commitments = get_commitments(local=True)
     public_key = product(coefficients[0] for coefficients in commitments.values())
     json_data = list_to_base64([public_key], int_length=0)
-    dictionary = {"public_key": json_data}
-    publish_dict(dictionary, LOCAL_BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
+    dictionary = {"content": json_data}
+    dictionary2 = {"content": dictionary}
+    publish_dict(dictionary2, LOCAL_BB_URL + PUBLISH_VOTING_PUBLIC_KEY_TABLE)
     return public_key
 
 

@@ -12,12 +12,13 @@ post '/sendVote' do
 		  for index in 0 ... params['votes'].size
 			create = Votes.create(vote_value: params['votes'].fetch(index)['vote_value'],
 				                  ballot_box: params['ballot_box'].to_i,
-				                  serial_number: params['serial_number'].to_i,
-				                  race_id: index+1)
+				                  serial_number: params['serial_number'],
+				                  race_id: index+1,
+						  qr: params['qr'])
 			end
 
 	else
-		complaint = Complaint.create( content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes']}" )
+		complaint = Complaint.create( content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes'].fetch(0)['vote_value']}" )
 		raise
 	end
 

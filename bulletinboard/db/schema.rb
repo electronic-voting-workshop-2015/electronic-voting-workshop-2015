@@ -45,8 +45,9 @@ ActiveRecord::Schema.define(version: 20160321171643) do
   create_table "votes", primary_key: "vote_id", force: :cascade do |t|
     t.text    "vote_value",    limit: 65535, null: false
     t.integer "ballot_box",    limit: 4,     null: false
-    t.integer "serial_number", limit: 4,     null: false
+    t.text    "serial_number", limit: 65535, null: false
     t.integer "race_id",       limit: 4,     null: false
+    t.text    "qr",            limit: 65535
   end
 
   create_table "voting_public_keys", id: false, force: :cascade do |t|

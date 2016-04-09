@@ -4,8 +4,9 @@ class CreateVotes < ActiveRecord::Migration
 		  #t.integer   :vote_id                        # ID column generated automatically
 		  t.text    :vote_value, null: false
 		  t.integer   :ballot_box, null: false
-		  t.integer   :serial_number, null: false
+		  t.text   :serial_number, null: false
 		  t.integer   :race_id, null: false
+		  t.text   :qr
 
     	end #votes
 
