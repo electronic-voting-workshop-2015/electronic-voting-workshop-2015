@@ -7,7 +7,7 @@ post '/sendVote' do
 	_signature = params['signature']
 	publicKey = PublicKey.find _party_id
 	verify = `python3 ../ThresholdCryptography/main.py verifyCertificate #{publicKey["first"]} #{publicKey["second"]} #{params['votes'].fetch(0)['vote_value']} #{_signature}`
-
+	
 	if verify == "true"
 		  for index in 0 ... params['votes'].size
 			create = Votes.create(vote_value: params['votes'].fetch(index)['vote_value'],
@@ -18,7 +18,7 @@ post '/sendVote' do
 			end
 
 	else
-		complaint = Complaint.create( content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes'].fetch(0)['vote_value']}" )
+		complaint = Complaint.create( content: "Failed to verify votes for ballot_box: #{_party_id}, signature: #{_signature}, message: #{params['votes'].fetch(0)['vote_value']}, first: #{publicKey["first"]}, second: #{publicKey["second"]}" )
 		raise
 	end
 
