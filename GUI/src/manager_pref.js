@@ -93,17 +93,19 @@ function createRaces() {
         });
 		*/	
 		
-			
+			parameterText = JSON.parse(JSON.stringify(JSON.parse('{"content": '+ parameterText+ "}")));
 			
 			$.post({
-				//url: "http://46.101.148.106:4567/publishParametersFile",
-                		url: "http://46.101.148.106:4567/publishParametersFile",
-				data: {content: {ARBITRARY: 'JAVASCRIPT', OBJECT: 'HERE'}},
+				
+                url: "http://46.101.148.106:4567/publishParametersFile",
+				//data: {content: {ARBITRARY: 'JAVASCRIPT', OBJECT: 'HERE'}},
+				//data: {content: parameterText},
+				data: parameterText,
 				success: function () {
-                    successAlert( "OK!!!" );
+                    successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
 				},
 				error: function (ajaxrequest, ajaxOptions, thrownError) {
-					successAlert("סיום","הגדרת המרוצים נשמרה בהצלחה!");
+					successAlert("בעיה בשליחת הנתונים לשרת");
 					// alert(thrownError);
 				}
 			});

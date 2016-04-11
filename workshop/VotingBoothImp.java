@@ -72,7 +72,7 @@ public class VotingBoothImp implements VotingBooth {
 	private byte[] toBeSigned;
 	
 	public VotingBoothImp(){
-		String pathName = "privateKey_1.txt";
+		String pathName = "privateKey_6.txt";
 		partyId = getInfoFromFile(pathName, false); 
 		privateKey = getInfoFromFile(pathName, true); 
 	}
@@ -236,7 +236,7 @@ public class VotingBoothImp implements VotingBooth {
 			if (isPrivateKey){
 		    		line = br.readLine();
 		    		line = br.readLine();
-		    		return new BigInteger(line, 16).toByteArray();
+		    		return new BigInteger(line).toByteArray();
 		    	}
 		    	int value = Integer.parseInt(line);
 		    	return new byte[] {
