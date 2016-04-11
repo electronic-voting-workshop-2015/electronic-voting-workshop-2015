@@ -923,7 +923,7 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
 
 def test():
     print("reading parameters")
-    # sign_curve = VOTING_CURVE
+    sign_curve = VOTING_CURVE
     # generate_keys(N)
     sign_keys = []
     for i in range(1, N+1):
