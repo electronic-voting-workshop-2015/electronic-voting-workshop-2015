@@ -917,14 +917,14 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
             vote_string_list.append(repr(vote_dict))
         bytes_signature = party.sign(base64_to_bytes(vote_list[0]["vote_value"]))
         base64_signature = bytes_to_base64(bytes_signature)
-        dictionary = {"ballot_box": 6, "Serial_number": vote_id, "votes": vote_list, "qr": "gibberish", "signature": base64_signature}
+        dictionary = {"ballot_box": 6, "serial_number": vote_id, "votes": vote_list, "qr": "gibberish", "signature": base64_signature}
         publish_dict(dictionary, LOCAL_BB_URL + SEND_VOTE_TABLE)
 
 
 def test():
     print("reading parameters")
     sign_curve = VOTING_CURVE
-    # generate_keys(N)
+    generate_keys(N)
     sign_keys = []
     for i in range(1, N+1):
         file = open('privateKey_%d.txt' % i)
@@ -936,10 +936,11 @@ def test():
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
-    base64_public_key = "iL9cHppfhTzSoE4gNA+SvUUD7Hkk92uqs22Ohfc89lr2ZhuqwilcHcRElXQtuMCS7hNLh56xqsX6TVupgtjO1A=="
-    public_key = base64_to_list(base64_public_key, curve=VOTING_CURVE)[0]
-    generate_votes(2, 2, parties[0], public_key)
-    sys.exit()
+    # party = ThresholdParty(VOTING_CURVE, T, N, 6, ZKP_HASH_FUNCTION, sign_keys[5], sign_curve, is_phase1=True)
+    # base64_public_key = "iL9cHppfhTzSoE4gNA+SvUUD7Hkk92uqs22Ohfc89lr2ZhuqwilcHcRElXQtuMCS7hNLh56xqsX6TVupgtjO1A=="
+    # public_key = base64_to_list(base64_public_key, curve=VOTING_CURVE)[0]
+    # generate_votes(2, 2, party, public_key)
+    # sys.exit()
 
     print("publishing commitments (step 2)")
     for party in shuffled(parties):
