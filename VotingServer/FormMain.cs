@@ -57,7 +57,32 @@ namespace VotingRegisterationClient
                 response.StatusCode = (int)HttpStatusCode.OK;
                 StreamReader s1 = new StreamReader(request.InputStream);
                 string sRes = s1.ReadToEnd();
+                string encodedRes="";
                 response.Close();
+                if (request.HttpMethod == "POST")
+                {
+                    /*System.Diagnostics.Process clientProcessFormat = new Process();
+                    clientProcessFormat.StartInfo.FileName = "bat";
+                    clientProcessFormat.StartInfo.Arguments =  @"-bat "+ @".\chcp.bat";
+                    clientProcessFormat.Start();*/
+                    System.Diagnostics.Process clientProcess = new Process();
+                    clientProcess.StartInfo.FileName = "java";
+                    if (sRes.Contains("audit"))
+                    {
+                        //Enter proper jar in bin/release with adminJson, privateKey_6.txt, publicKey
+                        clientProcess.StartInfo.Arguments = @"-jar " + @".\sadna.jar audit " + sRes;
+                    }
+                    else
+                    {
+                        encodedRes = toUnicodeArr(sRes);
+                        Console.Write("Original string " + sRes + " Encoded string " + encodedRes);
+                        //Enter proper jar in bin/release with adminJson, privateKey_6.txt, publicKey
+                        clientProcess.StartInfo.Arguments = @"-jar " + @".\sadna.jar vote " + encodedRes;
+                    }
+                    clientProcess.Start();
+                    //clientProcess.WaitForExit();
+                }
+                /**response.Close();
                 
                 if (request.HttpMethod == "POST")
                 {
@@ -76,7 +101,8 @@ namespace VotingRegisterationClient
                         clientProcess.StartInfo.Arguments = @"-jar " + @".\sadna.jar audit " + json;
                         clientProcess.Start();
                     }
-                }
+                }OLD DECODE AND JAR CALL**/
+                
                 //string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
                 //byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
                 //// Get a response stream and write the response to it.
@@ -467,6 +493,21 @@ namespace VotingRegisterationClient
                     MessageBox.Show("Error loading voters. " + sError, "Failure Reloading Voters");
                 }
             }
+        }
+        
+         private string toUnicodeArr(string s){
+            string res = "";
+            int l = s.Length;
+            for (int i = 0; i < l; i++)
+            {
+                char c = s.ElementAt<char>(i);
+                int v = Convert.ToInt32(c);
+                if (i != l - 1)
+                    res += Convert.ToString(v) + ",";
+                else
+                    res += Convert.ToString(v);
+            }
+            return res;
         }
 
     }
