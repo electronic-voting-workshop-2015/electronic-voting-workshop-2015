@@ -401,6 +401,18 @@ public class Parameters {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		/*
+		// if tashsit would have to upload the paramters by themselves (using POST command from command line)
+		// then the parameters jsonarray is uploaded in an extra array ([[{"Race..." instead of [{"Race...")
+		// so we should place the first index of the array to adminArray and continue initializing
+		try {
+			adminArray = (JSONArray) adminArray.getJSONArray(0);
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		*/
 
 		// initialize
 		parseJSONInit(adminArray, pkeyByte);
