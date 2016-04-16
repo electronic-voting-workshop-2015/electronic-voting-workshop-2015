@@ -76,7 +76,7 @@ public class RunMixnet {
 		return votes;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws JSONException {
 		//InitializeGroupInfo();
 		System.out.println("Start Server");
 		String filepath = "./adminJson";
@@ -87,21 +87,26 @@ public class RunMixnet {
 		s = ExecuteShellCommand.executeCommand("wget -q  -O- http://46.101.148.106:4567/retrieveVotingPublicKey");
 		CreateJsonv2.stringToFile(filepath, s);
 		
+		System.out.println("Starting parametersMain.init");
+		ParametersMain.init();
+		System.out.println("Done parametersMain.init");
+
+		Group group = ParametersMain.ourGroup;
+		MyGroup.INITIATE(group);
+		
 		filepath = "./Proofs.json";
 		s = ExecuteShellCommand.executeCommand("wget -q  -O- http://46.101.148.106:4567/getBBVotes/-1");
-		System.out.println(s);
+		//System.out.println(s);
 		Vote[] votes = StringVoteParser.splitInput(s);
 		System.out.println("Done Server");
-		System.out.println("Start Random Votes");
+		//System.out.println("Start Random Votes");
 		//Vote[] votes = getRandomVotes();
-		System.out.println("Done Random Votes");
+		//System.out.println("Done Random Votes");
         
-		ParametersMain.init();
-		
-		//Group group = ParametersMain.ourGroup;
-		GroupMember g = MyGroup.getGenerator();
-		//GroupMember h = new GroupMember(ParametersMain.publicKey);
-		GroupMember h = StringVoteParser.stringToGroupMember("iL9cHppfhTzSoE4gNA+SvUUD7Hkk92uqs22Ohfc89lr2ZhuqwilcHcRElXQtuMCS7hNLh56xqsX6TVupgtjO1A==");
+		GroupMember g = new GroupMember(group.getGenerator());
+		//GroupMember g = MyGroup.getGenerator();
+		GroupMember h = new GroupMember(ParametersMain.publicKey);
+		//GroupMember h = StringVoteParser.stringToGroupMember("iL9cHppfhTzSoE4gNA+SvUUD7Hkk92uqs22Ohfc89lr2ZhuqwilcHcRElXQtuMCS7hNLh56xqsX6TVupgtjO1A==");
 		mixnetUtils mix = new mixnetUtils(g, h);// need to be ****mixnetUtils(Group group, GroupMember g, GroupMember h)**** byte[]
 		BeneshNetwork layers = new BeneshNetwork(votes, mix);
 		int n = layers.depth;
@@ -114,8 +119,7 @@ public class RunMixnet {
 		}
 		
 		System.out.println("GREAT");
-		//ExecuteShellCommand.commandWithFileContent(filepath, "wget -q --header \"Content-Type: application/json\" --post-data='", "'  -O- http://46.101.148.106:4567/PostProofsFile");
-		
+		ExecuteShellCommand.commandWithFileContent(filepath, "wget -q --header \"Content-Type: application/json\" --post-data='", "'  -O- http://46.101.148.106:4567/PostProofsFile");
 	}
 	
 	/*
