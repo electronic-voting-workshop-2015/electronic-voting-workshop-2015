@@ -2,6 +2,7 @@ package workshop;
 
 import java.math.BigInteger;
 import java.util.Random;
+import java.util.Scanner;
 
 import org.json.JSONException;
 
@@ -77,6 +78,11 @@ public class RunMixnet {
 	}
 	
 	public static void main(String[] args) throws JSONException {
+		
+		Scanner in = new Scanner(System.in);
+		System.out.print("Enter race number (-1 for all): ");
+		int race = in.nextInt();
+		in.close();
 		//InitializeGroupInfo();
 		System.out.println("Start Server");
 		String filepath = "./adminJson";
@@ -95,7 +101,7 @@ public class RunMixnet {
 		MyGroup.INITIATE(group);
 		
 		filepath = "./Proofs.json";
-		s = ExecuteShellCommand.executeCommand("wget -q  -O- http://46.101.148.106:4567/getBBVotes/-1");
+		s = ExecuteShellCommand.executeCommand("wget -q  -O- http://46.101.148.106:4567/getBBVotes/" + race);
 		//System.out.println(s);
 		Vote[] votes = StringVoteParser.splitInput(s);
 		System.out.println("Done Server");
@@ -119,6 +125,7 @@ public class RunMixnet {
 		}
 		
 		System.out.println("GREAT");
+		//TODO: with race number
 		ExecuteShellCommand.commandWithFileContent(filepath, "wget -q --header \"Content-Type: application/json\" --post-data='", "'  -O- http://46.101.148.106:4567/PostProofsFile");
 	}
 	
