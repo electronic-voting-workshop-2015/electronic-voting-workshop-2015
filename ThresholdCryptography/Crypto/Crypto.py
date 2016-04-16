@@ -41,7 +41,7 @@ GET_VOTING_PUBLIC_KEY_TABLE = "/retrieveVotingPublicKey"
 GET_PUBLIC_KEY_TABLE = "/getPublicKey"
 GET_COMMITMENT_TABLE = "/retrieveCommitment"
 GET_MESSAGES_TABLE = "/retrieveMessage"
-GET_PARAMETERS = "/publishParametersFile"
+GET_PARAMETERS = "/retrievePrametersFile"
 
 
 class EllipticCurve:
@@ -627,22 +627,21 @@ def get_sign_curve():
 
 def get_curve_from_server():
     data = get_bb_data(BB_URL + GET_PARAMETERS)
-    for dictionary in data:
-        if "Group" in dictionary:
-            group = dictionary["Group"]
-            order = int(group[0]["Order"])
-            int_length = int(group[1]["ElementSizeInBytes"]) // 2 * 8 # Group size is 2 ints.
-            curve_ints = group[2]["EC"]
-            a =  int(curve_ints[0]["a"])
-            b =  int(curve_ints[1]["b"])
-            p = int(curve_ints[2]["p"])
-            generator = group[3]["Generator"] # String with both numbers
-            gx = int(generator.split()[0])
-            gy = int(generator.split()[1])
-            curve =  EllipticCurve(a, b, p, order, int_length);
-            g = ECGroupMember(curve, gx, gy)
-            curve.generator = g
-            return curve
+    dictionary  = data[0]
+    group = dictionary["1"]["Group"]
+    order = int(group["0"]["Order"])
+    int_length = int(group["1"]["ElementSizeInBytes"]) // 2 * 8 # Group size is 2 ints.
+    curve_ints = group["2"]["EC"]
+    a =  int(curve_ints["0"]["a"])
+    b =  int(curve_ints["1"]["b"])
+    p = int(curve_ints["2"]["p"])
+    generator = group["3"]["Generator"] # String with both numbers
+    gx = int(generator.split(",")[0])
+    gy = int(generator.split(",")[1])
+    curve =  EllipticCurve(a, b, p, order, int_length)
+    g = ECGroupMember(curve, gx, gy)
+    curve.generator = g
+    return curve
 
 
 def get_voting_curve():
