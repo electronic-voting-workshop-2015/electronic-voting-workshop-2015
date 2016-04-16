@@ -1,27 +1,30 @@
+//package Vote;
 package Vote;
+
 import java.lang.String;
 import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
+import org.json.*;
+
+import java.util.Base64;
+
+
 public class StringVoteParser {
 
 	private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 	
-	public static Vote[] splitInput(String str) {
-		str = str.replace("[{", "").replace("}]", "").replace(",", "");
-		String[] splited = str.split("\\}\\{");
-		Vote[] votes = new Vote[splited.length];
-		for (int i = 0; i < splited.length; i++) {
-			votes[i] = stringToVote(getFromInput(splited[i]));
+	public static Vote[] splitInput(String str) throws JSONException {
+		
+		JSONArray jsonVotes = new JSONArray(str);
+		Vote[] votes = new Vote[jsonVotes.length()];
+		
+		for (int i = 0; i < jsonVotes.length(); i++) {
+			//System.out.println(jsonVotes.getJSONObject(i).get("vote_value"));
+			votes[i] = stringToVote(jsonVotes.getJSONObject(i).get("vote_value").toString());
 		}
 		return votes;
-	}
-
-	private static String getFromInput(String str) {
-		String[] splited = str.split(":");
-		splited = splited[2].split("\"");
-		return splited[1];
 	}
 	
 	private static byte[][] splitAtMiddle(byte[] array)
@@ -40,13 +43,13 @@ public class StringVoteParser {
 		return MyGroup.getMember(x, y);
 	}
 	
-	public static GroupMember stringToGroupMember(String str)
-	{
-		return xyToGroupMember(str.getBytes(UTF8_CHARSET));
+	public static GroupMember stringToGroupMember(String str) {
+		byte[] decoded = Base64.getDecoder().decode(str.getBytes(UTF8_CHARSET));
+		return xyToGroupMember(decoded);
 	}
 	
 	private static Vote stringToVote(String str) {
-		byte[][] components = splitAtMiddle(str.getBytes(UTF8_CHARSET));
+		byte[][] components = splitAtMiddle(Base64.getDecoder().decode(str.getBytes(UTF8_CHARSET)));
 		GroupMember key = xyToGroupMember(components[0]);
 		GroupMember message = xyToGroupMember(components[1]);
 		return new Vote(key, message);
