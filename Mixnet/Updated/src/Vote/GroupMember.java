@@ -1,6 +1,7 @@
+//package Vote;
 package Vote;
 import java.nio.charset.Charset;
-
+import java.util.Base64;
 
 public class GroupMember {
 	public byte[] member;
@@ -13,6 +14,7 @@ public class GroupMember {
 	
 	public String toString()
 	{
-		return new String(member, UTF8_CHARSET);
+		byte[] member64 = Base64.getEncoder().encode(member);
+		return new String(member64, UTF8_CHARSET);
 	}
 }
