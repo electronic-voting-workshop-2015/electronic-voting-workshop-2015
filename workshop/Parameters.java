@@ -171,6 +171,7 @@ public class Parameters {
 		return true;
 	}
 
+	
 	/**
 	 * Parsing the JSONArray which represents the races and their properties
 	 * 
@@ -178,6 +179,31 @@ public class Parameters {
 	 * @return
 	 * @throws JSONException
 	 */
+	 private static ArrayList<RaceProperties> parseRaceProps(JSONObject jsonRepr) throws JSONException {
+		ArrayList<RaceProperties> res = new ArrayList<RaceProperties>();
+		JSONObject races = jsonRepr.getJSONObject("RaceProperties");
+		for (int i = 0; i < races.length(); i++) {// go over races
+			JSONObject curElement = races.getJSONObject(String.valueOf(i));
+			String name = curElement.getString("position");
+			JSONObject candidates = curElement.getJSONObject("candidates");
+			Set<String> namesPool = new HashSet<String>();
+			for (int j = 0; j < candidates.length(); j++) {
+				JSONObject candidate = candidates.getJSONObject(String.valueOf(j));
+				namesPool.add(candidate.getString("name"));
+			}
+			int slotsNum = 1;
+			if (curElement.has("slots")) {
+				slotsNum = curElement.getInt("slots");
+			}
+			boolean order = false;
+			if (curElement.getInt("type") == 2) {
+				order = true;
+			}
+			res.add(new RaceProperties(namesPool, name, slotsNum, order));
+		}
+		return res;
+	}
+	 /*
 	private static ArrayList<RaceProperties> parseRaceProps(JSONArray jsonRepr) throws JSONException {
 		ArrayList<RaceProperties> res = new ArrayList<RaceProperties>();
 		for (int i = 0; i < jsonRepr.length(); i++) {// go over races
@@ -200,7 +226,7 @@ public class Parameters {
 		}
 		return res;
 	}
-
+	*/
 	/**
 	 * Parsing the initialization JSON into the main array which defines the
 	 * election system
@@ -208,6 +234,150 @@ public class Parameters {
 	 * @param initFormat
 	 * @param pkey
 	 */
+	 private static void parseJSONInit(JSONArray initFormat, byte[] pkey) {
+		JSONObject initFormatObject = null;
+		try {
+			initFormatObject = initFormat.getJSONObject(0);
+		} catch (JSONException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		ArrayList<RaceProperties> racesProperties = null;
+		JSONObject group = null;
+		String order = null;
+		String elementSizeInBytes = null;
+		String a = null, b = null, p = null, totalgen = null;
+		int numOfMachines = 0, timeStampLevel = 0;
+		
+		for (int k = 0; k < initFormatObject.length(); k++) {
+			JSONObject current = null;
+			try {
+				current = initFormatObject.getJSONObject(String.valueOf(k));
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if (current.has("RaceProperties")) {
+				try {
+					racesProperties = parseRaceProps(current);
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			else if (current.has("Group")) {
+				try {
+					group = initFormat.getJSONObject(0).getJSONObject("1").getJSONObject("Group");
+					//group = initFormat.getJSONObject(1).getJSONArray("Group");
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				for (int i = 0; i < group.length(); i++) {
+					JSONObject curElement = null;
+					try {
+						curElement = group.getJSONObject(String.valueOf(i));
+					} catch (JSONException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					if (curElement.has("Order")) {
+						try {
+							order = curElement.getString("Order");
+						} catch (JSONException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else if (curElement.has("ElementSizeInBytes")) {
+						try {
+							elementSizeInBytes = curElement.getString("ElementSizeInBytes");
+						} catch (JSONException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+					else if (curElement.has("EC")) {
+						JSONObject ec = null;
+						try {
+							ec = curElement.getJSONObject("EC");
+						} catch (JSONException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						for (int j = 0; j < ec.length(); j++) {
+							JSONObject cur = null;
+							try {
+								cur = ec.getJSONObject(String.valueOf(j));
+							} catch (JSONException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							if (cur.has("a")) {
+								try {
+									a = cur.getString("a");
+								} catch (JSONException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+							else if (cur.has("b")) {
+								try {
+									b = cur.getString("b");
+								} catch (JSONException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+							else if (cur.has("p")) {
+								try {
+									p = cur.getString("p");
+								} catch (JSONException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+							}
+						}
+					}
+					else if (curElement.has("Generator")) {
+						try {
+							totalgen = curElement.getString("Generator");
+						} catch (JSONException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+			else if (current.has("NumOfMachines")) {
+				try {
+					numOfMachines = current.getInt("NumOfMachines");
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			else if (current.has("TimeStampLevel")) {
+				try {
+					timeStampLevel = current.getInt("TimeStampLevel");
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			else {
+				System.out.println("Error: unhandled object: " + current);
+			}
+		}
+		
+		String[] gen = totalgen.split(",");
+		String generator_X = gen[0];
+		String generator_Y = gen[1];
+		setParameters(order, elementSizeInBytes, a, b, p, generator_X, generator_Y, numOfMachines, racesProperties,
+				timeStampLevel, pkey);
+	}
+	/*
 	private static void parseJSONInit(JSONArray initFormat, byte[] pkey) {
 		ArrayList<RaceProperties> racesProperties = null;
 		try {
@@ -292,6 +462,7 @@ public class Parameters {
 		setParameters(order, elementSizeInBytes, a, b, p, generator_X, generator_Y, numOfMachines, racesProperties,
 				timeStampLevel, pkey);
 	}
+	*/
 
 	/**
 	 * get admin's selections (the JSON file) and the public key from the server
