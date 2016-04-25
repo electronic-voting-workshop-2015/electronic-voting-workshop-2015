@@ -17,6 +17,8 @@ import OtherTeams.*;
  */
 public class MixnetVerifier implements IMixnetVerifier {
 
+    private static int ATTEMPTS = 0;
+    private static int COUNTER = 0;
     private static int FULL = 100;
     private int currentLayerIndex;
 
@@ -133,20 +135,20 @@ public class MixnetVerifier implements IMixnetVerifier {
 
         amountOfLayersToVerify = (int) (Math.ceil(((double) percentage / 100) * totalNumberOfProofsLayers));
 
-        if (g == null) {
+        if (g == null || g.length != QR_ParsingUtils.getElementSize()) {
             complaint = "Mixnet verification could not start.\n" +
-                    "Failed retrieving group generator";
+                    "Failed retrieving a valid group generator";
 
             BulletinBoardApi.sendComplaint(complaint);
             return false;
         }
 
-        if (h == null) {
+        if (h == null || h.length != QR_ParsingUtils.getElementSize()) {
             complaint = "Mixnet verification could not start.\n" +
-                    "Failed retrieving public key";
+                    "Failed retrieving a valid public key";
 
             BulletinBoardApi.sendComplaint(complaint);
-            return false;
+           // return false;
         }
 
         if (amountOfLayersToVerify == totalNumberOfProofsLayers) {
@@ -165,7 +167,8 @@ public class MixnetVerifier implements IMixnetVerifier {
                 currentLayerRelativeIndex++;
             }
         }
-
+        System.out.println("COUNTER: " + COUNTER);
+        System.out.println("Total attempts: " + ATTEMPTS);
         return true;
     }
 
@@ -397,28 +400,6 @@ public class MixnetVerifier implements IMixnetVerifier {
             return false;
         }
 
-//        if (orProof.d1.length() != elementSize) {
-//            complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
-//                    "Verification of challenge has failed at: \n" +
-//                    "index1 = " + currentIndex1 + "\n" +
-//                    "index2 = " + currentIndex2 + "\n" +
-//                    "Or proof number: " + currentOrProofIndex + "\n" +
-//                    "Because d1 length is: " + orProof.a1.length() + ", expected length: " + elementSize;
-//            BulletinBoardApi.sendComplaint(complaint);
-//            return false;
-//        }
-
-//        if (orProof.r1.length() != elementSize) {
-//            complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
-//                    "Verification of challenge has failed at: \n" +
-//                    "index1 = " + currentIndex1 + "\n" +
-//                    "index2 = " + currentIndex2 + "\n" +
-//                    "Or proof number: " + currentOrProofIndex + "\n" +
-//                    "Because r1 length is: " + orProof.a1.length() + ", expected length: " + elementSize;
-//            BulletinBoardApi.sendComplaint(complaint);
-//            return false;
-//        }
-
         if (a2.length != elementSize) {
             complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
                     "index1 = " + currentIndex1 + "\n" +
@@ -438,40 +419,6 @@ public class MixnetVerifier implements IMixnetVerifier {
             BulletinBoardApi.sendComplaint(complaint);
             return false;
         }
-
-//        if (orProof.d2.length() != elementSize) {
-//            complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
-//                    "Verification of challenge has failed at: \n" +
-//                    "index1 = " + currentIndex1 + "\n" +
-//                    "index2 = " + currentIndex2 + "\n" +
-//                    "Or proof number: " + currentOrProofIndex + "\n" +
-//                    "Because d2 length is: " + orProof.a1.length() + ", expected length: " + elementSize;
-//            BulletinBoardApi.sendComplaint(complaint);
-//            return false;
-//        }
-
-//        if (orProof.r2.length() != elementSize) {
-//            complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
-//                    "Verification of challenge has failed at: \n" +
-//                    "index1 = " + currentIndex1 + "\n" +
-//                    "index2 = " + currentIndex2 + "\n" +
-//                    "Or proof number: " + currentOrProofIndex + "\n" +
-//                    "Because r2 length is: " + orProof.a1.length() + ", expected length: " + elementSize;
-//            BulletinBoardApi.sendComplaint(complaint);
-//            return false;
-//        }
-
-//        if (orProof.c.length() != elementSize) {
-//            complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
-//                    "Verification of challenge has failed at: \n" +
-//                    "index1 = " + currentIndex1 + "\n" +
-//                    "index2 = " + currentIndex2 + "\n" +
-//                    "Or proof number: " + currentOrProofIndex + "\n" +
-//                    "Because c length is: " + orProof.a1.length() + ", expected length: " + elementSize;
-//            BulletinBoardApi.sendComplaint(complaint);
-//            return false;
-//        }
-
 
         return true;
     }
@@ -526,9 +473,11 @@ public class MixnetVerifier implements IMixnetVerifier {
 
         byte[] u1 = multiply(nextCode1, inverse(currentCode1));
         byte[] v1 = multiply(nextCode2, inverse(currentCode2));
+        byte[] r1_mod = (new BigInteger(r1).mod(new BigInteger(ecGroup.getOrder()))).toByteArray();
+        byte[] d1_mod = (new BigInteger(d1).mod(new BigInteger(ecGroup.getOrder()))).toByteArray();
 
-
-        byte[] actual_a1 = multiply(power(u1, d1), power(g, r1));
+        ATTEMPTS++;
+        byte[] actual_a1 = multiply(power(u1, d1_mod), power(g, r1_mod));
         if (!QR_ParsingUtils.isSameArray(actual_a1, a1)) {
             complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
                     "Verification of the encryptions failed at: \n" +
@@ -537,9 +486,12 @@ public class MixnetVerifier implements IMixnetVerifier {
                     "Or proof number: " + currentOrProofIndex;
             BulletinBoardApi.sendComplaint(complaint);
             return false;
+        } else {
+            COUNTER++;
         }
 
-        byte[] actual_b1 = multiply(power(v1, d1), power(h, r1));
+
+        byte[] actual_b1 = multiply(power(v1, d1_mod), power(h, r1_mod));
         if (!QR_ParsingUtils.isSameArray(b1, actual_b1)) {
             complaint = "Mixnet verification has failed at layer index: " + currentLayerIndex + "\n" +
                     "Verification of the encryptions failed at: \n" +
@@ -575,7 +527,7 @@ public class MixnetVerifier implements IMixnetVerifier {
 
     private static Set<Integer> generateRandomLayersIndices(int numOfLayersToGenerate, int totalLayersNumber) {
         final Random random = new Random();
-        final Set<Integer> intSet = new TreeSet();
+        final Set<Integer> intSet = new TreeSet<>();
         while (intSet.size() < numOfLayersToGenerate) {
             intSet.add(random.nextInt(totalLayersNumber));
         }
@@ -594,7 +546,7 @@ public class MixnetVerifier implements IMixnetVerifier {
     }
 
     public static MixnetProofs deserializeProofs(String proofsJson) {
-        BBJsonDeserializer<MixnetProofsContainer> des = new BBJsonDeserializer(MixnetProofsContainer.class);
+        BBJsonDeserializer<MixnetProofsContainer> des = new BBJsonDeserializer<>(MixnetProofsContainer.class);
         MixnetProofsContainer proofsContainer = des.deserialize(proofsJson);
         if (proofsContainer == null) {
             return null;
