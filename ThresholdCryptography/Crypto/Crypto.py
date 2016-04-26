@@ -968,11 +968,11 @@ def test():
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
-    party = ThresholdParty(VOTING_CURVE, T, N, 6, ZKP_HASH_FUNCTION, sign_keys[5], sign_curve, is_phase1=True)
-    base64_public_key = "AIjS9xdhxW6XuBHIdo+sGU6X9ykZHZB+1b1+LieZxGvAAO1zTRxQHURqzxgyM7gNcxSqXw+D2cMVBgxf5jc2r3Uo"
-    public_key = base64_to_list(base64_public_key, curve=VOTING_CURVE)[0]
-    generate_votes(2, 2, party, public_key)
-    sys.exit()
+    # party = ThresholdParty(VOTING_CURVE, T, N, 6, ZKP_HASH_FUNCTION, sign_keys[5], sign_curve, is_phase1=True)
+    # base64_public_key = "AIjS9xdhxW6XuBHIdo+sGU6X9ykZHZB+1b1+LieZxGvAAO1zTRxQHURqzxgyM7gNcxSqXw+D2cMVBgxf5jc2r3Uo"
+    # public_key = base64_to_list(base64_public_key, curve=VOTING_CURVE)[0]
+    # generate_votes(2, 2, party, public_key)
+    # sys.exit()
 
     print("publishing commitments (step 2)")
     for party in shuffled(parties):
