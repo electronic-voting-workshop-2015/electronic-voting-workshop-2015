@@ -5,7 +5,7 @@ from base64 import standard_b64decode, standard_b64encode
 from random import SystemRandom
 from time import sleep
 from collections import defaultdict
-from json import dumps
+from json import dumps, loads
 import math
 
 gmpy2_is_installed = False  # TODO: profile optimization
@@ -683,6 +683,15 @@ def get_sent_messages_confirmation():
     pass
 
 
+
+def get_votes_from_mixnet(proofs_filename, race_id):
+    with open(proofs_filename, 'r') as proofs_file:
+        json_data = loads(proofs_file.read())
+    vote_list = json_data['content']['voteLayers'][0]['layerVotes']
+    result = {vote_id: (base64_to_list(vote_item['code1'] + vote_item['code2'], curve=VOTING_CURVE), race_id)
+              for vote_id, vote_item in enumerate(vote_list)}
+    return result
+
 def get_votes(local=False):
     """returns all votes as a dictionary mapping vote_id to a tuple
     containing the encrypted group member and the race_id"""
@@ -959,11 +968,11 @@ def test():
     parties = [ThresholdParty(VOTING_CURVE, T, N, i, ZKP_HASH_FUNCTION, sign_keys[i - 1], sign_curve, is_phase1=True)
                for i in range(1, N + 1)]
 
-    # party = ThresholdParty(VOTING_CURVE, T, N, 6, ZKP_HASH_FUNCTION, sign_keys[5], sign_curve, is_phase1=True)
-    # base64_public_key = "iL9cHppfhTzSoE4gNA+SvUUD7Hkk92uqs22Ohfc89lr2ZhuqwilcHcRElXQtuMCS7hNLh56xqsX6TVupgtjO1A=="
-    # public_key = base64_to_list(base64_public_key, curve=VOTING_CURVE)[0]
-    # generate_votes(2, 2, party, public_key)
-    # sys.exit()
+    party = ThresholdParty(VOTING_CURVE, T, N, 6, ZKP_HASH_FUNCTION, sign_keys[5], sign_curve, is_phase1=True)
+    base64_public_key = "AIjS9xdhxW6XuBHIdo+sGU6X9ykZHZB+1b1+LieZxGvAAO1zTRxQHURqzxgyM7gNcxSqXw+D2cMVBgxf5jc2r3Uo"
+    public_key = base64_to_list(base64_public_key, curve=VOTING_CURVE)[0]
+    generate_votes(2, 2, party, public_key)
+    sys.exit()
 
     print("publishing commitments (step 2)")
     for party in shuffled(parties):
