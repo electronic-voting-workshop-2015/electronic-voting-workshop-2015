@@ -185,6 +185,7 @@ class ECGroupMember:
         # TODO: test
         length = curve.p.bit_length() // 8 + 1
         if len(data) != 2 * length:
+            print(len(data), length)
             raise Exception('binary data does not match curve parameters')
         xb = data[0:length]
         yb = data[length:2 * length]
@@ -282,7 +283,7 @@ class ThresholdParty:
 
     def publish_secret_commitment(self, value):
         """publish commitment to secret value"""
-        cert = self.sign(bytes(value))
+        cert = self.sign(value.to_bytes_signed())
         base64_cert = bytes_to_base64(cert)
         base64_value = list_to_base64([value], int_length=0)
         dictionary = {'party_id': self.party_id, 'secret_commitment': base64_value}
@@ -463,7 +464,7 @@ class ThresholdParty:
         ln = self.sign_curve.order.bit_length() // 8
         n = self.sign_curve.order
         z = e[0:ln]
-        z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
+        z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
         certificate = 0
         while certificate == 0:
             rng = SystemRandom()
@@ -517,10 +518,10 @@ class ZKP:
     @staticmethod
     def from_bytes(data, curve):
         int_length = curve.p.bit_length() // 8
-        if len(data) != 12 * int_length:
+        if len(data) != 12 * int_length + 10:
             raise Exception('binary data does not match curve parameters')
-        first_part = data[0:5 * 2 * int_length]  # 5 group members, each one is size 2*int_length
-        second_part = data[5 * 2 * int_length:]
+        first_part = data[0:5 * 2 * (int_length+1)]  # 5 group members, each one is size 2*int_length
+        second_part = data[5 * 2 * (int_length+1):]
         c, h, w, u, v = bytes_to_list(first_part, curve=curve)
         cc, z = bytes_to_list(second_part, member_length=int_length)
         return ZKP(c, h, w, u, v, cc, z)
@@ -552,7 +553,7 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     n = sign_curve.order
     ln = int(math.log(n))
     z = e[0:ln]
-    z = int.from_bytes(z, byteorder='little')  # Matching the BigInteger form in the java signing.
+    z = int.from_bytes(z, byteorder='big')  # Matching the BigInteger form in the java signing.
     w = mod_inv(s, n)
     u1 = (z * w) % n
     u2 = (w * r) % n
@@ -939,7 +940,7 @@ def generate_votes(number_of_races, number_of_votes_for_each_race, party, voting
             vote_string_list.append(repr(vote_dict))
         bytes_signature = party.sign(base64_to_bytes(vote_list[0]["vote_value"]))
         base64_signature = bytes_to_base64(bytes_signature)
-        dictionary = {"ballot_box": 6, "serial_number": vote_id, "votes": vote_list, "qr": "gibberish", "signature": base64_signature}
+        dictionary = {"ballot_box": 1, "serial_number": vote_id, "votes": vote_list, "qr": "gibberish", "signature": base64_signature}
         publish_dict(dictionary, LOCAL_BB_URL + SEND_VOTE_TABLE)
 
 

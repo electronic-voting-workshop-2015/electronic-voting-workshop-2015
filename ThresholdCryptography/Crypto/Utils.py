@@ -4,6 +4,7 @@ import urllib.request
 
 # gmpy2 needs to be installed: https://code.google.com/archive/p/gmpy/wikis/InstallingGmpy2.wiki
 # makes mod_inv computation much faster
+
 gmpy2_installed = True
 try:
     from gmpy2 import invert, mpz, powmod
@@ -95,6 +96,7 @@ else:
 def list_to_bytes(l, int_length=0, signed=True):
     """returns bytes object formed from concatenating members of list l
     int_length is the length in bytes of every integer"""
+    from .Crypto import ECGroupMember, ZKP
     res = bytearray(0)  # empty string of bytes
     for i in l:
         if isinstance(i, int):
@@ -102,7 +104,7 @@ def list_to_bytes(l, int_length=0, signed=True):
         elif gmpy2_installed and isinstance(i, mpz().__class__):
             res += int(i).to_bytes(int_length, 'little')
         else:  # object is ECGroupMember or ZKP
-            if signed:
+            if signed and not isinstance(i, ZKP):
                 res += i.to_bytes_signed()
             else:
                 res += bytes(i)
@@ -115,9 +117,11 @@ def bytes_to_list(b, member_length=0, curve=None, is_zkp=False, signed=True):
     from .Crypto import ECGroupMember, ZKP
     res = []
     if is_zkp:
-        member_length = 12 * curve.p.bit_length() // 8
-    if member_length == 0:  #
+        member_length = 10 * (curve.p.bit_length() // 8 + 1) + 2 * curve.p.bit_length() // 8
+    if member_length == 0:
         member_length = 2 * curve.p.bit_length() // 8
+        if signed:
+            member_length += 2
     for i in split_every(member_length, b):
         if curve is None:  # object in integer
             res.append(int.from_bytes(i, 'little'))
