@@ -153,6 +153,14 @@ class ECGroupMember:
         yb = int(self.y).to_bytes(length, 'little')
         return xb + yb
 
+    def to_bytes_signed(self):
+        """compatible with java code"""
+        # TODO: test
+        length = self.curve.p.bit_length() // 8 + 1
+        xb = int(self.x).to_bytes(length, 'big', signed=True)
+        yb = int(self.y).to_bytes(length, 'big', signed=True)
+        return xb + yb
+
     def to_base64(self):
         """encodes object as base64 string"""
         return standard_b64encode(bytes(self)).decode('utf-8')
@@ -167,6 +175,21 @@ class ECGroupMember:
         yb = data[length:2 * length]
         x = int.from_bytes(xb, 'little')
         y = int.from_bytes(yb, 'little')
+        if not ECGroupMember.verify_point(x, y, curve):
+            raise Exception('binary data does not match curve parameters')
+        return ECGroupMember(curve, x, y)
+
+    @staticmethod
+    def from_bytes_signed(data, curve):
+        """compatible with java code"""
+        # TODO: test
+        length = curve.p.bit_length() // 8 + 1
+        if len(data) != 2 * length:
+            raise Exception('binary data does not match curve parameters')
+        xb = data[0:length]
+        yb = data[length:2 * length]
+        x = int.from_bytes(xb, 'big', signed=True)
+        y = int.from_bytes(yb, 'big', signed=True)
         if not ECGroupMember.verify_point(x, y, curve):
             raise Exception('binary data does not match curve parameters')
         return ECGroupMember(curve, x, y)
@@ -453,7 +476,7 @@ class ThresholdParty:
             if s == 0:
                 continue
             l = [r, s]
-            int_length = self.sign_curve.int_length // 8 + 1
+            int_length = self.sign_curve.int_length // 8
             certificate = list_to_bytes(l, int_length)
         return certificate
 
@@ -515,7 +538,7 @@ def verify_certificate(public_key_first, public_key_second, encrypted_message, c
     encrypted_message = base64_to_bytes(encrypted_message)
     publicKey = ECGroupMember(VOTING_CURVE, int(public_key_first), int(public_key_second))
     sign_curve = VOTING_CURVE
-    int_length = sign_curve.int_length // 8 + 1
+    int_length = sign_curve.int_length // 8
     l = bytes_to_list(certificate, int_length)
     r = l[0]
     s = l[1]
