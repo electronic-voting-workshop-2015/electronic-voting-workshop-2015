@@ -92,7 +92,7 @@ else:
     mod_inv = mod_inv_slow
 
 
-def list_to_bytes(l, int_length=0, signed=False):
+def list_to_bytes(l, int_length=0, signed=True):
     """returns bytes object formed from concatenating members of list l
     int_length is the length in bytes of every integer"""
     res = bytearray(0)  # empty string of bytes
@@ -109,7 +109,7 @@ def list_to_bytes(l, int_length=0, signed=False):
     return bytes(res)
 
 
-def bytes_to_list(b, member_length=0, curve=None, is_zkp=False, signed=False):
+def bytes_to_list(b, member_length=0, curve=None, is_zkp=False, signed=True):
     """member length is the size in bytes of each member in the list
     list is either of ints (curve=None) or of ECGroupMembers (member_length=None), or ZKPs (is_zkp=True)"""
     from .Crypto import ECGroupMember, ZKP
@@ -141,12 +141,12 @@ def base64_to_bytes(b64):
     return base64.standard_b64decode(b64.encode('utf-8'))
 
 
-def list_to_base64(l, int_length, signed=False):
+def list_to_base64(l, int_length, signed=True):
     """converts list of objects (or single object) to base64 string"""
     return bytes_to_base64(list_to_bytes(l, int_length, signed))
 
 
-def base64_to_list(b, member_length=0, curve=None, is_zkp=False, signed=False):
+def base64_to_list(b, member_length=0, curve=None, is_zkp=False, signed=True):
     return bytes_to_list(base64_to_bytes(b), member_length, curve, is_zkp, signed)
 
 
