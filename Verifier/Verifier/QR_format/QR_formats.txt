@@ -1,0 +1,22 @@
+
+g = generator
+h = public key
+m = message (candidate's corresponding group member)
+r = randomness
+k = number of candidates to choose
+
+
+QR1 (MainQR): [g^r,m*h^r]^k + [signature] + [partyId] + [timestamp] 
+QR2 (AuditQR): [m,r]^k
+
+
+
+QR1 size: (2*element_size)*k + signatureSize + partyIdSize + timeStampSize
+QR2 size: (2*element_size)*k
+
+comments: ^ = concatenation k times
+		  disregard '[' , ']'  they're just to make the format clear.
+		  there are no separators between different sections at each QR,
+		  everything is concatenated straight forward.
+		  
+** current signature size = 64 bytes
