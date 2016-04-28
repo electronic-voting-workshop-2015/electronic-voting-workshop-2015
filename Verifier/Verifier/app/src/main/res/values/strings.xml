@@ -1,9 +1,0 @@
-<resources>
-    <string name="app_name">Verifier</string>
-    <string name="action_settings">Settings</string>
-    <string name="title_activity_activity__verifi_vote_in_bb">Activity_VerifiVoteInBB</string>
-
-    <string name="title_activity_activity_verifi_vote_in_bb">ActivityVerifiVoteInBB</string>
-    <string name="dummy_button">Dummy Button</string>
-    <string name="dummy_content">DUMMY\nCONTENT</string>
-</resources>
