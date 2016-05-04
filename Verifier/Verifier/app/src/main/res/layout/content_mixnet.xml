@@ -164,6 +164,11 @@
         android:id="@+id/linearLayout3"
         android:background="@drawable/mixnet_3">
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:id="@+id/myButton" />
 
     </LinearLayout>
 

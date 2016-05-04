@@ -34,7 +34,9 @@ import workshop.Group;
 
 public class ActivityCompareQRS extends QRScanningActivity {
 
-
+    private boolean DEBUGYemini = false;
+    private boolean SHOWRESULTDEBUG = false;
+    private int DEBUGCounter = 0;
     private Activity currentActivity = this;
     //private Button button1;
     private TextView textView;
@@ -117,7 +119,10 @@ public class ActivityCompareQRS extends QRScanningActivity {
             switch (v.getId()) {
                 case R.id.b_1:
 
-
+                    if (SHOWRESULTDEBUG) {
+                        showResultAndResetValues();
+                        break;
+                    }
                     putEmptyTexts();
                     hideList();
                     requestQRString();
@@ -137,6 +142,10 @@ public class ActivityCompareQRS extends QRScanningActivity {
     @Override
     protected void onQrCodeReceived(final String qrString) {
 
+        if (DEBUGYemini) {
+            debugStuff();
+            return;
+        }
 
         if (qrString == null) {
             showFailureAlert(SCAN_FAILED); //couldnot scan
@@ -233,7 +242,13 @@ public class ActivityCompareQRS extends QRScanningActivity {
         requestScanButtonAudit.setVisibility(View.GONE);
         ArrayList<ArrayList<String>> racesList;
 
+        if (SHOWRESULTDEBUG) {
+            racesList = createListForResultDebug();
+            enableListViewWithActualList(racesList);
+            showList();
+            textView.setText("זוהו הבחירות הבאות:");
 
+        } else {
             boolean result = auditQR.compareToMainQR(mainQR);
 
             if (result) {
@@ -250,7 +265,7 @@ public class ActivityCompareQRS extends QRScanningActivity {
             } else {
                 showFailureAlert(NO_MATCH);
             }
-
+        }
     }
 
 
@@ -412,6 +427,33 @@ public class ActivityCompareQRS extends QRScanningActivity {
     }
 
 
+    private void debugStuff() {
+
+        if (DEBUGCounter == 0) {
+            //showFailedScanningAlert(4);
+            DEBUGCounter = 1;
+        } else if (DEBUGCounter == 1) {
+            scannedMainQrsuccessfully = true;
+            requestScanButtonMain.setEnabled(false);
+            requestScanButtonMain.setImageResource(R.drawable.scan_main_qr_finished);
+            requestScanButtonAudit.setEnabled(true);
+            requestScanButtonAudit.setImageResource(R.drawable.scan_audit_qr);
+            DEBUGCounter = 2;
+        } else if (DEBUGCounter == 2) {
+            scannedMainQrsuccessfully = false;
+            requestScanButtonMain.setEnabled(true);
+            requestScanButtonMain.setImageResource(R.drawable.scan_main_qr);
+            requestScanButtonAudit.setEnabled(false);
+            requestScanButtonAudit.setImageResource(0);
+
+
+            //  textView1.setText("נמצאה התאמה בין הברקודים!");
+            // textView2.setText("זוהתה הבחירה הבאה:");
+            //textView3.setText("ליכוד");
+
+            DEBUGCounter = 0;
+        }
+    }
 
 
     private void createSelections(ArrayList<ArrayList<String>> racesList) {

@@ -41,14 +41,27 @@ import workshop.Group;
 public class ActivityMixnet extends AppCompatActivity {
 
 
+    boolean FINALPRESENTATION = false;
     boolean DEBUG_useLocalMixnetFile = true;
-
+    int debugCounter = 0;
+    int state = 0; //0: didnt start verifing.  1: started verifing
     private Activity currentActivity = this;
     private ImageButton theButton;
-
+    private Button myButton;
+    private boolean myButtonValue = true;
     private SeekBar percentageBar = null;
     private TextView percentageText = null;
     private int percentage = 10;
+    private ProgressDialog progressBar;
+    private int progressStatus = 0;
+    private boolean finishedProgress = false;
+    private boolean finishedProgressBar = false;
+    private boolean result = false;
+    private int timePassed = 0;
+    private int timeToIncrement = 1;
+    private int timeToWait = 100;
+    final int totalProgressTime = 100;
+    private Handler handler = new Handler();
 
     private static int UNEXPECTED_ERROR = 1;
     private static int NETWORK_ERROR = 2;
@@ -77,8 +90,11 @@ public class ActivityMixnet extends AppCompatActivity {
 
     private void buttonPressed() {
 
-        startVerifying();
-
+        if (FINALPRESENTATION) {
+            startVerifyingYemini();
+        } else {
+            startVerifying();
+        }
 
 
     }
@@ -145,7 +161,10 @@ public class ActivityMixnet extends AppCompatActivity {
 
         theButton.setOnClickListener(myOnClickListener);
 
-
+        myButton = (Button) findViewById(R.id.myButton);
+        myButton.setVisibility(View.VISIBLE);
+        myButton.setBackgroundColor(Color.TRANSPARENT);
+        myButton.setOnClickListener(myOnClickListener);
     }
 
 
@@ -158,7 +177,8 @@ public class ActivityMixnet extends AppCompatActivity {
                     buttonPressed();
 
                     break;
-
+                case R.id.myButton:
+                    myButtonValue = !myButtonValue;
                 default:
                     break;
             }
@@ -178,6 +198,12 @@ public class ActivityMixnet extends AppCompatActivity {
     private void startVerifying() {
 
         imageView.setBackgroundResource(0);
+
+        result = false;
+        finishedProgress = false;
+        finishedProgressBar = false;
+        progressStatus = 0;
+        timePassed = 0;
 
         final ProgressDialog progressDialog = new ProgressDialog(this);
         String m = "החלה בדיקה של " + percentage + "% מתוך המיקסנט";
@@ -230,7 +256,112 @@ public class ActivityMixnet extends AppCompatActivity {
     }
 
 
+    private void startVerifyingYemini() {
 
+        imageView.setBackgroundResource(0);
+        finishedProgressBar = false;
+        result = false;
+        finishedProgress = false;
+        progressStatus = 0;
+        timePassed = 0;
+        timeToIncrement = 1;
+
+        showProgressBar();
+
+            new Thread(new Runnable() {
+                public void run() {
+
+                    while (!finishedProgressBar) {
+                        try {
+                            Thread.sleep(150);
+
+                        } catch (InterruptedException e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+                    }
+                    updateUi(myButtonValue);
+                    try{
+                        Thread.sleep(750);
+                    }catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            if(!myButtonValue){
+                                showFailureAlert(UNEXPECTED_ERROR);
+                            }else{
+                                String titleStringTmp = "", messageStringTmp = "", buttonStringTmp = "";
+                                titleStringTmp = "הבדיקה הסתיימה בהצלחה";
+                                buttonStringTmp = "הבנתי";
+                                messageStringTmp = "תודה רבה על השתתפותך בבדיקה";
+                                showAlertDialog(titleStringTmp,messageStringTmp,buttonStringTmp);
+
+                            }
+                        }
+                    });
+
+
+
+                }
+            }).start();
+
+
+        /*Group group = ParametersMain.ourGroup;
+        final MixnetVerifier mixnetVerifier = new MixnetVerifier(group);
+
+
+        //try to retrieve the data
+        Callback mixnetCallback = new Callback() {
+            @Override
+            public void onResponse(Call call, final Response response) throws IOException {
+                try {
+                    MixnetProofs mixnetProofs = MixnetVerifier.deserializeProofs(response.body().string());
+                    final boolean verificationResult = mixnetVerifier.verifyMixnetRandomlyByPercentage(mixnetProofs, percentage);
+
+                    //this thread waits for the prograss bar to finish, then show the result
+                    new Thread(new Runnable() {
+                        public void run() {
+
+                            while (!finishedProgressBar) {
+                                try {
+                                    Thread.sleep(150);
+
+                                } catch (InterruptedException e) {
+                                    // TODO Auto-generated catch block
+                                    e.printStackTrace();
+                                }
+                            }
+                            updateUi(verificationResult);
+
+
+                        }
+                    }).start();
+
+
+                } catch (Exception e) {
+                    finishedProgressBar = true;
+                    progressBar.dismiss();
+                    showFailureAlert(UNEXPECTED_ERROR);
+                    updateUi(false);
+                }
+
+            }
+
+            @Override
+            public void onFailure(Call call, IOException e) {
+                // tell user network request failed
+                //Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                showFailureAlert(NETWORK_ERROR);////TODO GUI - network request failed
+            }
+        };
+        BulletinBoardApi.enqueueGetRequest(BulletinBoardApi.MIXNET_REQUEST_URL, mixnetCallback);
+        */
+
+    }
 
 
     private void initImageView() {
@@ -337,9 +468,74 @@ public class ActivityMixnet extends AppCompatActivity {
         builder.show();
     }
 
+    private void showProgressBar() {
+        result = false;
+        finishedProgress = false;
+        finishedProgressBar = false;
+        progressStatus = 0;
+        timePassed = 0;
+        //timeToIncrement = (1000/percentage)- (8 + (100/percentage));
+        //timeToIncrement = -1*((percentage/10)-10);
+        //if(timeToIncrement==0)timeToIncrement=1;
+        timeToIncrement = 2;
+        timeToWait = 3*percentage + 50 - (100 / percentage);
+        progressBar = new ProgressDialog(this);
+        String m = "החלה בדיקה של " + percentage + "% מתוך המיקסנט";
+        progressBar.setMessage(m);
+        progressBar.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        progressBar.setMax(totalProgressTime);
+        progressBar.setProgress(0);
+        progressBar.setCancelable(false);
+        progressBar.setCanceledOnTouchOutside(false);
+        progressBar.show();
+
+        Random r = new Random();
+        final int stopProgressAtRandom = r.nextInt(40)+30;
 
 
+        new Thread(new Runnable() {
+            public void run() {
 
+                while (progressStatus < totalProgressTime) {
+
+                    // progressStatus=mixnetVerifier.getVerificationProgressPercentage();
+                    progressStatus = 0;
+
+                    handler.post(new Runnable() {
+                        public void run() {
+
+                            progressBar.setMax(totalProgressTime);
+
+                            progressStatus = timePassed;
+
+                            progressBar.setProgress(progressStatus);
+                        }
+                    });
+
+                    try {
+                        Random r = new Random();
+                        timeToIncrement = r.nextInt(6);
+                        if(timeToIncrement>=4)timeToIncrement=0;
+                        Thread.sleep(timeToWait);
+                        timePassed += timeToIncrement;
+                        if(!myButtonValue && timePassed>stopProgressAtRandom){
+                            progressBar.dismiss();
+                            finishedProgressBar=true;
+                        }
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                        progressBar.dismiss();
+                        finishedProgressBar = true;
+                    }
+                }
+                progressBar.dismiss();
+                finishedProgressBar = true;
+            }
+        }).start();
+
+
+    }
 
 
     private String readFile(File file) throws IOException {

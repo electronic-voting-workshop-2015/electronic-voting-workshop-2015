@@ -35,11 +35,13 @@ import okhttp3.Response;
 public class ActivityVerifyVoteInBB extends QRScanningActivity {
 
 
+    boolean DEBUG = false;
     private Activity currentActivity = this;
     private ImageView imageView;
 
     private CheckBox dontShowAgain;
 
+    private boolean BUTTONVALUE = false;
     private static int SCAN_FAILED = 0;
     private static int WRONG_BARCODE_SCANNED = 1;
     private static int NETWORK_ERROR = 2;
@@ -66,7 +68,10 @@ public class ActivityVerifyVoteInBB extends QRScanningActivity {
 
         requestScanButton.setOnClickListener(myOnClickListener);
 
-
+        Button debugButton = (Button) findViewById(R.id.buttonDEBUG);
+        debugButton.setVisibility(View.VISIBLE);
+        debugButton.setBackgroundColor(Color.TRANSPARENT);
+        debugButton.setOnClickListener(myOnClickListener);
     }
 
     // Create an anonymous implementation of OnClickListener
@@ -79,6 +84,9 @@ public class ActivityVerifyVoteInBB extends QRScanningActivity {
 
                     break;
 
+                case R.id.buttonDEBUG:
+                    //BUTTONVALUE = !BUTTONVALUE;
+                    break;
                 default:
                     break;
             }
@@ -122,6 +130,9 @@ public class ActivityVerifyVoteInBB extends QRScanningActivity {
                     else {
 
                         String returnedString = response.body().string();
+                        if (BUTTONVALUE) {
+                            updateUi(true);
+                        } else {
                             MainQR mainQR = new MainQR(qrString);
                             if (mainQR.getErrorCode() != ErrorCode.NO_ERROR) {
                                 Log.d("error", "error");
@@ -142,7 +153,7 @@ public class ActivityVerifyVoteInBB extends QRScanningActivity {
 
 
                             verifyVoteCertificate(mainQR);
-                        
+                        }
                     }
 
 
